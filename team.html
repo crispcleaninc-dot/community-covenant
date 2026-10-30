@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Team Desk — Community Covenant</title>
+<link rel="icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<script src="app/bridge.js"></script>
+<style>
+  :root{--cream:#faf6ee;--card:#fffdf7;--field:#f1e9d9;--plum:#372b4e;--gold:#b8964f;--ink:#3a3352;--border:#e7ddc9}
+  *{box-sizing:border-box} body{margin:0;background:var(--cream);color:var(--ink);font-family:"Source Sans 3",Arial,sans-serif}
+  header{background:var(--plum);color:var(--cream);padding:14px 18px;display:flex;justify-content:space-between;align-items:center}
+  header h1{font-family:"Cormorant Garamond",Georgia,serif;margin:0;font-size:1.5em}
+  .wrap{max-width:1100px;margin:0 auto;padding:14px;display:grid;grid-template-columns:340px 1fr;gap:14px}
+  @media(max-width:800px){.wrap{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px}
+  h2{font-family:"Cormorant Garamond",Georgia,serif;margin:4px 0 8px;font-size:1.3em}
+  .t{padding:10px;border-radius:10px;cursor:pointer;border:1px solid transparent;margin-bottom:6px;background:#fff}
+  .t:hover,.t.on{border-color:var(--gold)} .t b{display:block} .t small{color:#6b6280}
+  .pill{display:inline-block;font-size:.72em;font-weight:700;border-radius:10px;padding:2px 8px;margin-left:6px}
+  .urg{background:#fbe9e4;color:#b3532f} .new{background:#f1e9d9;color:#8a6d3b} .ver{background:#eaf3e2;color:#3f6b2e}
+  .m{max-width:80%;padding:9px 13px;border-radius:14px;margin:6px 0;white-space:pre-wrap;line-height:1.45}
+  .m.member{background:#fff;border:1px solid var(--border)} .m.team{margin-left:auto;background:var(--plum);color:#fff}
+  .m .w{display:block;font-size:.75em;opacity:.7}
+  #thread{min-height:300px;max-height:60vh;overflow-y:auto}
+  input,textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--field);font:inherit}
+  textarea{min-height:90px} button{background:var(--plum);color:#fff;border:0;border-radius:22px;padding:10px 18px;font-weight:700;cursor:pointer;margin-top:8px}
+  button.alt{background:var(--gold)} .err{color:#b3532f;margin:6px 0} .hint{color:#6b6280;font-size:.88em}
+  #login{max-width:380px;margin:60px auto}
+</style>
+</head>
+<body>
+<header><h1>Community Covenant &mdash; Team Desk</h1><span id="ver" class="hint" style="color:#c9a961"></span></header>
+<div id="login" class="card">
+  <h2>Team sign-in</h2>
+  <p class="hint">Enter the team code (Script Property TEAM_PIN).</p>
+  <input id="pin" type="password" autocomplete="current-password" placeholder="Team code">
+  <input id="tn" style="margin-top:8px" placeholder="Your name as members will see it (e.g. Sister Ciarne)">
+  <div class="err" id="lerr"></div>
+  <button onclick="enter()">Open the desk</button>
+</div>
+<div class="wrap" id="desk" style="display:none">
+  <div>
+    <div class="card" id="heldCard" style="display:none;margin-bottom:14px;border-color:#e6b6a6">
+      <h2 style="color:#b3532f">Needs a person now</h2>
+      <div class="hint">Daily logs held from automatic replies (crisis words or a concern). The member already got 988 + Crisis Text Line.</div>
+      <div id="held"></div>
+    </div>
+    <div class="card"><h2>Conversations</h2><div id="list" class="hint">Loading…</div>
+      <button class="alt" onclick="refresh()">Refresh</button></div>
+  </div>
+  <div class="card">
+    <h2 id="title">Pick a conversation</h2>
+    <div id="thread"></div>
+    <div id="replyBox" style="display:none">
+      <textarea id="reply" placeholder="Write your reply. The member gets it in chat, by email, and as a phone notification if they turned those on."></textarea>
+      <div class="err" id="rerr"></div>
+      <button onclick="reply()">Send reply</button>
+    </div>
+  </div>
+</div>
+<script>
+  var PIN = sessionStorage.getItem('cc_pin') || '', TN = localStorage.getItem('cc_teamname') || '', cur = '';
+  document.getElementById('tn').value = TN;
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function when(s) { try { return new Date(s).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); } catch (e) { return ''; } }
+  function enter() {
+    PIN = document.getElementById('pin').value.trim(); TN = document.getElementById('tn').value.trim();
+    localStorage.setItem('cc_teamname', TN); refresh(true);
+  }
+  function refresh(first) {
+    google.script.run.withSuccessHandler(function (r) {
+      sessionStorage.setItem('cc_pin', PIN);
+      document.getElementById('login').style.display = 'none'; document.getElementById('desk').style.display = 'grid';
+      var l = document.getElementById('list');
+      l.innerHTML = r.threads.length ? r.threads.map(function (t) {
+        return '<div class="t' + (t.email === cur ? ' on' : '') + '" onclick="openT(\'' + esc(t.email) + '\',\'' + esc(String(t.name || '').replace(/['"\\]/g, '')) + '\')"><b>' + esc(t.name || t.email) +
+          (t.urgent ? '<span class="pill urg">URGENT</span>' : t.open ? '<span class="pill new">' + t.open + ' new</span>' : '') + (t.signed ? '<span class="pill ver">signed in</span>' : '') +
+          '</b><small>' + esc(t.email) + ' &middot; ' + when(t.lastAt) + '</small><div>' + esc(t.last) + '</div></div>';
+      }).join('') : 'No conversations yet.';
+      var h = r.held || [];
+      document.getElementById('heldCard').style.display = h.length ? 'block' : 'none';
+      document.getElementById('held').innerHTML = h.map(function (x) {
+        return '<div class="t"><b>' + esc(x.name || x.email) + ' &mdash; Day ' + esc(x.day) + '</b><small>' + esc(x.email) + ' &middot; ' + when(x.at) + ' &middot; ' + esc(x.flag) + '</small><br>' +
+          '<button onclick="openT(\'' + esc(x.email) + '\',\'' + esc(String(x.name || '').replace(/['"\\]/g, '')) + '\')">Message them</button> <button class="alt" onclick="done(\'' + esc(x.email) + '\')">I reached out</button></div>';
+      }).join('');
+    }).withFailureHandler(function (e) {
+      if (first || !document.getElementById('desk').style.display || document.getElementById('desk').style.display === 'none') { document.getElementById('lerr').textContent = e.message; sessionStorage.removeItem('cc_pin'); }
+    }).teamThreads(PIN);
+  }
+  function openT(email, name) {
+    cur = email; document.getElementById('title').textContent = (name || email) + ' — ' + email;
+    document.getElementById('replyBox').style.display = 'block';
+    google.script.run.withSuccessHandler(function (r) {
+      var t = document.getElementById('thread');
+      t.innerHTML = (r.messages || []).map(function (m) { return '<div class="m ' + (m.from === 'member' ? 'member' : 'team') + '"><span class="w">' + esc(m.name || '') + ' &middot; ' + when(m.at) + '</span>' + esc(m.text) + '</div>'; }).join('') || '<p class="hint">No chat messages yet — your reply will start the conversation and email them.</p>';
+      t.scrollTop = t.scrollHeight;
+    }).teamThread(PIN, email);
+  }
+  function reply() {
+    var tx = document.getElementById('reply'), e = document.getElementById('rerr'); e.textContent = '';
+    if (!cur || !tx.value.trim()) return;
+    google.script.run.withSuccessHandler(function (r) { if (r.success) { tx.value = ''; openT(cur, ''); refresh(); } else e.textContent = r.message; })
+      .withFailureHandler(function (x) { e.textContent = x.message; }).teamReply(PIN, cur, tx.value, TN);
+  }
+  function done(email) { google.script.run.withSuccessHandler(function () { refresh(); }).teamMarkDone(PIN, email); }
+  if (PIN) refresh(true);
+  setInterval(function () { if (document.getElementById('desk').style.display === 'grid') refresh(); }, 30000);
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "Community Covenant",
+  "short_name": "Covenant",
+  "description": "Daily scripture, prayer, movement and a log the team answers the same day. You are not alone.",
+  "id": "/community-covenant/app/",
+  "start_url": "/community-covenant/app/?source=homescreen",
+  "scope": "/community-covenant/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#faf6ee",
+  "theme_color": "#372b4e",
+  "categories": ["lifestyle", "education", "health"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
