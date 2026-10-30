@@ -316,3 +316,210 @@
   }
   function pushLogout() { bell.style.display = 'none'; if (pushReady) pushReady.then(function (OS) { try { OS && OS.logout(); } catch (e) {} }); }
 })();
+
+/* ===== Stay signed in + no duplicate accounts (Oct 30 2026). Additive: every original
+ * sign-up / login / logout function still runs; this only adds safety around them. ===== */
+(function () {
+  var SS_KEY = 'cc_session', DRAFT_KEY = 'cc_reg_draft', LAST_KEY = 'cc_last_email';
+  function $(id) { return document.getElementById(id); }
+  function get(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+  function put(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function norm(e) { return String(e || '').replace(/\s+/g, '').toLowerCase(); }
+  function cu() { try { return (typeof currentUser !== 'undefined') ? currentUser : null; } catch (e) { return null; } }
+
+  /* 1. No pull-to-refresh by accident (Android Chrome, newer iPhones). Scrolling still works. */
+  var st = document.createElement('style');
+  st.textContent = 'html,body{overscroll-behavior-y:contain}' +
+    '.cc-busy{position:fixed;inset:0;z-index:100000;background:rgba(55,43,78,.88);display:flex;align-items:center;justify-content:center;padding:24px}' +
+    '.cc-busy .b{background:#faf6ee;color:#372b4e;border-radius:16px;max-width:360px;width:100%;padding:26px 22px;text-align:center;font-family:Georgia,serif;box-shadow:0 10px 40px rgba(0,0,0,.3)}' +
+    '.cc-busy .sp{width:42px;height:42px;margin:0 auto 14px;border-radius:50%;border:4px solid #e4d6b4;border-top-color:#8a6d3b;animation:ccspin 1s linear infinite}' +
+    '.cc-busy h4{margin:0 0 8px;font-size:1.15em}.cc-busy p{margin:6px 0 0;font-size:.95em;line-height:1.45}.cc-busy .w{color:#8a3b3b;font-weight:bold}' +
+    '@keyframes ccspin{to{transform:rotate(360deg)}}' +
+    '.cc-note{margin:8px 0 4px;padding:10px 12px;border-radius:10px;background:#f3ead6;color:#372b4e;font-size:.92em;line-height:1.45}' +
+    '.cc-note a{color:#8a6d3b;font-weight:bold;cursor:pointer;text-decoration:underline}';
+  document.head.appendChild(st);
+
+  /* 2. "Please wait, don't refresh" screen while signing up / in. */
+  var busyEl = null, busyFor = '', slowT = null;
+  function busy(on, title, fn) {
+    clearTimeout(slowT);
+    if (!on) { if (busyEl) busyEl.remove(); busyEl = null; busyFor = ''; return; }
+    busyFor = fn || '';
+    if (!busyEl) { busyEl = document.createElement('div'); busyEl.className = 'cc-busy'; document.body.appendChild(busyEl); }
+    busyEl.innerHTML = '<div class="b" role="status" aria-live="polite"><div class="sp"></div><h4>' + esc(title) + '</h4>' +
+      '<p>This can take a few seconds.</p><p class="w">Please don’t refresh, pull down, or close this page.</p><p class="slow" style="display:none">Still working — your phone connection may be slow. Stay right here.</p></div>';
+    slowT = setTimeout(function () { var s = busyEl && busyEl.querySelector('.slow'); if (s) s.style.display = 'block'; }, 8000);
+  }
+  window.addEventListener('beforeunload', function (e) {
+    if (busyEl || dirty) { e.preventDefault(); e.returnValue = ''; return ''; }
+  });
+  // Unsaved typing while signed in: ask before leaving. Saves clear it.
+  var dirty = false;
+  document.addEventListener('input', function (e) {
+    var t = e.target; if (!cu() || !t || !/^(TEXTAREA|INPUT)$/.test(t.tagName) || /password|email/.test(t.type)) return;
+    if ($('appPage') && $('appPage').contains(t)) dirty = true;
+  }, true);
+
+  /* 3. Email fields: no auto-capitals (phones capitalized the first letter = "new" person). */
+  ['regEmail', 'loginEmail', 'forgotEmail'].forEach(function (id) {
+    var f = $(id); if (!f) return;
+    f.setAttribute('autocapitalize', 'none'); f.setAttribute('autocorrect', 'off'); f.setAttribute('spellcheck', 'false'); f.setAttribute('autocomplete', 'email');
+  });
+  function note(afterId, html) {
+    var host = $(afterId); if (!host) return null;
+    var n = host.parentNode.querySelector('.cc-note[data-for="' + afterId + '"]');
+    if (!html) { if (n) n.remove(); return null; }
+    if (!n) { n = document.createElement('div'); n.className = 'cc-note'; n.setAttribute('data-for', afterId); host.insertAdjacentElement('afterend', n); }
+    n.innerHTML = html; return n;
+  }
+  function goLogin(email, msg, ok) {
+    switchPage('loginPage');
+    if (email && $('loginEmail')) $('loginEmail').value = email;
+    if (msg) setMsg('loginError', msg, !!ok);
+    setTimeout(function () { var p = $('loginPassword'); if (p && email) try { p.focus(); } catch (e) {} }, 200);
+  }
+  function resendLink(email, where) {
+    google.script.run.withSuccessHandler(function (r) { setMsg(where, r.message, !!r.success); if (r.verified) goLogin(email); })
+      .withFailureHandler(function (e) { setMsg(where, String(e.message || e), false); }).resendVerification(email);
+  }
+  window.ccResend = function (where) { var e = norm(($(where === 'regError' ? 'regEmail' : 'loginEmail') || {}).value); if (e) resendLink(e, where); };
+
+  /* 4. Tell people right away if their email already has an account. */
+  var chkT = null, lastChk = '';
+  function checkReg() {
+    var e = norm(($('regEmail') || {}).value);
+    if (!/^[^@]+@[^@]+\.[^@]+$/.test(e) || e === lastChk) return; lastChk = e;
+    google.script.run.withFailureHandler(function () {}).withSuccessHandler(function (r) {
+      if (norm($('regEmail').value) !== e) return;
+      if (r && r.status === 'verified') note('regEmail', 'You already have an account with this email — no need to make another. <a onclick="ccToLogin()">Log in instead</a>');
+      else if (r && r.status === 'pending') note('regEmail', 'You already started signing up with this email. Check your inbox for the verification link, or <a onclick="ccResend(\'regError\')">send the link again</a>. You can also finish the form — we’ll keep the same account.');
+      else note('regEmail', '');
+    }).checkEmail(e);
+  }
+  window.ccToLogin = function () { goLogin(norm($('regEmail').value)); };
+  if ($('regEmail')) {
+    $('regEmail').addEventListener('input', function () { clearTimeout(chkT); chkT = setTimeout(checkReg, 900); });
+    $('regEmail').addEventListener('blur', checkReg);
+  }
+
+  /* 5. Keep the sign-up form if the page reloads by accident (never the passwords). */
+  var DRAFT_IDS = ['regEmail', 'regName', 'regDOB', 'regAge', 'fastingPref', 'fastingDur', 'religionOther'];
+  function saveDraft() {
+    var d = {}; DRAFT_IDS.forEach(function (id) { var f = $(id); if (f && f.value) d[id] = f.value; });
+    try { if (typeof CHIPSETS !== 'undefined' && CHIPSETS.religionReg) d.chips = CHIPSETS.religionReg.state.slice(); } catch (e) {}
+    put(DRAFT_KEY, Object.keys(d).length ? d : null);
+  }
+  function loadDraft() {
+    var d = get(DRAFT_KEY); if (!d) return;
+    DRAFT_IDS.forEach(function (id) { var f = $(id); if (f && d[id] && !f.value) f.value = d[id]; });
+    try { if (d.fastingPref) toggleFastingDuration(); } catch (e) {}
+    try { if (d.chips && d.chips.length) chipSet('religionReg', d.chips); } catch (e) {}
+    if (d.regEmail) checkReg();
+  }
+  if ($('registerPage')) { $('registerPage').addEventListener('input', saveDraft); $('registerPage').addEventListener('change', saveDraft); $('registerPage').addEventListener('click', function () { setTimeout(saveDraft, 50); }); }
+
+  /* 6. Wrap sign-up, login, forgot password and logout (originals still run). */
+  var origReg = window.registerUser, origLogin = window.loginUser, origForgot = window.requestPasswordReset, origOut = window.logoutUser;
+  window.registerUser = function () {
+    if (busyEl) return; // a second tap while we're already creating it does nothing
+    if ($('regEmail')) $('regEmail').value = norm($('regEmail').value);
+    busyFor = 'registerUser';
+    origReg.apply(this, arguments);
+  };
+  window.loginUser = function () {
+    if (busyEl) return;
+    if ($('loginEmail')) $('loginEmail').value = norm($('loginEmail').value);
+    note('loginError', '');
+    busyFor = 'loginUser';
+    origLogin.apply(this, arguments);
+  };
+  window.requestPasswordReset = function () { if ($('forgotEmail')) $('forgotEmail').value = norm($('forgotEmail').value); origForgot.apply(this, arguments); };
+  window.logoutUser = function () {
+    var s = get(SS_KEY);
+    origOut.apply(this, arguments);
+    if (!cu()) { // they confirmed
+      put(SS_KEY, null); dirty = false;
+      if (s && s.remember) google.script.run.withFailureHandler(function () {}).withSuccessHandler(function () {}).forgetDevice(s.remember);
+      if (s && s.email && $('loginEmail')) $('loginEmail').value = s.email;
+    }
+  };
+
+  var prevBefore = window.ccBeforeCall;
+  window.ccBeforeCall = function (fn, args) {
+    if (prevBefore) args = prevBefore(fn, args) || args;
+    if (fn === 'registerUser' && busyFor === 'registerUser') busy(true, 'Creating your account…', fn);
+    if (fn === 'loginUser' && busyFor === 'loginUser') busy(true, 'Signing you in…', fn);
+    if (fn === 'loginUser' && args.length === 2) args.push(String(navigator.userAgent || '').replace(/\s+/g, ' ').slice(0, 160));
+    return args;
+  };
+  var prevFilter = window.ccFilterResult;
+  window.ccFilterResult = function (fn, res) { if (fn === busyFor) busy(false); return prevFilter ? prevFilter(fn, res) : res; };
+  var prevDone = window.ccCallDone;
+  window.ccCallDone = function (fn, good, res) {
+    if (prevDone) try { prevDone(fn, good, res); } catch (e) {}
+    if (fn === busyFor) busy(false);
+    if (fn === 'registerUser' && good && res) {
+      if (res.success) {
+        put(DRAFT_KEY, null); put(LAST_KEY, res.email || norm(($('regEmail') || {}).value));
+        goLogin(res.email || norm($('regEmail').value), (res.reused ? res.message : 'Your account is made. Open the verification link we just emailed you, then log in here.') + ' (Your account is saved — if this page reloads, just log in. Don’t sign up again.)', true);
+        note('loginError', 'Didn’t get the email? Check spam, or <a onclick="ccResend(\'loginError\')">send the link again</a>.');
+      } else if (res.isDuplicate) {
+        put(DRAFT_KEY, null);
+        var em = norm($('regEmail').value);
+        setTimeout(function () { goLogin(em, 'You already have an account with this email. Enter your password to log in, or tap "Forgot password?".', false); }, 1900);
+      }
+    }
+    if (fn === 'loginUser' && good && res) {
+      if (res.success) {
+        put(SS_KEY, { remember: res.remember || '', email: res.email, name: res.name, at: Date.now() }); put(LAST_KEY, res.email); put(DRAFT_KEY, null);
+      } else if (res.unverified) {
+        note('loginError', '<a onclick="ccResend(\'loginError\')">Send the verification link again</a>');
+      }
+    }
+    if (fn === 'requestPasswordReset' && good && res && res.unverified) note('forgotError', 'Your account still needs its verification link. Go to Log in and tap "Send the verification link again".');
+    if (good && /^(saveEntry|seekFirstSave|altarSave|saveWorkbookProgress|updateUserProfile|updateFastType|askCovenant|logHelpQuestion|chatSend|addUserSong)$/.test(fn)) dirty = false;
+  };
+
+  /* 7. Private session code timed out mid-use: sign back in silently with this device's key. */
+  var renewing = null;
+  window.ccRenewSession = function (cb) {
+    var s = get(SS_KEY); if (!s || !s.remember) return cb(null);
+    if (renewing) return renewing.push(cb);
+    renewing = [cb];
+    google.script.run.withSuccessHandler(function (r) {
+      var tok = (r && r.success && r.token) || null, u = cu();
+      if (tok && u) u.token = tok;
+      if (!tok) put(SS_KEY, null);
+      var list = renewing; renewing = null; list.forEach(function (f) { f(tok); });
+    }).withFailureHandler(function () { var list = renewing; renewing = null; list.forEach(function (f) { f(null); }); }).resumeSession(s.remember);
+  };
+
+  /* 8. Opening the app again on the same phone/browser: straight back in. */
+  function enterApp(res) {
+    currentUser = res;
+    switchPage('appPage');
+    var steps = [function () { $('entryDate').valueAsDate = new Date(); }, loadProfile, renderDay, renderCorner, renderWorkoutOfDay, loadMusic];
+    steps.forEach(function (f) { try { f(); } catch (e) { console.warn(e); } });
+  }
+  function start() {
+    var s = get(SS_KEY), last = get(LAST_KEY);
+    if (s && s.remember && !cu()) {
+      busy(true, 'Welcome back' + (s.name ? ', ' + String(s.name).split(' ')[0] : '') + '… opening your covenant', 'resumeSession');
+      google.script.run.withSuccessHandler(function (r) {
+        if (r && r.success) { put(SS_KEY, { remember: s.remember, email: r.email, name: r.name, at: Date.now() }); enterApp(r); }
+        else { put(SS_KEY, null); goLogin(s.email, 'Please sign in again on this device.', false); }
+      }).withFailureHandler(function (e) {
+        // Couldn't reach the server (weak signal). Keep the key so the next try works.
+        goLogin(s.email, 'We couldn’t reach Community Covenant just now. Check your signal, then log in (or reopen the app).', false);
+      }).resumeSession(s.remember);
+      return;
+    }
+    loadDraft();
+    // Been here before (signed up or signed in)? Open on Log in, not "Create Your Account".
+    if (!get(DRAFT_KEY) && last && !cu()) goLogin(last);
+    // Wake the server up while they type, so login is faster.
+    try { google.script.run.withFailureHandler(function () {}).withSuccessHandler(function () {}).connectInfo(); } catch (e) {}
+  }
+  if (document.readyState === 'complete') start(); else window.addEventListener('load', start);
+})();

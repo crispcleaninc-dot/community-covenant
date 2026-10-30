@@ -7,7 +7,9 @@
   var cfg = window.COVENANT_CONFIG || {};
   function call(fn, args, ok, fail) {
     var clean = Array.prototype.map.call(args, function (a) { return a === undefined ? null : a; });
-    var tries = 0;
+    try { if (window.ccBeforeCall) clean = window.ccBeforeCall(fn, clean) || clean; } catch (x) {}
+    var tries = 0, renewed = false;
+    function done(good, val) { try { if (window.ccCallDone) window.ccCallDone(fn, good, val); } catch (x) {} }
     function go() {
       tries++;
       fetch(cfg.API_URL, {
@@ -18,12 +20,23 @@
         if (!r.ok) throw new Error('Server answered ' + r.status);
         return r.json();
       }).then(function (d) {
-        if (d && d.ok) { var res = d.result; try { if (window.ccFilterResult) res = window.ccFilterResult(fn, res); } catch (x) {} if (ok) ok(res); }
-        else { var e = new Error((d && d.error) || 'Something went wrong'); if (fail) fail(e); else console.error(e); }
+        if (d && d.ok) { var res = d.result; try { if (window.ccFilterResult) res = window.ccFilterResult(fn, res); } catch (x) {} if (ok) ok(res); done(true, res); }
+        else {
+          var msg = (d && d.error) || 'Something went wrong';
+          // Private session code timed out: quietly sign back in on this device and try once more.
+          if (!renewed && /sign in again/i.test(msg) && window.ccRenewSession) {
+            renewed = true;
+            return window.ccRenewSession(function (tok) {
+              if (tok && clean.length && /^cv_[a-f0-9]{32}$/.test(String(clean[clean.length - 1]))) { clean[clean.length - 1] = tok; tries = 0; return go(); }
+              var e0 = new Error(msg); if (fail) fail(e0); else console.error(e0); done(false, e0);
+            });
+          }
+          var e = new Error(msg); if (fail) fail(e); else console.error(e); done(false, e);
+        }
       }).catch(function (e) {
         if (tries < 2 && !/Server answered 4/.test(String(e))) return setTimeout(go, 1200); // one retry for flaky phone data
         var err = new Error(navigator.onLine === false ? 'You appear to be offline. Check your connection and try again.' : ('Could not reach Community Covenant (' + (e && e.message || e) + ')'));
-        if (fail) fail(err); else console.error(err);
+        if (fail) fail(err); else console.error(err); done(false, err);
       });
     }
     go();

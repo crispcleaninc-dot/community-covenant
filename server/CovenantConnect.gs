@@ -1,5 +1,5 @@
 /******************************************************************************
- * COVENANT CONNECT v1.6 (2026-10-30) — ADDITIVE. Must load AFTER CovenantPlus.gs
+ * COVENANT CONNECT v1.7 (2026-10-30) — ADDITIVE. Must load AFTER CovenantPlus.gs
  * (keep it as the LAST file in the project). Nothing in Code.gs or
  * CovenantPlus.gs is edited; every wrapper calls the function that was there.
  *
@@ -38,7 +38,7 @@
  ******************************************************************************/
 
 var CCX = {
-  VERSION: '1.6 (2026-10-30)',
+  VERSION: '1.7 (2026-10-30)',
   REPLY_SHEET: 'Covenant — Daily Replies',
   CHAT_SHEET: 'Covenant — Team Chat',
   OPTOUT_SHEET: 'Covenant — Email Opt-Outs',
@@ -50,7 +50,8 @@ var CCX = {
     'saveWorkbookProgress', 'getWorkbookProgress', 'getMusicPlaylist', 'addUserSong',
     'seekFirstGet', 'seekFirstSave', 'getReelAudio', 'getReelsMusic', 'logSongFeedback',
     'altarSave', 'altarGet', 'askCovenant', 'replyNow',
-    'chatSend', 'chatGet', 'teamThreads', 'teamThread', 'teamReply', 'teamMarkDone', 'connectInfo']
+    'chatSend', 'chatGet', 'teamThreads', 'teamThread', 'teamReply', 'teamMarkDone', 'connectInfo',
+    'checkEmail', 'resendVerification', 'resumeSession', 'forgetDevice']
 };
 
 var CCX_CRISIS = ['suicide', 'suicidal', 'kill myself', 'killing myself', 'end my life', 'ending my life',
@@ -893,3 +894,210 @@ var CCX_ENCOURAGE = [
   'Your faithfulness today is a seed for someone else’s tomorrow.',
   'The covenant is kept one day at a time. Today is kept.'
 ];
+
+
+/* ===================== 7. Accounts: no duplicates, stay signed in (v1.7) =====================
+ * Additive. Every original function is still called; these wrappers only add checks.
+ *  - Email matching ignores capitals and spaces. Phones often capitalize the first letter
+ *    ("Jane@..."), which made the app treat it as a brand-new person: a second account at
+ *    sign-up, and "email not found" or "not verified" at login.
+ *  - Signing up again with an email that is waiting on its verification link does NOT make
+ *    a new account. The same account is reused (new password and details kept) and the
+ *    verification link is sent again. A double tap or a refresh mid-signup returns the
+ *    same answer instead of making another account.
+ *  - Signing up with an email that already has an account says so right away.
+ *  - "Stay signed in": each phone/browser gets its own private device key (kept 90 days
+ *    from last use). Pull-to-refresh or closing the app no longer logs people out.
+ *    Logging out, or a password reset, turns the key off.
+ *  - Nothing is deleted. covenantDuplicateReport lists old duplicates for review only.
+ */
+CCX.DEVICE_SHEET = 'Covenant — Signed-in Devices';
+CCX.DUP_SHEET = 'Covenant — Duplicate Accounts';
+CCX.DEVICE_DAYS = 90;
+
+function ccxNorm_(e) { return String(e || '').replace(/\s+/g, '').toLowerCase(); }
+function ccxIsVer_(v) { return v === true || String(v).toUpperCase() === 'TRUE'; }
+function ccxHash_(s) {
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(s)).map(function (b) { return ('0' + (b & 255).toString(16)).slice(-2); }).join('');
+}
+function ccxPwHash_(pw) { return Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, pw)); }
+/** All Users-sheet rows for one email, any capitalization. */
+function ccxAccount_(email) {
+  var sh = getOrCreateUsersSheet_(), v = sh.getDataRange().getValues(), n = ccxNorm_(email), rows = [], ver = [];
+  for (var i = 1; i < v.length; i++) {
+    if (ccxNorm_(v[i][0]) !== n) continue;
+    var r = { i: i, row: v[i] }; rows.push(r); if (ccxIsVer_(v[i][5])) ver.push(r);
+  }
+  return { sheet: sh, rows: rows, verified: ver, pending: rows.filter(function (r) { return !ccxIsVer_(r.row[5]); }) };
+}
+function ccxLoginResult_(row) {
+  return { success: true, userId: row[3], name: row[2], email: row[0], age: row[15] || '', religion: row[22] || '' };
+}
+
+/** Early check while someone types their email on the sign-up page. */
+function checkEmail(email) {
+  if (cvpCount_('cvchk:all', 3600) > 600) return { status: 'unknown' };
+  var n = ccxNorm_(email); if (!/^[^@]+@[^@]+\.[^@]+$/.test(n)) return { status: 'unknown' };
+  var a = ccxAccount_(n);
+  return { status: a.verified.length ? 'verified' : (a.pending.length ? 'pending' : 'new') };
+}
+
+/** Send the verification link again (no new account). */
+function resendVerification(email) {
+  var n = ccxNorm_(email);
+  if (cvpCount_('cvresend:' + n, 3600) > 3) return { success: false, message: 'We already sent it a few times. Check your inbox and spam folder, or try again in an hour.' };
+  var a = ccxAccount_(n);
+  if (a.verified.length) return { success: false, verified: true, message: 'This email is already verified. Please log in.' };
+  if (!a.pending.length) return { success: false, message: 'We could not find a sign-up for that email. Please create your account.' };
+  var r = a.pending[a.pending.length - 1], tok = String(r.row[4] || '');
+  if (!tok) { tok = Utilities.getUuid(); a.sheet.getRange(r.i + 1, 5).setValue(tok); }
+  sendVerificationEmail_(r.row[0], r.row[2], tok, r.row[3]);
+  return { success: true, message: 'Verification link sent again to ' + r.row[0] + '. Check your inbox (and spam).' };
+}
+
+var _ccx_register = registerUser;
+registerUser = function (email, password, name, dob, ageGroup, fastingPref, fastingDuration, religion, activityLevel, deviceInfo) {
+  var n = ccxNorm_(email), c = CacheService.getScriptCache();
+  if (!n) return _ccx_register.apply(this, arguments);
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(25000); } catch (x) { return { success: false, message: 'The app is busy for a moment. Please wait a few seconds and tap Create Account again (no need to refresh).' }; }
+  try {
+    var done = c.get('cvregok:' + n);
+    if (done) { var d = JSON.parse(done); d.repeat = true; return d; }      // double tap / refresh: same answer, no second account
+    var a = ccxAccount_(n);
+    if (a.verified.length) return { success: false, isDuplicate: true, existing: true, email: a.verified[a.verified.length - 1].row[0],
+      message: 'You already have an account with this email. Please log in. If you forgot your password, tap "Forgot password?".' };
+    if (a.pending.length) {
+      // Reuse the account they already started. Keep their newest password and details.
+      var r = a.pending[a.pending.length - 1], row = r.i + 1, sh = a.sheet, tok = String(r.row[4] || '') || Utilities.getUuid();
+      sh.getRange(row, 2).setValue(ccxPwHash_(password));
+      if (name) sh.getRange(row, 3).setValue(name);
+      sh.getRange(row, 5).setValue(tok);
+      if (ageGroup) sh.getRange(row, 16).setValue(ageGroup);
+      sh.getRange(row, 19).setValue(new Date());
+      if (dob) sh.getRange(row, 20).setValue(dob);
+      if (fastingPref) sh.getRange(row, 21).setValue(fastingPref);
+      sh.getRange(row, 22).setValue(fastingDuration || '');
+      if (religion) sh.getRange(row, 23).setValue(religion);
+      sendVerificationEmail_(r.row[0], name || r.row[2], tok, r.row[3]);
+      var res = { success: true, reused: true, userId: r.row[3], email: r.row[0],
+        message: 'Welcome back! You had already started your account, so we kept it (no second account) and sent your verification link again. Check your email.' };
+      c.put('cvregok:' + n, JSON.stringify(res), 600);
+      return res;
+    }
+    var out = _ccx_register(n, password, name, dob, ageGroup, fastingPref, fastingDuration, religion, activityLevel, deviceInfo || {});
+    if (out && out.success) { out.email = n; c.put('cvregok:' + n, JSON.stringify(out), 600); }
+    return out;
+  } finally { try { lock.releaseLock(); } catch (x) {} }
+};
+
+var _ccx_login = loginUser;
+loginUser = function (email, password, device) {
+  var a = ccxAccount_(email), r = null;
+  if (!a.rows.length) { r = _ccx_login(ccxNorm_(email), password); if (r && !r.success) r.message = 'We could not find an account with that email. Check the spelling, or create your account.'; return r; }
+  if (!a.verified.length) return { success: false, unverified: true, email: a.rows[a.rows.length - 1].row[0],
+    message: 'Your account is waiting on its verification link. Check your email (and spam), or tap "Send the link again".' };
+  var h = ccxPwHash_(password), match = null;
+  for (var k = a.verified.length - 1; k >= 0; k--) if (String(a.verified[k].row[1]) === h) { match = a.verified[k]; break; }
+  var stored = (match || a.verified[a.verified.length - 1]).row[0];
+  r = _ccx_login(stored, password);                                     // original + sign-in limits + session code
+  if (r && !r.success && match && !/Too many/i.test(String(r.message))) { // duplicate rows: the right password is on an older row
+    r = ccxLoginResult_(match.row); CacheService.getScriptCache().remove('cvfail:' + ccxNorm_(stored));
+    r.token = cvpNewTok_(r.email, r.userId);
+  }
+  if (r && r.success) r.remember = ccxDeviceNew_(r.email, r.userId, device);
+  return r;
+};
+
+var _ccx_forgot = requestPasswordReset;
+requestPasswordReset = function (email) {
+  var a = ccxAccount_(email);
+  if (!a.verified.length && a.pending.length) return { success: false, unverified: true, message: 'Your account is waiting on its verification link. Check your email, or tap "Send the link again" on the login page.' };
+  return _ccx_forgot(a.verified.length ? a.verified[a.verified.length - 1].row[0] : ccxNorm_(email));
+};
+
+/* ---- remembered devices ---- */
+function ccxDeviceSheet_() {
+  return ccxSheet_(CCX.DEVICE_SHEET, ['Signed In At', 'Email', 'User ID', 'Device Key (hashed)', 'Last Used', 'Device', 'Status']);
+}
+function ccxDeviceNew_(email, userId, device) {
+  try {
+    var t = 'rm_' + Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
+    ccxDeviceSheet_().appendRow([new Date(), email, userId, ccxHash_(t), new Date(), String(device || '').slice(0, 180), 'active']);
+    return t;
+  } catch (e) { return ''; }
+}
+function ccxDeviceFind_(t) {
+  if (!/^rm_[a-f0-9]{64}$/.test(String(t || ''))) return null;
+  var h = ccxHash_(t), sh = ccxDeviceSheet_(), v = sh.getDataRange().getValues();
+  for (var i = v.length - 1; i >= 1; i--) if (v[i][3] === h) return { sheet: sh, i: i, row: v[i], h: h };
+  return null;
+}
+/** Signs a member back in on a phone/browser they already signed in on. */
+function resumeSession(t) {
+  var c = CacheService.getScriptCache(), h = /^rm_[a-f0-9]{64}$/.test(String(t || '')) ? ccxHash_(t) : '';
+  if (!h) return { success: false };
+  var hit = c.get('cvrm:' + h), info = hit ? JSON.parse(hit) : null;
+  if (!info) {
+    var d = ccxDeviceFind_(t);
+    if (!d || d.row[6] !== 'active') return { success: false };
+    var last = new Date(d.row[4]).getTime() || 0;
+    if (Date.now() - last > CCX.DEVICE_DAYS * 864e5) { d.sheet.getRange(d.i + 1, 7).setValue('expired'); return { success: false }; }
+    var a = ccxAccount_(d.row[1]), u = null;
+    for (var k = a.verified.length - 1; k >= 0; k--) if (String(a.verified[k].row[3]) === String(d.row[2])) { u = a.verified[k]; break; }
+    if (!u) return { success: false };
+    d.sheet.getRange(d.i + 1, 5).setValue(new Date());
+    info = ccxLoginResult_(u.row);
+    c.put('cvrm:' + h, JSON.stringify(info), 21600);
+  }
+  var r = JSON.parse(JSON.stringify(info)); r.success = true; r.resumed = true;
+  r.token = cvpNewTok_(r.email, r.userId);
+  return r;
+}
+function forgetDevice(t) {
+  var d = ccxDeviceFind_(t); if (!d) return { success: true };
+  d.sheet.getRange(d.i + 1, 7).setValue('signed out'); CacheService.getScriptCache().remove('cvrm:' + d.h);
+  return { success: true };
+}
+function ccxDevicesOff_(email, why) {
+  var n = ccxNorm_(email), sh = ccxDeviceSheet_(), v = sh.getDataRange().getValues(), c = CacheService.getScriptCache();
+  for (var i = 1; i < v.length; i++) if (ccxNorm_(v[i][1]) === n && v[i][6] === 'active') { sh.getRange(i + 1, 7).setValue(why); c.remove('cvrm:' + v[i][3]); }
+}
+var _ccx_resetPw = resetPassword;
+resetPassword = function (resetToken) {
+  var who = '';
+  try { var v = getOrCreateUsersSheet_().getDataRange().getValues(); for (var i = 1; i < v.length; i++) if (resetToken && v[i][8] === resetToken) { who = v[i][0]; break; } } catch (x) {}
+  var r = _ccx_resetPw.apply(this, arguments);
+  if (r && r.success && who) { try { ccxDevicesOff_(who, 'password reset'); } catch (x) {} }
+  return r;
+};
+
+/** Owner-only: list members with more than one account row (nothing is changed or deleted). */
+function covenantDuplicateReport() {
+  var v = getOrCreateUsersSheet_().getDataRange().getValues(), g = {}, order = [];
+  for (var i = 1; i < v.length; i++) {
+    var n = ccxNorm_(v[i][0]); if (!n) continue;
+    if (!g[n]) { g[n] = []; order.push(n); }
+    g[n].push({ row: i + 1, email: v[i][0], name: v[i][2], uid: v[i][3], ver: ccxIsVer_(v[i][5]), at: v[i][6] });
+  }
+  var out = [['Checked At', 'Email (any capitals)', 'Account Rows', 'Verified Rows', 'Sheet Rows', 'Spellings Used', 'Created Times', 'Minutes Between First and Last', 'Likely Cause', 'Keep (the one they log in with)']];
+  var now = new Date(), groups = 0, extra = 0;
+  order.forEach(function (n) {
+    var list = g[n]; if (list.length < 2) return; groups++; extra += list.length - 1;
+    var times = list.map(function (x) { return new Date(x.at).getTime() || 0; }).filter(Boolean).sort();
+    var mins = times.length > 1 ? Math.round((times[times.length - 1] - times[0]) / 60000) : '';
+    var spell = list.map(function (x) { return x.email; }).filter(function (e, k, arr) { return arr.indexOf(e) === k; });
+    var ver = list.filter(function (x) { return x.ver; });
+    var cause = spell.length > 1 ? 'Capital letters typed differently' : (mins !== '' && mins <= 60 ? 'Signed up again within the hour (refresh / double tap)' : 'Signed up again later');
+    var keep = ver.length ? ver[ver.length - 1] : list[list.length - 1];
+    out.push([now, n, list.length, ver.length, list.map(function (x) { return x.row; }).join(', '), spell.join(' | '),
+      list.map(function (x) { return x.at ? Utilities.formatDate(new Date(x.at), 'America/New_York', 'MMM d h:mm a') : ''; }).join(' | '), mins, cause,
+      'Row ' + keep.row + (keep.ver ? ' (verified)' : ' (not verified yet)')]);
+  });
+  var sh = ccxSheet_(CCX.DUP_SHEET, out[0]);
+  sh.getRange(2, 1, Math.max(sh.getMaxRows() - 1, 1), out[0].length).clearContent();
+  if (out.length > 1) sh.getRange(2, 1, out.length - 1, out[0].length).setValues(out.slice(1));
+  var msg = groups + ' members have duplicate rows (' + extra + ' extra). Nothing was deleted. Report: ' + sh.getParent().getUrl();
+  Logger.log(msg); return msg;
+}
+covenantDuplicateReport = cvpOwner_(covenantDuplicateReport, 'covenantDuplicateReport');
