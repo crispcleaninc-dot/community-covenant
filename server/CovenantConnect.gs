@@ -1,5 +1,5 @@
 /******************************************************************************
- * COVENANT CONNECT v1.3 (2026-10-30) — ADDITIVE. Must load AFTER CovenantPlus.gs
+ * COVENANT CONNECT v1.4 (2026-10-30) — ADDITIVE. Must load AFTER CovenantPlus.gs
  * (keep it as the LAST file in the project). Nothing in Code.gs or
  * CovenantPlus.gs is edited; every wrapper calls the function that was there.
  *
@@ -38,7 +38,7 @@
  ******************************************************************************/
 
 var CCX = {
-  VERSION: '1.3 (2026-10-30)',
+  VERSION: '1.4 (2026-10-30)',
   REPLY_SHEET: 'Covenant — Daily Replies',
   CHAT_SHEET: 'Covenant — Team Chat',
   OPTOUT_SHEET: 'Covenant — Email Opt-Outs',
@@ -197,14 +197,18 @@ function ccxTag_(t, tag) { var m = String(t).match(new RegExp('<' + tag + '>([\\
 function ccxParas_(t) { return String(t || '').split(/\n\s*\n/).map(function (p) { return p.replace(/\s*\n\s*/g, ' ').trim(); }).filter(function (p) { return p; }); }
 /** Asks Claude and reads its answer from simple tags (no JSON, so quotes in the text can never break it). */
 function ccxClaude_(system, user, maxTokens) {
-  var r = ccxClaudeRaw_(system + ' FORMAT: answer using ONLY these tags, plain text inside them, no JSON, no markdown: ' +
-    '<concern>yes or no</concern> <body>paragraphs separated by a blank line</body> <reflection>2 sentences</reflection> ' +
-    '<scriptures>one per line as: Reference | short KJV quote</scriptures> <next>one practical next step</next> <followup>yes or no</followup>. ' +
-    'Leave out tags that do not apply.', user, maxTokens);
-  if (!r.text) return null;
+  var fmt = '\n\nWrite your answer in exactly this layout (plain text inside the tags, no JSON, no markdown). The <reply> section is REQUIRED and must contain the full message:\n' +
+    '<reply>\nParagraph one...\n\nParagraph two...\n</reply>\n<reflection>two sentences</reflection>\n<scriptures>\nReference | short KJV quote\nReference | short KJV quote\n</scriptures>\n<next>one practical next step</next>\n<followup>yes or no</followup>\n<concern>yes or no</concern>';
+  var r = null;
+  for (var attempt = 0; attempt < 2; attempt++) {
+    r = ccxClaudeRaw_(system, user + fmt, maxTokens);
+    if (!r.text) return null;
+    if (/<reply>[\s\S]*?\S[\s\S]*?<\/reply>/i.test(r.text) || /^y/i.test(ccxTag_(r.text, 'concern'))) break;
+    Logger.log('Claude reply missing <reply> (try ' + (attempt + 1) + '): ' + r.text.slice(0, 200));
+  }
   var t = r.text, out = { concern: /^y/i.test(ccxTag_(t, 'concern')) };
-  out.paragraphs = ccxParas_(ccxTag_(t, 'body'));
-  if (!out.paragraphs.length && !/<\w+>/.test(t)) out.paragraphs = ccxParas_(t); // plain answer without tags
+  out.paragraphs = ccxParas_(ccxTag_(t, 'reply') || ccxTag_(t, 'body'));
+  if (!out.paragraphs.length) out.paragraphs = ccxParas_(t.replace(/<(concern|reflection|scriptures|next|followup)>[\s\S]*?<\/\1>/gi, '').replace(/<\/?\w+>/g, '')); // untagged answer
   out.answer = out.paragraphs;
   out.reflection = ccxTag_(t, 'reflection');
   out.scriptures = ccxTag_(t, 'scriptures').split(/\n/).map(function (l) { var p = l.replace(/^[-*\u2022\s]+/, '').split('|'); return p.length > 1 ? { ref: p[0].trim(), text: p.slice(1).join('|').trim().replace(/^["\u201C]|["\u201D]$/g, '') } : null; }).filter(function (x) { return x && x.ref; });
@@ -544,9 +548,9 @@ function ccxAiReply_(who, dayParts, tabParts, reading, questions) {
     'Write the same-day reply to a member about EVERYTHING they wrote in the app today: their Day Page log and anything they typed in other tabs (Seek First, Daily Altar, My Workbook). ' +
     'Respond to each tab they wrote in, naming their specifics. Answer EVERY question they asked, fully, with Scripture backing (book chapter:verse, KJV). ' +
     'Length: 2 to 6 short paragraphs depending on how much they wrote. ' +
-    'If anything suggests self-harm, suicide, abuse, or danger, put yes in <concern> and leave <body> empty. ' +
+    'If anything suggests self-harm, suicide, abuse, or danger, put yes in <concern>. ' +
     'Today\'s deeper reading is ' + reading.ref + '; in <reflection> write 2 sentences connecting it to what they shared. ' +
-    'Put the reply paragraphs in <body>.';
+    'The message to the member goes in <reply>.';
   return ccxClaude_(sys, 'Member first name: ' + ccxFirst_(who.name) + '\nAge group: ' + (who.age || 'unknown') + '\nReligion: ' + (who.religion || 'unknown') +
     '\nQuestions found: ' + JSON.stringify(questions) + '\nDay Page logs today: ' + JSON.stringify(logs).slice(0, 9000) + '\nOther tabs today: ' + JSON.stringify(tabs).slice(0, 6000), 1400);
 }
@@ -565,7 +569,7 @@ function askCovenant(question, email, name, userId) {
   var r = ccxClaude_(CCX_VOICE +
     'A member typed a question into the app\'s "Ask for Help" box. Answer it well and directly: what the Bible says, with 2 to 5 key Scriptures (reference + short KJV quote), a plain explanation, and one practical next step. ' +
     'For word-meaning questions, give the plain meaning first, then the Scripture. 120 to 320 words total. ' +
-    'If it suggests self-harm, suicide, abuse, or danger, put yes in <concern>. Put the explanation in <body>, the key Scriptures in <scriptures>, one next step in <next>, ' +
+    'If it suggests self-harm, suicide, abuse, or danger, put yes in <concern>. Put the explanation in <reply>, the key Scriptures in <scriptures>, one next step in <next>, ' +
     'and yes in <followup> when a pastor or the team should talk with them personally.',
     'Age group: ' + (prof.age || 'unknown') + '\nReligion: ' + (prof.religion || 'unknown') + '\nQuestion: ' + question, 1100);
   if (!r) return { success: false, reason: 'ai-failed' };
@@ -595,7 +599,7 @@ function ccxAnswerHelpBacklog_() {
     if (ccxHasCrisis_(v[i][4])) { sh.getRange(i + 1, 6).setValue('CRISIS'); continue; }
     var prof = _ccx_profile(email) || {};
     var r = ccxClaude_(CCX_VOICE + 'A member asked this in the app and has been waiting for an answer. Answer it well: what the Bible says, 2 to 5 key Scriptures (reference + short KJV quote), plain explanation, one practical next step; 150 to 350 words. ' +
-      'If it suggests danger, put yes in <concern>. Explanation in <body>, Scriptures in <scriptures>, one next step in <next>.',
+      'If it suggests danger, put yes in <concern>. Explanation in <reply>, Scriptures in <scriptures>, one next step in <next>.',
       'Age group: ' + (prof.age || 'unknown') + '\nReligion: ' + (prof.religion || 'unknown') + '\nQuestion: ' + v[i][4], 1100);
     if (!r) break;
     if (r.concern) { sh.getRange(i + 1, 6).setValue('NEEDS A PERSON'); GmailApp.sendEmail(GMAIL_ADDRESS, 'Covenant — a waiting question needs a person', nm + ' (' + email + ') asked: "' + v[i][4] + '"'); continue; }
@@ -788,6 +792,20 @@ function covenantBackfillToday() {
   return 'Backfill queued ' + queued + '; ' + res;
 }
 
+/** Owner-only: preview the AI reply for today's newest Day Page log, WITHOUT emailing anyone. */
+function covenantPreviewReply() {
+  var v = ccxReplySheet_().getDataRange().getValues(), d = null, row = null;
+  for (var i = v.length - 1; i >= 1; i--) if (String(v[i][13]) === 'Day Page') { try { d = JSON.parse(v[i][7]); row = v[i]; } catch (x) {} break; }
+  if (!d) return 'No Day Page log found to preview.';
+  if (d.docText) { var pd = ccxParas_ && ccxParseDoc_(d.docText); Object.keys(pd).forEach(function (k) { if (!d[k]) d[k] = pd[k]; }); }
+  var prof = _ccx_profile(row[1]) || {};
+  var who = { email: row[1], name: row[2] || prof.name, userId: row[3], age: prof.age, religion: prof.religion };
+  var reading = CCX_DEEPER[((Number(row[4]) || 1) - 1) % CCX_DEEPER.length];
+  var ai = ccxAiReply_(who, [{ source: 'Day Page', data: d, day: row[4] }], [], reading, ccxQuestions_(d));
+  var msg = ai ? ('AI REPLY PREVIEW (not sent):\n\n' + (ai.paragraphs || []).join('\n\n') + '\n\nReflection: ' + (ai.reflection || '')) : 'AI reply failed — see log lines above.';
+  Logger.log(msg); return msg;
+}
+
 /** Owner-only: today's replies that went out as the basic (non-AI) version get answered again with full AI replies. */
 function covenantResendToday() {
   var sh = ccxReplySheet_(), v = sh.getDataRange().getValues(), today = ccxToday_(), n = 0;
@@ -817,6 +835,7 @@ installCovenantConnect = cvpOwner_(installCovenantConnect, 'installCovenantConne
 covenantReplySweep = cvpOwner_(covenantReplySweep, 'covenantReplySweep');
 covenantBackfillToday = cvpOwner_(covenantBackfillToday, 'covenantBackfillToday');
 covenantAiTest = cvpOwner_(covenantAiTest, 'covenantAiTest');
+covenantPreviewReply = cvpOwner_(covenantPreviewReply, 'covenantPreviewReply');
 covenantResendToday = cvpOwner_(covenantResendToday, 'covenantResendToday');
 covenantMorningPush = cvpOwner_(covenantMorningPush, 'covenantMorningPush');
 covenantEveningPush = cvpOwner_(covenantEveningPush, 'covenantEveningPush');
