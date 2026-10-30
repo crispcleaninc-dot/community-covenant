@@ -1,5 +1,5 @@
 /******************************************************************************
- * COVENANT CONNECT v1.5 (2026-10-30) — ADDITIVE. Must load AFTER CovenantPlus.gs
+ * COVENANT CONNECT v1.6 (2026-10-30) — ADDITIVE. Must load AFTER CovenantPlus.gs
  * (keep it as the LAST file in the project). Nothing in Code.gs or
  * CovenantPlus.gs is edited; every wrapper calls the function that was there.
  *
@@ -38,7 +38,7 @@
  ******************************************************************************/
 
 var CCX = {
-  VERSION: '1.5 (2026-10-30)',
+  VERSION: '1.6 (2026-10-30)',
   REPLY_SHEET: 'Covenant — Daily Replies',
   CHAT_SHEET: 'Covenant — Team Chat',
   OPTOUT_SHEET: 'Covenant — Email Opt-Outs',
@@ -228,7 +228,7 @@ function covenantAiTest() {
 var CCX_VOICE = 'You write for Community Covenant, a Christian daily-covenant app whose mission is: "you are not alone. Keep pushing one more day. Don\'t give up in God." ' +
   'You speak for the Community Covenant team: warm, pastoral, plain words, no emojis, never preachy. Ground what you say in Scripture with KJV references and short KJV quotations you are certain of. ' +
   'When Christians genuinely differ on something (for example divorce and remarriage, or end times), say so kindly, show the main scriptural views, and point them to their pastor. ' +
-  'Never give medical, legal, or financial instructions; for those, encourage a doctor, counselor, attorney, or advisor. Never claim to be a person. Do not sign the message. ' +
+  'Never give medical, legal, or financial instructions; for those, encourage a doctor, counselor, attorney, or advisor. Never claim to be a person. Do not sign the message. Speak to the member directly as "you" everywhere (including the reflection); never guess their gender and never refer to them as he or she. ' +
   'If the member is a child (Under 12 or Teen age group), write simply and kindly for that age. Their religion is given; the app also offers Apocrypha and Quran readings, so be respectful of other faiths without debating. ';
 
 function ccxLabelText_(source, obj) {
@@ -550,7 +550,7 @@ function ccxAiReply_(who, dayParts, tabParts, reading, questions) {
     'Respond to each tab they wrote in, naming their specifics. Answer EVERY question they asked, fully, with Scripture backing (book chapter:verse, KJV). ' +
     'Length: 3 to 5 short paragraphs, about 250 to 420 words in total — finish every sentence. ' +
     'If anything suggests self-harm, suicide, abuse, or danger, put yes in <concern>. ' +
-    'Today\'s deeper reading is ' + reading.ref + '; in <reflection> write 2 sentences connecting it to what they shared. ' +
+    'Today\'s deeper reading is ' + reading.ref + '; in <reflection> write 2 sentences, speaking to them as \"you\", connecting it to what they shared. ' +
     'The message to the member goes in <reply>.';
   return ccxClaude_(sys, 'Member first name: ' + ccxFirst_(who.name) + '\nAge group: ' + (who.age || 'unknown') + '\nReligion: ' + (who.religion || 'unknown') +
     '\nQuestions found: ' + JSON.stringify(questions) + '\nDay Page logs today: ' + JSON.stringify(logs).slice(0, 9000) + '\nOther tabs today: ' + JSON.stringify(tabs).slice(0, 6000), 1400);
