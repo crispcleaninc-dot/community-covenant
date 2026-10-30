@@ -39,13 +39,13 @@
   window.ccOpenVideo = openVideo;
   var acts = document.querySelector('#ccWelcome .acts');
   if (acts) {
-    var wb = el('<button class="ccw-btn glass" type="button">See how the app works (2 min)</button>');
+    var wb = el('<button class="ccw-btn glass" type="button">See how the app works</button>');
     wb.onclick = openVideo;
     acts.appendChild(wb);
   }
   ['registerPage', 'loginPage'].forEach(function (id) {
     var p = document.getElementById(id); if (!p) return;
-    var card = el('<div class="cc-vid" role="button" tabindex="0"><div class="pl"></div><div><b>See how Community Covenant works</b><span>Signing up, logging in, your daily page, and every feature — about 2 minutes</span></div></div>');
+    var card = el('<div class="cc-vid" role="button" tabindex="0"><div class="pl"></div><div><b>See how Community Covenant works</b><span>Signing up, logging in, your daily page, and every feature — about 2\u00BD minutes</span></div></div>');
     card.onclick = openVideo; card.onkeydown = function (e) { if (e.key === 'Enter') openVideo(); };
     p.insertBefore(card, p.firstChild);
   });
