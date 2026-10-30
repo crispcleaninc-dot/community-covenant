@@ -1,5 +1,5 @@
 /******************************************************************************
- * COVENANT CONNECT v1.2 (2026-10-30) — ADDITIVE. Must load AFTER CovenantPlus.gs
+ * COVENANT CONNECT v1.3 (2026-10-30) — ADDITIVE. Must load AFTER CovenantPlus.gs
  * (keep it as the LAST file in the project). Nothing in Code.gs or
  * CovenantPlus.gs is edited; every wrapper calls the function that was there.
  *
@@ -38,7 +38,7 @@
  ******************************************************************************/
 
 var CCX = {
-  VERSION: '1.2 (2026-10-30)',
+  VERSION: '1.3 (2026-10-30)',
   REPLY_SHEET: 'Covenant — Daily Replies',
   CHAT_SHEET: 'Covenant — Team Chat',
   OPTOUT_SHEET: 'Covenant — Email Opt-Outs',
@@ -179,7 +179,7 @@ function ccxClaudeRaw_(system, user, maxTokens) {
       var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
         method: 'post', contentType: 'application/json', muteHttpExceptions: true,
         headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
-        payload: JSON.stringify({ model: models[i], max_tokens: maxTokens || 1200, system: system, messages: [{ role: 'user', content: user }] })
+        payload: JSON.stringify({ model: models[i], max_tokens: Math.max(maxTokens || 1200, 1600), system: system, messages: [{ role: 'user', content: user }] })
       });
       var code = res.getResponseCode(), body = res.getContentText();
       if (code === 200) {
@@ -193,11 +193,25 @@ function ccxClaudeRaw_(system, user, maxTokens) {
   }
   return { error: last };
 }
+function ccxTag_(t, tag) { var m = String(t).match(new RegExp('<' + tag + '>([\\s\\S]*?)</' + tag + '>', 'i')); return m ? m[1].trim() : ''; }
+function ccxParas_(t) { return String(t || '').split(/\n\s*\n/).map(function (p) { return p.replace(/\s*\n\s*/g, ' ').trim(); }).filter(function (p) { return p; }); }
+/** Asks Claude and reads its answer from simple tags (no JSON, so quotes in the text can never break it). */
 function ccxClaude_(system, user, maxTokens) {
-  var r = ccxClaudeRaw_(system, user, maxTokens);
+  var r = ccxClaudeRaw_(system + ' FORMAT: answer using ONLY these tags, plain text inside them, no JSON, no markdown: ' +
+    '<concern>yes or no</concern> <body>paragraphs separated by a blank line</body> <reflection>2 sentences</reflection> ' +
+    '<scriptures>one per line as: Reference | short KJV quote</scriptures> <next>one practical next step</next> <followup>yes or no</followup>. ' +
+    'Leave out tags that do not apply.', user, maxTokens);
   if (!r.text) return null;
-  var m = r.text.match(/\{[\s\S]*\}/);
-  try { return m ? JSON.parse(m[0]) : null; } catch (x) { Logger.log('Claude JSON: ' + x); return null; }
+  var t = r.text, out = { concern: /^y/i.test(ccxTag_(t, 'concern')) };
+  out.paragraphs = ccxParas_(ccxTag_(t, 'body'));
+  if (!out.paragraphs.length && !/<\w+>/.test(t)) out.paragraphs = ccxParas_(t); // plain answer without tags
+  out.answer = out.paragraphs;
+  out.reflection = ccxTag_(t, 'reflection');
+  out.scriptures = ccxTag_(t, 'scriptures').split(/\n/).map(function (l) { var p = l.replace(/^[-*\u2022\s]+/, '').split('|'); return p.length > 1 ? { ref: p[0].trim(), text: p.slice(1).join('|').trim().replace(/^["\u201C]|["\u201D]$/g, '') } : null; }).filter(function (x) { return x && x.ref; });
+  out.next_step = ccxTag_(t, 'next');
+  out.follow_up = /^y/i.test(ccxTag_(t, 'followup'));
+  if (!out.paragraphs.length && !out.concern) { Logger.log('Claude reply had no body: ' + t.slice(0, 300)); return null; }
+  return out;
 }
 /** Owner-only check: run from the editor to see if AI replies are working. */
 function covenantAiTest() {
@@ -530,9 +544,9 @@ function ccxAiReply_(who, dayParts, tabParts, reading, questions) {
     'Write the same-day reply to a member about EVERYTHING they wrote in the app today: their Day Page log and anything they typed in other tabs (Seek First, Daily Altar, My Workbook). ' +
     'Respond to each tab they wrote in, naming their specifics. Answer EVERY question they asked, fully, with Scripture backing (book chapter:verse, KJV). ' +
     'Length: 2 to 6 short paragraphs depending on how much they wrote. ' +
-    'If anything suggests self-harm, suicide, abuse, or danger, set "concern": true and leave paragraphs empty. ' +
-    'Today\'s deeper reading is ' + reading.ref + '; in "reflection" write 2 sentences connecting it to what they shared. ' +
-    'Return ONLY JSON: {"concern": false, "paragraphs": ["..."], "reflection": "..."}';
+    'If anything suggests self-harm, suicide, abuse, or danger, put yes in <concern> and leave <body> empty. ' +
+    'Today\'s deeper reading is ' + reading.ref + '; in <reflection> write 2 sentences connecting it to what they shared. ' +
+    'Put the reply paragraphs in <body>.';
   return ccxClaude_(sys, 'Member first name: ' + ccxFirst_(who.name) + '\nAge group: ' + (who.age || 'unknown') + '\nReligion: ' + (who.religion || 'unknown') +
     '\nQuestions found: ' + JSON.stringify(questions) + '\nDay Page logs today: ' + JSON.stringify(logs).slice(0, 9000) + '\nOther tabs today: ' + JSON.stringify(tabs).slice(0, 6000), 1400);
 }
@@ -551,9 +565,8 @@ function askCovenant(question, email, name, userId) {
   var r = ccxClaude_(CCX_VOICE +
     'A member typed a question into the app\'s "Ask for Help" box. Answer it well and directly: what the Bible says, with 2 to 5 key Scriptures (reference + short KJV quote), a plain explanation, and one practical next step. ' +
     'For word-meaning questions, give the plain meaning first, then the Scripture. 120 to 320 words total. ' +
-    'If it suggests self-harm, suicide, abuse, or danger, set "concern": true. ' +
-    'Return ONLY JSON: {"concern": false, "answer": ["paragraph", "..."], "scriptures": [{"ref": "Genesis 2:24", "text": "..."}], "next_step": "...", "follow_up": true|false} ' +
-    '(follow_up true when a pastor or the team should talk with them personally).',
+    'If it suggests self-harm, suicide, abuse, or danger, put yes in <concern>. Put the explanation in <body>, the key Scriptures in <scriptures>, one next step in <next>, ' +
+    'and yes in <followup> when a pastor or the team should talk with them personally.',
     'Age group: ' + (prof.age || 'unknown') + '\nReligion: ' + (prof.religion || 'unknown') + '\nQuestion: ' + question, 1100);
   if (!r) return { success: false, reason: 'ai-failed' };
   if (r.concern) return { success: false, crisis: true }; // the app shows 988 and logs it as CRISIS (urgent email to you)
@@ -582,7 +595,7 @@ function ccxAnswerHelpBacklog_() {
     if (ccxHasCrisis_(v[i][4])) { sh.getRange(i + 1, 6).setValue('CRISIS'); continue; }
     var prof = _ccx_profile(email) || {};
     var r = ccxClaude_(CCX_VOICE + 'A member asked this in the app and has been waiting for an answer. Answer it well: what the Bible says, 2 to 5 key Scriptures (reference + short KJV quote), plain explanation, one practical next step; 150 to 350 words. ' +
-      'If it suggests danger, set "concern": true. Return ONLY JSON: {"concern": false, "answer": ["..."], "scriptures": [{"ref": "", "text": ""}], "next_step": ""}',
+      'If it suggests danger, put yes in <concern>. Explanation in <body>, Scriptures in <scriptures>, one next step in <next>.',
       'Age group: ' + (prof.age || 'unknown') + '\nReligion: ' + (prof.religion || 'unknown') + '\nQuestion: ' + v[i][4], 1100);
     if (!r) break;
     if (r.concern) { sh.getRange(i + 1, 6).setValue('NEEDS A PERSON'); GmailApp.sendEmail(GMAIL_ADDRESS, 'Covenant — a waiting question needs a person', nm + ' (' + email + ') asked: "' + v[i][4] + '"'); continue; }
