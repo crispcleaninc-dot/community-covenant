@@ -1,5 +1,5 @@
 /******************************************************************************
- * COVENANT CONNECT v1.7 (2026-10-30) — ADDITIVE. Must load AFTER CovenantPlus.gs
+ * COVENANT CONNECT v1.8 (2026-10-30) — ADDITIVE. Must load AFTER CovenantPlus.gs
  * (keep it as the LAST file in the project). Nothing in Code.gs or
  * CovenantPlus.gs is edited; every wrapper calls the function that was there.
  *
@@ -38,7 +38,7 @@
  ******************************************************************************/
 
 var CCX = {
-  VERSION: '1.7 (2026-10-30)',
+  VERSION: '1.8 (2026-10-30)',
   REPLY_SHEET: 'Covenant — Daily Replies',
   CHAT_SHEET: 'Covenant — Team Chat',
   OPTOUT_SHEET: 'Covenant — Email Opt-Outs',
@@ -916,6 +916,7 @@ CCX.DUP_SHEET = 'Covenant — Duplicate Accounts';
 CCX.DEVICE_DAYS = 90;
 
 function ccxNorm_(e) { return String(e || '').replace(/\s+/g, '').toLowerCase(); }
+function ccxMerged_(row) { return String(row[5]).toUpperCase() === 'MERGED'; }
 function ccxIsVer_(v) { return v === true || String(v).toUpperCase() === 'TRUE'; }
 function ccxHash_(s) {
   return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(s)).map(function (b) { return ('0' + (b & 255).toString(16)).slice(-2); }).join('');
@@ -925,7 +926,7 @@ function ccxPwHash_(pw) { return Utilities.base64Encode(Utilities.computeDigest(
 function ccxAccount_(email) {
   var sh = getOrCreateUsersSheet_(), v = sh.getDataRange().getValues(), n = ccxNorm_(email), rows = [], ver = [];
   for (var i = 1; i < v.length; i++) {
-    if (ccxNorm_(v[i][0]) !== n) continue;
+    if (ccxNorm_(v[i][0]) !== n || ccxMerged_(v[i])) continue;
     var r = { i: i, row: v[i] }; rows.push(r); if (ccxIsVer_(v[i][5])) ver.push(r);
   }
   return { sheet: sh, rows: rows, verified: ver, pending: rows.filter(function (r) { return !ccxIsVer_(r.row[5]); }) };
@@ -1076,7 +1077,7 @@ resetPassword = function (resetToken) {
 function covenantDuplicateReport() {
   var v = getOrCreateUsersSheet_().getDataRange().getValues(), g = {}, order = [];
   for (var i = 1; i < v.length; i++) {
-    var n = ccxNorm_(v[i][0]); if (!n) continue;
+    var n = ccxNorm_(v[i][0]); if (!n || ccxMerged_(v[i])) continue;
     if (!g[n]) { g[n] = []; order.push(n); }
     g[n].push({ row: i + 1, email: v[i][0], name: v[i][2], uid: v[i][3], ver: ccxIsVer_(v[i][5]), at: v[i][6] });
   }
@@ -1101,3 +1102,179 @@ function covenantDuplicateReport() {
   Logger.log(msg); return msg;
 }
 covenantDuplicateReport = cvpOwner_(covenantDuplicateReport, 'covenantDuplicateReport');
+
+/* ===================== 8. Merge duplicate accounts (v1.8) =====================
+ * Each person keeps ONE account. Every password they ever used still works.
+ * Nothing is deleted:
+ *  - The kept account is the row the app already shows their profile from (the first row);
+ *    blank details are filled in from their other rows, and it is marked verified if any row was.
+ *  - Extra rows stay in the Users sheet with Verified set to "MERGED", so the app no
+ *    longer treats them as accounts (profile, login and reset all use the kept row). Each extra password is kept in
+ *    "Covenant — Merged Accounts" so it still logs them in (until a password reset).
+ *  - Extra Drive folders: entries, photos and day pages move into the kept folder; empty
+ *    starter folders are renamed "MERGED — …". Nothing is trashed.
+ */
+CCX.MERGE_SHEET = 'Covenant — Merged Accounts';
+function ccxMergeSheet_() {
+  return ccxSheet_(CCX.MERGE_SHEET, ['Merged At', 'Email', 'Kept User ID', 'Merged Sheet Row', 'Merged User ID', 'Merged Name',
+    'Password Hash', 'Same Password As Kept', 'Status', 'Folder Notes']);
+}
+function ccxMergedHashes_(email) {
+  var n = ccxNorm_(email), out = [];
+  try { var v = ccxMergeSheet_().getDataRange().getValues();
+    for (var i = 1; i < v.length; i++) if (ccxNorm_(v[i][1]) === n && v[i][8] === 'active' && v[i][6]) out.push(String(v[i][6])); } catch (e) {}
+  return out;
+}
+function ccxMergedOff_(email, why) {
+  var n = ccxNorm_(email), sh = ccxMergeSheet_(), v = sh.getDataRange().getValues();
+  for (var i = 1; i < v.length; i++) if (ccxNorm_(v[i][1]) === n && v[i][8] === 'active') sh.getRange(i + 1, 9).setValue(why);
+}
+/* login: an older password from a merged account also works */
+var _ccx_login2 = loginUser;
+loginUser = function (email, password, device) {
+  var r = _ccx_login2(email, password, device);
+  if (r && !r.success && !r.unverified && !/Too many|could not find/i.test(String(r.message))) {
+    var h = ccxPwHash_(password);
+    if (ccxMergedHashes_(email).indexOf(h) !== -1) {
+      var a = ccxAccount_(email);
+      if (a.verified.length) {
+        var keep = a.verified[0];
+        r = ccxLoginResult_(keep.row); CacheService.getScriptCache().remove('cvfail:' + ccxNorm_(keep.row[0]));
+        r.token = cvpNewTok_(r.email, r.userId);
+        r.remember = ccxDeviceNew_(r.email, r.userId, device);
+      }
+    }
+  }
+  return r;
+};
+/* a phone remembered under a merged account signs in to the kept one */
+var _ccx_resume = resumeSession;
+resumeSession = function (t) {
+  var r = _ccx_resume(t);
+  if (r && r.success) return r;
+  var d = ccxDeviceFind_(t);
+  if (!d || d.row[6] !== 'active' || Date.now() - (new Date(d.row[4]).getTime() || 0) > CCX.DEVICE_DAYS * 864e5) return r;
+  var a = ccxAccount_(d.row[1]); if (!a.verified.length) return r;
+  var keep = a.verified[0];
+  d.sheet.getRange(d.i + 1, 3).setValue(keep.row[3]); d.sheet.getRange(d.i + 1, 5).setValue(new Date());
+  var out = ccxLoginResult_(keep.row); out.resumed = true; out.token = cvpNewTok_(out.email, out.userId);
+  return out;
+};
+/* a password reset retires the old merged passwords */
+var _ccx_resetPw2 = resetPassword;
+resetPassword = function (resetToken) {
+  var who = '';
+  try { var v = getOrCreateUsersSheet_().getDataRange().getValues(); for (var i = 1; i < v.length; i++) if (resetToken && v[i][8] === resetToken) { who = v[i][0]; break; } } catch (x) {}
+  var r = _ccx_resetPw2.apply(this, arguments);
+  if (r && r.success && who) { try { ccxMergedOff_(who, 'password reset'); } catch (x) {} }
+  return r;
+};
+
+function ccxFolderInfo_(f) {
+  var files = [], it = f.getFiles(), data = 0;
+  while (it.hasNext()) {
+    var x = it.next(), nm = x.getName(), rows = '';
+    if (nm === 'Entries') { try { rows = Math.max(0, SpreadsheetApp.openById(x.getId()).getActiveSheet().getLastRow() - 1); } catch (e) { rows = '?'; } }
+    var starter = /^Metadata-/.test(nm) || (nm === 'Entries' && rows === 0);
+    if (!starter) data++;
+    files.push({ file: x, name: nm, rows: rows, starter: starter });
+  }
+  var sub = f.getFolders(); while (sub.hasNext()) { var s = sub.next(); files.push({ folder: s, name: s.getName() + '/', starter: false }); data++; }
+  return { folder: f, files: files, data: data };
+}
+function ccxMergePlan_() {
+  var sh = getOrCreateUsersSheet_(), v = sh.getDataRange().getValues(), g = {}, order = [];
+  for (var i = 1; i < v.length; i++) {
+    var n = ccxNorm_(v[i][0]); if (!n || ccxMerged_(v[i])) continue;
+    if (!g[n]) { g[n] = []; order.push(n); } g[n].push({ i: i, row: v[i] });
+  }
+  var root = getRootFolder_(), plans = [];
+  order.forEach(function (n) {
+    var list = g[n]; if (list.length < 2) return;
+    var keep = list[0], extra = list.slice(1);
+    var kf = null; try { kf = getUserFolder_(String(keep.row[3]), String(keep.row[0]), String(keep.row[2])); } catch (e) {}
+    var others = [], seen = {}; if (kf) seen[kf.getId()] = 1;
+    var all = root.getFolders();
+    while (all.hasNext()) { var f = all.next(), nm = f.getName().toLowerCase();
+      var mine = nm.indexOf('(' + n + ')') !== -1 || extra.some(function (x) { return f.getName() === String(x.row[3]); });
+      if (mine && !seen[f.getId()]) { seen[f.getId()] = 1; others.push(ccxFolderInfo_(f)); } }
+    plans.push({ email: n, keep: keep, extra: extra, keepFolder: kf, others: others });
+  });
+  return { sheet: sh, plans: plans };
+}
+/** Owner-only: shows what the merge would do. Changes nothing. */
+function covenantMergePreview() {
+  var p = ccxMergePlan_(), lines = [];
+  p.plans.forEach(function (pl) {
+    var kh = String(pl.keep.row[1]);
+    lines.push(pl.email + ' — keep sheet row ' + (pl.keep.i + 1) + ' (' + pl.keep.row[2] + ', verified ' + ccxIsVer_(pl.keep.row[5]) + ')' +
+      ' | kept folder: ' + (pl.keepFolder ? pl.keepFolder.getName() : 'none'));
+    pl.extra.forEach(function (x) { lines.push('   merge row ' + (x.i + 1) + ' (' + x.row[2] + ', verified ' + ccxIsVer_(x.row[5]) + ', same password: ' + (String(x.row[1]) === kh) + ')'); });
+    pl.others.forEach(function (o) { lines.push('   other folder "' + o.folder.getName() + '": ' + (o.data ? o.data + ' data item(s): ' : 'empty starter: ') +
+      o.files.map(function (f) { return f.name + (f.rows !== '' && f.rows !== undefined ? '[' + f.rows + ' rows]' : ''); }).join(', ')); });
+  });
+  var msg = p.plans.length ? lines.join('\n') : 'No duplicates to merge.';
+  Logger.log(msg); return msg;
+}
+/** Owner-only: merge every duplicate (see section header). Safe to run again. */
+function covenantMergeDuplicates() {
+  var lock = LockService.getScriptLock(); lock.waitLock(30000);
+  try {
+    var p = ccxMergePlan_(), sh = p.sheet, ms = ccxMergeSheet_(), out = [];
+    p.plans.forEach(function (pl) {
+      var kr = pl.keep.i + 1, keepRow = pl.keep.row, notes = [];
+      // 1) fill blanks on the kept row from the newest other row; verified if any row was
+      var width = Math.max.apply(null, [keepRow.length].concat(pl.extra.map(function (x) { return x.row.length; })));
+      for (var c = 2; c < width; c++) {
+        if (c === 3 || c === 4 || c === 5 || c === 8 || c === 9) continue; // ids, tokens, verified handled below
+        if (keepRow[c] === '' || keepRow[c] == null) {
+          for (var k = pl.extra.length - 1; k >= 0; k--) { var val = pl.extra[k].row[c]; if (val !== '' && val != null) { sh.getRange(kr, c + 1).setValue(val); break; } }
+        }
+      }
+      var anyVer = ccxIsVer_(keepRow[5]) || pl.extra.some(function (x) { return ccxIsVer_(x.row[5]); });
+      if (anyVer && !ccxIsVer_(keepRow[5])) { sh.getRange(kr, 6).setValue(true); sh.getRange(kr, 5).clearContent(); }
+      // 2) folders: bring member data into the kept folder
+      var kf = pl.keepFolder;
+      pl.others.forEach(function (o) {
+        if (!kf) { notes.push('kept folder missing; left "' + o.folder.getName() + '" as is'); return; }
+        o.files.forEach(function (f) {
+          if (f.starter) return;
+          if (f.folder) { f.folder.moveTo(kf); notes.push('moved folder ' + f.name); return; }
+          if (f.name === 'Entries') {
+            var src = SpreadsheetApp.openById(f.file.getId()).getActiveSheet(), rows = src.getDataRange().getValues().slice(1);
+            var kit = kf.getFilesByName('Entries'), dst;
+            if (kit.hasNext()) dst = SpreadsheetApp.openById(kit.next().getId()).getActiveSheet();
+            else { f.file.moveTo(kf); notes.push('moved Entries (' + rows.length + ' rows)'); return; }
+            if (rows.length) dst.getRange(dst.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
+            f.file.setName('Entries (merged copy — rows already added to kept account)');
+            notes.push('added ' + rows.length + ' entry row(s)'); return;
+          }
+          if (/\.json$/.test(f.name) && kf.getFilesByName(f.name).hasNext()) {
+            f.file.setName(f.name.replace(/\.json$/, '') + ' (from merged account).json'); f.file.moveTo(kf);
+            notes.push(f.name + ' kept both copies — please review'); return;
+          }
+          f.file.moveTo(kf); notes.push('moved ' + f.name);
+        });
+        var newName = 'MERGED — ' + o.folder.getName().replace(/\(([^)]*@[^)]*)\)/, '- $1') + ' (now in ' + kf.getName().replace(/[()]/g, '') + ')';
+        o.folder.setName(newName); notes.push('renamed old folder');
+      });
+      // 3) retire the extra rows, keep their passwords
+      pl.extra.forEach(function (x) {
+        var same = String(x.row[1]) === String(keepRow[1]);
+        ms.appendRow([new Date(), pl.email, keepRow[3], x.i + 1, x.row[3], x.row[2], same ? '' : x.row[1], same ? 'yes' : 'no', 'active', notes.join('; ')]);
+        sh.getRange(x.i + 1, 5).clearContent(); sh.getRange(x.i + 1, 9).clearContent(); // old verify / reset links can't revive it
+        sh.getRange(x.i + 1, 6).setValue('MERGED');
+      });
+      ccxDevicesKeep_(pl.email, keepRow[3]);
+      out.push(pl.email + ': kept row ' + kr + ', merged ' + pl.extra.length + (notes.length ? ' (' + notes.join('; ') + ')' : ''));
+    });
+    var msg = out.length ? 'Merged ' + out.length + ' members:\n' + out.join('\n') : 'No duplicates to merge.';
+    Logger.log(msg); return msg;
+  } finally { lock.releaseLock(); }
+}
+function ccxDevicesKeep_(email, keepId) {
+  var n = ccxNorm_(email), sh = ccxDeviceSheet_(), v = sh.getDataRange().getValues(), c = CacheService.getScriptCache();
+  for (var i = 1; i < v.length; i++) if (ccxNorm_(v[i][1]) === n && String(v[i][2]) !== String(keepId)) { sh.getRange(i + 1, 3).setValue(keepId); c.remove('cvrm:' + v[i][3]); }
+}
+covenantMergePreview = cvpOwner_(covenantMergePreview, 'covenantMergePreview');
+covenantMergeDuplicates = cvpOwner_(covenantMergeDuplicates, 'covenantMergeDuplicates');
