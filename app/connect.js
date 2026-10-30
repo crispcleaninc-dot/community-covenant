@@ -178,7 +178,22 @@
   function vidOf(u) { var m = String(u || '').match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/); return m ? m[1] : ''; }
   var flagged = {}; try { flagged = JSON.parse(localStorage.getItem(FLAG_KEY) || '{}') || {}; } catch (e) {}
   flagged['lPNdPQRcMnU'] = 1; // Help Me — Real Boston Richey (pre-marked)
+  /* Same-day replies, right away: after a seal (or after you stop typing in another tab) the server answers now. */
+  var replyTimer = null;
+  function askReplyNow(delay) {
+    clearTimeout(replyTimer);
+    replyTimer = setTimeout(function () {
+      var u = user(); if (!u || !u.token) return;
+      google.script.run.withFailureHandler(function () {}).withSuccessHandler(function () {}).replyNow(u.email, u.token);
+    }, delay);
+  }
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden' && replyTimer) askReplyNow(0); });
   window.ccFilterResult = function (fn, res) {
+    if (fn === 'saveEntry' && res && res.success) {
+      askReplyNow(1500);
+      setTimeout(function () { var b = document.getElementById('savedBar'); if (b && !/reply is on its way/.test(b.innerHTML)) b.innerHTML += '<br><span style="font-size:.92em">Our reply is on its way to your email in the next few minutes.</span>'; }, 300);
+    }
+    if ((fn === 'seekFirstSave' || fn === 'altarSave' || fn === 'saveWorkbookProgress') && res && res.success !== false) askReplyNow(90000);
     if ((fn !== 'getReelsMusic' && fn !== 'getMusicPlaylist') || !Array.isArray(res)) return res;
     if (fn === 'getReelsMusic') {
       res.forEach(function (s) { if (s && s.advisory) flagged[vidOf(s.youtubeLink)] = 1; });

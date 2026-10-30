@@ -1,5 +1,5 @@
 /******************************************************************************
- * COVENANT CONNECT v1.0 (2026-10-30) — ADDITIVE. Must load AFTER CovenantPlus.gs
+ * COVENANT CONNECT v1.1 (2026-10-30) — ADDITIVE. Must load AFTER CovenantPlus.gs
  * (keep it as the LAST file in the project). Nothing in Code.gs or
  * CovenantPlus.gs is edited; every wrapper calls the function that was there.
  *
@@ -38,7 +38,7 @@
  ******************************************************************************/
 
 var CCX = {
-  VERSION: '1.0 (2026-10-30)',
+  VERSION: '1.1 (2026-10-30)',
   REPLY_SHEET: 'Covenant — Daily Replies',
   CHAT_SHEET: 'Covenant — Team Chat',
   OPTOUT_SHEET: 'Covenant — Email Opt-Outs',
@@ -49,7 +49,7 @@ var CCX = {
     'updateUserProfile', 'logHelpQuestion', 'updateFastType', 'saveEntry', 'getUserEntries',
     'saveWorkbookProgress', 'getWorkbookProgress', 'getMusicPlaylist', 'addUserSong',
     'seekFirstGet', 'seekFirstSave', 'getReelAudio', 'getReelsMusic', 'logSongFeedback',
-    'altarSave', 'altarGet', 'askCovenant',
+    'altarSave', 'altarGet', 'askCovenant', 'replyNow',
     'chatSend', 'chatGet', 'teamThreads', 'teamThread', 'teamReply', 'teamMarkDone', 'connectInfo']
 };
 
@@ -167,7 +167,7 @@ function ccxOptOutPage_(email, sig) {
  * per day, per tab. Once it has "settled" (no typing for 8 minutes — the
  * workbook auto-saves as they type) the sweep answers all of it in one email.
  * Text already answered is remembered, so nothing is answered twice. */
-CCX.SETTLE_MIN = 8;
+CCX.SETTLE_MIN = 3;
 
 function ccxClaude_(system, user, maxTokens) {
   var key = ccxProp_('ANTHROPIC_API_KEY');
@@ -302,19 +302,21 @@ function ccxEntryText_(d) {
   d = d || {};
   if (Array.isArray(d)) return d.map(function (x) { return x.text; }).join(' \n ');
   var g = (d.gratitudes || []).filter(function (x) { return x; });
-  return [d.bibleReading, d.learned, d.revelation, d.message, g.join('; '), d.notes, d.wellbeingNote, d.cornerNote, d.cornerShare].join(' \n ');
+  return [d.docText, d.bibleReading, d.learned, d.revelation, d.message, g.join('; '), d.notes, d.wellbeingNote, d.cornerNote, d.cornerShare].join(' \n ');
 }
 function ccxQuestions_(d) {
-  var t = Array.isArray(d) ? d.map(function (x) { return x.text; }).join(' \n ') : [d.learned, d.revelation, d.notes, d.wellbeingNote, d.cornerNote, d.cornerShare].join(' \n ');
+  var t = Array.isArray(d) ? d.map(function (x) { return x.text; }).join(' \n ') : [d.docText, d.learned, d.revelation, d.notes, d.wellbeingNote, d.cornerNote, d.cornerShare].join(' \n ');
   var m = t.match(/[^.!?\n]{6,240}\?/g) || [];
   return m.map(function (q) { return q.trim(); }).slice(0, 6);
 }
 
 /** Runs every 10 minutes (installed by installCovenantConnect). */
-function covenantReplySweep(e) {
+function covenantReplySweep(e) { return ccxProcess_({}); }
+function ccxProcess_(opt) {
+  opt = opt || {};
   if (ccxProp_('REPLIES').toUpperCase() === 'OFF') return 'paused';
   var lock = LockService.getScriptLock();
-  if (!lock.tryLock(5000)) return 'busy';
+  if (!lock.tryLock(opt.onlyEmail ? 20000 : 5000)) return 'busy';
   try {
     var sh = ccxReplySheet_(), v = sh.getDataRange().getValues(), today = ccxToday_(), settle = Date.now() - CCX.SETTLE_MIN * 60000;
     var groups = {}, order = [], sentToday = {};
@@ -322,11 +324,12 @@ function covenantReplySweep(e) {
       var em = String(v[i][1]).toLowerCase().trim(), st = String(v[i][8]), rd = ccxRowDate_(v[i][12]);
       if (/^(SENT|HELD)/.test(st) && ccxRowDate_(v[i][10]) === today) { (sentToday[em] = sentToday[em] || {})[String(v[i][10])] = 1; }
       if (st !== 'QUEUED' || !em) continue;
+      if (opt.onlyEmail && em !== opt.onlyEmail) continue;
       if (rd && rd !== today) { sh.getRange(i + 1, 9).setValue('MISSED (older than today)'); continue; }
       if (!groups[em]) { groups[em] = { rows: [], settled: true }; order.push(em); }
       groups[em].rows.push(i + 1);
       var up = v[i][14] instanceof Date ? v[i][14].getTime() : 0;
-      if (up > settle && !ccxHasCrisis_(String(v[i][7]))) groups[em].settled = false; // still typing — wait
+      if (!opt.now && up > settle && !ccxHasCrisis_(String(v[i][7]))) groups[em].settled = false; // still typing — wait
     }
     var done = 0;
     for (var k = 0; k < order.length && done < CCX.MAX_PER_SWEEP; k++) {
@@ -359,7 +362,7 @@ function covenantReplySweep(e) {
       mark(r.status, r.flag, r.preview);
       done++;
     }
-    done += ccxAnswerHelpBacklog_();
+    if (!opt.onlyEmail) done += ccxAnswerHelpBacklog_();
     return 'replied to ' + done;
   } finally { lock.releaseLock(); }
 }
@@ -461,6 +464,10 @@ function ccxTemplateBody_(dayParts, tabParts, questions, day) {
     if (x.revelation) p.push('Your revelation today: “' + String(x.revelation).slice(0, 220) + '”. Write it somewhere you will see it again this week.');
     var g = (x.gratitudes || []).filter(function (y) { return y; });
     if (g.length) { var q = g.map(function (y) { return '“' + String(y).slice(0, 80) + '”'; }); p.push('You gave thanks for ' + (q.length > 1 ? q.slice(0, -1).join(', ') + ' and ' + q[q.length - 1] : q[0]) + '. A grateful heart is a guarded heart.'); }
+    if (x.docText && !x.bibleReading && !x.learned) {
+      var lines = String(x.docText).split(/\n+/).map(function (l) { return l.trim(); }).filter(function (l) { return l.length > 25 && !/^(day \d|psalm 50|“|")/i.test(l); });
+      if (lines.length) p.push('From your day page: \u201C' + lines[0].slice(0, 220) + '\u201D \u2014 thank you for putting that into words. It matters.');
+    }
     if (x.messageTo && x.message) p.push('The love you sent to ' + x.messageTo + ' matters more than you know. Words like that are how families get knit back together.');
   });
   var NOTE = { 'Seek First': 'putting God first', 'Daily Altar': 'your time at the altar', 'My Workbook': 'your workbook' };
@@ -475,7 +482,7 @@ function ccxTemplateBody_(dayParts, tabParts, questions, day) {
 
 function ccxAiReply_(who, dayParts, tabParts, reading, questions) {
   var logs = dayParts.map(function (o) {
-    var x = o.data, c = { day: o.day }; ['theme', 'checkinType', 'didWalk', 'walkTime', 'companion', 'location', 'bibleReading', 'learned', 'revelation', 'messageTo', 'message', 'gratitudes', 'notes', 'feeling', 'fastStuck', 'wellbeingNote', 'cornerNote', 'cornerShare', 'fasting', 'dailyFocus'].forEach(function (k) { if (x[k]) c[k] = x[k]; });
+    var x = o.data, c = { day: o.day }; ['theme', 'checkinType', 'didWalk', 'walkTime', 'companion', 'location', 'bibleReading', 'learned', 'revelation', 'messageTo', 'message', 'gratitudes', 'notes', 'feeling', 'fastStuck', 'wellbeingNote', 'cornerNote', 'cornerShare', 'fasting', 'dailyFocus', 'docText'].forEach(function (k) { if (x[k]) c[k] = x[k]; });
     return c;
   });
   var tabs = {}; tabParts.forEach(function (o) { tabs[o.source] = (tabs[o.source] || []).concat(o.data || []); });
@@ -680,19 +687,68 @@ function ccxPush_(userIds, title, message, url) {
 function covenantMorningPush(e) { return ccxPush_(null, 'Your covenant is waiting', 'Today’s scripture is ready. Keep pushing one more day.', ccxHome_()); }
 function covenantEveningPush(e) { return ccxPush_(null, 'Have you sealed today?', 'A few minutes with your log — the team replies the same day.', ccxHome_()); }
 
+
+/** Called by the app right after a member saves: answers their writing immediately. */
+function replyNow(email) {
+  var x = ccxSession_(arguments), s = x.s; email = String(x.args[0] || '').toLowerCase().trim();
+  if (!s || s.e !== email) return { success: false };
+  if (cvpCount_('ccxnow:' + email, 600) > 12) return { success: false, message: 'busy' };
+  var was = CVP.trusted; CVP.trusted = true;
+  try { return { success: true, result: ccxProcess_({ onlyEmail: email, now: true }) }; } finally { CVP.trusted = was; }
+}
+
+/** Owner-only: queue everything members wrote earlier today (before replies were switched on) and answer it. */
+function covenantBackfillToday() {
+  var today = ccxToday_(), users = getOrCreateUsersSheet_().getDataRange().getValues(), queued = 0, seen = {};
+  var rs = ccxReplySheet_(), rv = rs.getDataRange().getValues(), have = {};
+  for (var r = 1; r < rv.length; r++) have[String(rv[r][1]).toLowerCase() + '|' + rv[r][13] + '|' + rv[r][4] + '|' + ccxRowDate_(rv[r][12])] = 1;
+  for (var i = 1; i < users.length; i++) {
+    var email = String(users[i][0] || '').toLowerCase().trim(), name = String(users[i][2] || ''), uid = String(users[i][3] || '');
+    if (!email || seen[email]) continue; seen[email] = 1;
+    var folder = null; try { folder = getUserFolder_(uid, email, name); } catch (x) {}
+    if (!folder) continue;
+    try {
+      var it = folder.getFilesByName('Entries');
+      if (it.hasNext()) {
+        var ev = SpreadsheetApp.openById(it.next().getId()).getActiveSheet().getDataRange().getValues();
+        for (var j = 1; j < ev.length; j++) {
+          var ts = ev[j][0] instanceof Date ? ev[j][0] : new Date(ev[j][0]);
+          if (isNaN(ts) || Utilities.formatDate(ts, 'America/New_York', 'yyyy-MM-dd') !== today) continue;
+          var day = ev[j][5], key = email + '|Day Page|' + day + '|' + today;
+          if (have[key]) continue;
+          var txt = ''; try { if (/^http/.test(String(ev[j][8]))) txt = DocumentApp.openByUrl(String(ev[j][8])).getBody().getText().slice(0, 8000); } catch (x) {}
+          rs.appendRow([new Date(), email, name, uid, day, ev[j][7] || '', '', JSON.stringify({ name: name, theme: ev[j][7] || '', docText: txt }), 'QUEUED', 'backfill', '', '', today, 'Day Page', new Date(0), '[]']);
+          have[key] = 1; queued++;
+        }
+      }
+    } catch (x) { Logger.log('backfill entries ' + email + ': ' + x); }
+    [['seek-first.json', 'Seek First'], ['daily-altar.json', 'Daily Altar']].forEach(function (f) {
+      try {
+        var fi = folder.getFilesByName(f[0]); if (!fi.hasNext()) return;
+        var data = JSON.parse(fi.next().getBlob().getDataAsString() || '{}')[today];
+        var items = data ? ccxLabelText_(f[1], data) : [];
+        if (items.length) { ccxQueueText_(email, name, uid, f[1], items); queued++; }
+      } catch (x) { Logger.log('backfill ' + f[1] + ' ' + email + ': ' + x); }
+    });
+  }
+  var res = ccxProcess_({ now: true });
+  return 'Backfill queued ' + queued + '; ' + res;
+}
+
 /* ======================= setup =========================================== */
 function installCovenantConnect() {
   var want = { covenantReplySweep: 1, covenantMorningPush: 1, covenantEveningPush: 1 };
   ScriptApp.getProjectTriggers().forEach(function (t) { if (want[t.getHandlerFunction()]) ScriptApp.deleteTrigger(t); });
-  ScriptApp.newTrigger('covenantReplySweep').timeBased().everyMinutes(10).create();
+  ScriptApp.newTrigger('covenantReplySweep').timeBased().everyMinutes(5).create();
   ScriptApp.newTrigger('covenantMorningPush').timeBased().atHour(8).nearMinute(5).everyDays(1).inTimezone('America/New_York').create();
   ScriptApp.newTrigger('covenantEveningPush').timeBased().atHour(19).nearMinute(5).everyDays(1).inTimezone('America/New_York').create();
   ccxReplySheet_(); ccxChatSheet_(); ccxSecret_();
-  return 'Covenant Connect ' + CCX.VERSION + ' installed: replies every 10 min, push 8am/7pm (push only sends once OneSignal keys are set).';
+  return 'Covenant Connect ' + CCX.VERSION + ' installed: replies every 5 min (and right away after each save), push 8am/7pm (push only sends once OneSignal keys are set).';
 }
 // Owner-only: these cannot be called from a web page, only from the editor (EDITOR_RUN_UNTIL) or your own timers.
 installCovenantConnect = cvpOwner_(installCovenantConnect, 'installCovenantConnect');
 covenantReplySweep = cvpOwner_(covenantReplySweep, 'covenantReplySweep');
+covenantBackfillToday = cvpOwner_(covenantBackfillToday, 'covenantBackfillToday');
 covenantMorningPush = cvpOwner_(covenantMorningPush, 'covenantMorningPush');
 covenantEveningPush = cvpOwner_(covenantEveningPush, 'covenantEveningPush');
 
