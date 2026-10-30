@@ -1,5 +1,5 @@
 /******************************************************************************
- * COVENANT CONNECT v1.1 (2026-10-30) — ADDITIVE. Must load AFTER CovenantPlus.gs
+ * COVENANT CONNECT v1.2 (2026-10-30) — ADDITIVE. Must load AFTER CovenantPlus.gs
  * (keep it as the LAST file in the project). Nothing in Code.gs or
  * CovenantPlus.gs is edited; every wrapper calls the function that was there.
  *
@@ -38,7 +38,7 @@
  ******************************************************************************/
 
 var CCX = {
-  VERSION: '1.1 (2026-10-30)',
+  VERSION: '1.2 (2026-10-30)',
   REPLY_SHEET: 'Covenant — Daily Replies',
   CHAT_SHEET: 'Covenant — Team Chat',
   OPTOUT_SHEET: 'Covenant — Email Opt-Outs',
@@ -169,20 +169,41 @@ function ccxOptOutPage_(email, sig) {
  * Text already answered is remembered, so nothing is answered twice. */
 CCX.SETTLE_MIN = 3;
 
+var CCX_MODELS = ['claude-sonnet-5-5', 'claude-sonnet-4-5', 'claude-3-7-sonnet-latest', 'claude-3-5-sonnet-latest'];
+function ccxClaudeRaw_(system, user, maxTokens) {
+  var key = ccxProp_('ANTHROPIC_API_KEY').trim();
+  if (!key) return { error: 'no key' };
+  var models = (ccxProp_('ANTHROPIC_MODEL') ? [ccxProp_('ANTHROPIC_MODEL')] : []).concat(CCX_MODELS), last = '';
+  for (var i = 0; i < models.length; i++) {
+    try {
+      var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+        method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+        headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+        payload: JSON.stringify({ model: models[i], max_tokens: maxTokens || 1200, system: system, messages: [{ role: 'user', content: user }] })
+      });
+      var code = res.getResponseCode(), body = res.getContentText();
+      if (code === 200) {
+        if (ccxProp_('ANTHROPIC_MODEL') !== models[i]) try { PropertiesService.getScriptProperties().setProperty('ANTHROPIC_MODEL', models[i]); } catch (x) {}
+        return { text: JSON.parse(body).content.map(function (c) { return c.text || ''; }).join(''), model: models[i] };
+      }
+      last = code + ': ' + body.slice(0, 300);
+      Logger.log('Claude ' + models[i] + ' ' + last);
+      if (code !== 404 && code !== 400) break; // only try another model when this one isn't available
+    } catch (x) { last = String(x); Logger.log('Claude failed: ' + x); break; }
+  }
+  return { error: last };
+}
 function ccxClaude_(system, user, maxTokens) {
-  var key = ccxProp_('ANTHROPIC_API_KEY');
-  if (!key) return null;
-  try {
-    var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
-      method: 'post', contentType: 'application/json', muteHttpExceptions: true,
-      headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
-      payload: JSON.stringify({ model: ccxProp_('ANTHROPIC_MODEL') || 'claude-sonnet-5-5', max_tokens: maxTokens || 1200, system: system, messages: [{ role: 'user', content: user }] })
-    });
-    if (res.getResponseCode() !== 200) { Logger.log('Claude ' + res.getResponseCode() + ': ' + res.getContentText().slice(0, 300)); return null; }
-    var txt = JSON.parse(res.getContentText()).content.map(function (c) { return c.text || ''; }).join('');
-    var m = txt.match(/\{[\s\S]*\}/);
-    return m ? JSON.parse(m[0]) : null;
-  } catch (x) { Logger.log('Claude failed: ' + x); return null; }
+  var r = ccxClaudeRaw_(system, user, maxTokens);
+  if (!r.text) return null;
+  var m = r.text.match(/\{[\s\S]*\}/);
+  try { return m ? JSON.parse(m[0]) : null; } catch (x) { Logger.log('Claude JSON: ' + x); return null; }
+}
+/** Owner-only check: run from the editor to see if AI replies are working. */
+function covenantAiTest() {
+  var r = ccxClaudeRaw_('Reply with the single word OK.', 'Say OK', 20);
+  var msg = r.text ? ('AI is working (' + r.model + '): ' + r.text) : ('AI NOT working: ' + r.error);
+  Logger.log(msg); return msg;
 }
 
 var CCX_VOICE = 'You write for Community Covenant, a Christian daily-covenant app whose mission is: "you are not alone. Keep pushing one more day. Don\'t give up in God." ' +
@@ -338,6 +359,7 @@ function ccxProcess_(opt) {
       var rows = g.rows.map(function (r) { return { r: r, v: sh.getRange(r, 1, 1, 16).getValues()[0] }; });
       var parts = rows.map(function (x) {
         var d = {}; try { d = JSON.parse(x.v[7]); } catch (y) {}
+        if (d && d.docText && !Array.isArray(d)) { var pd = ccxParseDoc_(d.docText); Object.keys(pd).forEach(function (k) { if (!d[k]) d[k] = pd[k]; }); }
         return { source: x.v[13] || 'Day Page', data: d, day: x.v[4], name: x.v[2], userId: x.v[3] };
       });
       var allText = parts.map(function (p) { return ccxEntryText_(p.data); }).join('\n');
@@ -451,6 +473,27 @@ function ccxMemberDay_(email) {
   return 1;
 }
 
+function ccxParseDoc_(t) {
+  var out = {}, sec = '', map = { 'WHAT I LEARNED': 'learned', 'REVELATION': 'revelation', 'IN THE WORD': 'word', 'FOUR GRATITUDES': 'grat', 'MESSAGE OF LOVE': 'msg', 'HOW ARE YOU DOING': 'how', 'MY CORNER': 'corner', 'THE WALK': 'walk', 'REMEMBERING': 'notes' };
+  String(t || '').split(/\n/).forEach(function (l) {
+    var L = l.trim(); if (!L) return;
+    var key = Object.keys(map).filter(function (k) { return L.toUpperCase().indexOf(k) === 0; })[0];
+    if (key) { sec = map[key]; return; }
+    if (/^THE BODY/i.test(L)) { sec = 'body'; return; }
+    if (sec) (out[sec] = out[sec] || []).push(L);
+  });
+  var r = {};
+  if (out.learned) r.learned = out.learned.join(' ');
+  if (out.revelation) r.revelation = out.revelation.join(' ');
+  if (out.word) { var rd = out.word.join(' ').replace(/^Read:\s*/i, ''); if (!/scriptures above/i.test(rd)) r.bibleReading = rd; }
+  if (out.grat) r.gratitudes = out.grat.map(function (g) { return g.replace(/^\d+\.\s*/, ''); });
+  if (out.msg) { var to = (out.msg[0] || '').match(/Sent to:\s*(.+)/i); if (to) { r.messageTo = to[1].trim(); r.message = out.msg.slice(1).join(' ').replace(/[\u201C\u201D"]/g, ''); } }
+  if (out.how) { var f = (out.how[0] || '').match(/Feeling:\s*([^\u00B7]+)/i); if (f) r.feeling = f[1].trim(); if (out.how.length > 1) r.wellbeingNote = out.how.slice(1).join(' '); }
+  if (out.corner) r.cornerNote = out.corner.join(' ');
+  if (out.notes) r.notes = out.notes.join(' ');
+  if (out.walk && /\u2714|yes/i.test(out.walk.join(' '))) r.didWalk = 'Yes';
+  return r;
+}
 function ccxTemplateBody_(dayParts, tabParts, questions, day) {
   var p = [];
   if (dayParts.length) {
@@ -460,14 +503,11 @@ function ccxTemplateBody_(dayParts, tabParts, questions, day) {
   dayParts.forEach(function (o) {
     var x = o.data;
     if (/yes/i.test(String(x.didWalk || '')) || x.walkTime) p.push('You walked' + (x.walkTime ? ' ' + x.walkTime : '') + (x.companion ? ' with ' + x.companion : '') + (x.location ? ' at ' + x.location : '') + '. Moving your body and praying as you go is worship too.');
+    if (!x.bibleReading && x.learned) p.push('What you learned today \u2014 \u201C' + String(x.learned).slice(0, 220) + '\u201D \u2014 is worth carrying into tomorrow.');
     if (x.bibleReading) p.push('You read ' + x.bibleReading + '.' + (x.learned ? ' What you took from it — “' + String(x.learned).slice(0, 220) + '” — is worth carrying into tomorrow.' : ''));
     if (x.revelation) p.push('Your revelation today: “' + String(x.revelation).slice(0, 220) + '”. Write it somewhere you will see it again this week.');
     var g = (x.gratitudes || []).filter(function (y) { return y; });
     if (g.length) { var q = g.map(function (y) { return '“' + String(y).slice(0, 80) + '”'; }); p.push('You gave thanks for ' + (q.length > 1 ? q.slice(0, -1).join(', ') + ' and ' + q[q.length - 1] : q[0]) + '. A grateful heart is a guarded heart.'); }
-    if (x.docText && !x.bibleReading && !x.learned) {
-      var lines = String(x.docText).split(/\n+/).map(function (l) { return l.trim(); }).filter(function (l) { return l.length > 25 && !/^(day \d|psalm 50|“|")/i.test(l); });
-      if (lines.length) p.push('From your day page: \u201C' + lines[0].slice(0, 220) + '\u201D \u2014 thank you for putting that into words. It matters.');
-    }
     if (x.messageTo && x.message) p.push('The love you sent to ' + x.messageTo + ' matters more than you know. Words like that are how families get knit back together.');
   });
   var NOTE = { 'Seek First': 'putting God first', 'Daily Altar': 'your time at the altar', 'My Workbook': 'your workbook' };
@@ -735,6 +775,20 @@ function covenantBackfillToday() {
   return 'Backfill queued ' + queued + '; ' + res;
 }
 
+/** Owner-only: today's replies that went out as the basic (non-AI) version get answered again with full AI replies. */
+function covenantResendToday() {
+  var sh = ccxReplySheet_(), v = sh.getDataRange().getValues(), today = ccxToday_(), n = 0;
+  for (var i = 1; i < v.length; i++) {
+    if (ccxRowDate_(v[i][12]) !== today || String(v[i][8]) !== 'SENT' || /^AI/.test(String(v[i][9]))) continue;
+    var answered = []; try { answered = JSON.parse(v[i][15] || '[]'); } catch (x) {}
+    var wrote = String(v[i][7]);
+    if (Array.isArray(answered) && answered.length && wrote.charAt(0) !== '[') wrote = JSON.stringify(answered);
+    sh.getRange(i + 1, 8, 1, 9).setValues([[wrote, 'QUEUED', 'resend (AI)', '', '', today, v[i][13], new Date(0), '[]']]);
+    n++;
+  }
+  return 'Re-queued ' + n + '; ' + ccxProcess_({ now: true });
+}
+
 /* ======================= setup =========================================== */
 function installCovenantConnect() {
   var want = { covenantReplySweep: 1, covenantMorningPush: 1, covenantEveningPush: 1 };
@@ -749,6 +803,8 @@ function installCovenantConnect() {
 installCovenantConnect = cvpOwner_(installCovenantConnect, 'installCovenantConnect');
 covenantReplySweep = cvpOwner_(covenantReplySweep, 'covenantReplySweep');
 covenantBackfillToday = cvpOwner_(covenantBackfillToday, 'covenantBackfillToday');
+covenantAiTest = cvpOwner_(covenantAiTest, 'covenantAiTest');
+covenantResendToday = cvpOwner_(covenantResendToday, 'covenantResendToday');
 covenantMorningPush = cvpOwner_(covenantMorningPush, 'covenantMorningPush');
 covenantEveningPush = cvpOwner_(covenantEveningPush, 'covenantEveningPush');
 
