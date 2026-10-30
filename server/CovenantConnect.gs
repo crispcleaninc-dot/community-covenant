@@ -1,5 +1,5 @@
 /******************************************************************************
- * COVENANT CONNECT v1.4 (2026-10-30) — ADDITIVE. Must load AFTER CovenantPlus.gs
+ * COVENANT CONNECT v1.5 (2026-10-30) — ADDITIVE. Must load AFTER CovenantPlus.gs
  * (keep it as the LAST file in the project). Nothing in Code.gs or
  * CovenantPlus.gs is edited; every wrapper calls the function that was there.
  *
@@ -38,7 +38,7 @@
  ******************************************************************************/
 
 var CCX = {
-  VERSION: '1.4 (2026-10-30)',
+  VERSION: '1.5 (2026-10-30)',
   REPLY_SHEET: 'Covenant — Daily Replies',
   CHAT_SHEET: 'Covenant — Team Chat',
   OPTOUT_SHEET: 'Covenant — Email Opt-Outs',
@@ -179,12 +179,13 @@ function ccxClaudeRaw_(system, user, maxTokens) {
       var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
         method: 'post', contentType: 'application/json', muteHttpExceptions: true,
         headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
-        payload: JSON.stringify({ model: models[i], max_tokens: Math.max(maxTokens || 1200, 1600), system: system, messages: [{ role: 'user', content: user }] })
+        payload: JSON.stringify({ model: models[i], max_tokens: Math.max(maxTokens || 1200, 3000), system: system, messages: [{ role: 'user', content: user }] })
       });
       var code = res.getResponseCode(), body = res.getContentText();
       if (code === 200) {
         if (ccxProp_('ANTHROPIC_MODEL') !== models[i]) try { PropertiesService.getScriptProperties().setProperty('ANTHROPIC_MODEL', models[i]); } catch (x) {}
-        return { text: JSON.parse(body).content.map(function (c) { return c.text || ''; }).join(''), model: models[i] };
+        var J = JSON.parse(body);
+        return { text: J.content.map(function (c) { return c.text || ''; }).join(''), model: models[i], cut: J.stop_reason === 'max_tokens' };
       }
       last = code + ': ' + body.slice(0, 300);
       Logger.log('Claude ' + models[i] + ' ' + last);
@@ -193,7 +194,7 @@ function ccxClaudeRaw_(system, user, maxTokens) {
   }
   return { error: last };
 }
-function ccxTag_(t, tag) { var m = String(t).match(new RegExp('<' + tag + '>([\\s\\S]*?)</' + tag + '>', 'i')); return m ? m[1].trim() : ''; }
+function ccxTag_(t, tag) { var m = String(t).match(new RegExp('<' + tag + '>([\\s\\S]*?)(</' + tag + '>|<(?:reply|reflection|scriptures|next|followup|concern)>|$)', 'i')); return m ? m[1].trim() : ''; }
 function ccxParas_(t) { return String(t || '').split(/\n\s*\n/).map(function (p) { return p.replace(/\s*\n\s*/g, ' ').trim(); }).filter(function (p) { return p; }); }
 /** Asks Claude and reads its answer from simple tags (no JSON, so quotes in the text can never break it). */
 function ccxClaude_(system, user, maxTokens) {
@@ -203,7 +204,7 @@ function ccxClaude_(system, user, maxTokens) {
   for (var attempt = 0; attempt < 2; attempt++) {
     r = ccxClaudeRaw_(system, user + fmt, maxTokens);
     if (!r.text) return null;
-    if (/<reply>[\s\S]*?\S[\s\S]*?<\/reply>/i.test(r.text) || /^y/i.test(ccxTag_(r.text, 'concern'))) break;
+    if ((/<reply>[\s\S]*?\S[\s\S]*?<\/reply>/i.test(r.text) && !r.cut) || /^y/i.test(ccxTag_(r.text, 'concern'))) break;
     Logger.log('Claude reply missing <reply> (try ' + (attempt + 1) + '): ' + r.text.slice(0, 200));
   }
   var t = r.text, out = { concern: /^y/i.test(ccxTag_(t, 'concern')) };
@@ -396,7 +397,7 @@ function ccxProcess_(opt) {
       };
       if (crisis) { ccxCrisisCare_(email, who, crisis, allText); mark('HELD', 'CRISIS: ' + crisis, 'Care email + 988 sent; waiting for a person'); done++; continue; }
       if (ccxOptedOut_(email)) { mark('OPTED OUT', '', ''); continue; }
-      if (Object.keys(sentToday[email] || {}).length >= CCX.MAX_REPLIES_PER_DAY) { mark('NO REPLY (daily limit)', '', 'Already answered ' + CCX.MAX_REPLIES_PER_DAY + ' times today'); continue; }
+      if (!opt.ignoreCap && Object.keys(sentToday[email] || {}).length >= CCX.MAX_REPLIES_PER_DAY) { mark('NO REPLY (daily limit)', '', 'Already answered ' + CCX.MAX_REPLIES_PER_DAY + ' times today'); continue; }
       if (MailApp.getRemainingDailyQuota() < 5) break; // keep a few for crisis alerts; the rest wait
       var r = ccxSendReply_(who, parts);
       mark(r.status, r.flag, r.preview);
@@ -547,7 +548,7 @@ function ccxAiReply_(who, dayParts, tabParts, reading, questions) {
   var sys = CCX_VOICE +
     'Write the same-day reply to a member about EVERYTHING they wrote in the app today: their Day Page log and anything they typed in other tabs (Seek First, Daily Altar, My Workbook). ' +
     'Respond to each tab they wrote in, naming their specifics. Answer EVERY question they asked, fully, with Scripture backing (book chapter:verse, KJV). ' +
-    'Length: 2 to 6 short paragraphs depending on how much they wrote. ' +
+    'Length: 3 to 5 short paragraphs, about 250 to 420 words in total — finish every sentence. ' +
     'If anything suggests self-harm, suicide, abuse, or danger, put yes in <concern>. ' +
     'Today\'s deeper reading is ' + reading.ref + '; in <reflection> write 2 sentences connecting it to what they shared. ' +
     'The message to the member goes in <reply>.';
@@ -617,6 +618,11 @@ function ccxAnswerHelpBacklog_() {
   return n;
 }
 
+function ccxExecUrl_() {
+  var u = ''; try { u = ScriptApp.getService().getUrl() || ''; } catch (x) {}
+  if (!u || /\/dev$/.test(u)) u = ccxProp_('EXEC_URL') || 'https://script.google.com/macros/s/AKfycbzgI4aUh2ICbJQqFVHXkuKOJv6TFIx_aZMqGOV_7uc3ZKigfoilvN27kFRzRhixYzkLUQ/exec';
+  return u;
+}
 function ccxButton_(href, label) {
   return '<p style="text-align:center;margin:22px 0"><a href="' + href + '" style="display:inline-block;background:#372b4e;color:#fff;text-decoration:none;font-weight:bold;padding:12px 26px;border-radius:24px">' + label + '</a></p>';
 }
@@ -624,7 +630,7 @@ function ccxButton_(href, label) {
 /** Email shell: header, body, sign-off, ADA disclosure, opt-out. */
 function ccxFrame_(title, inner, email, allowOptOut) {
   var opt = '';
-  try { if (allowOptOut && ScriptApp.getService().getUrl()) opt = ScriptApp.getService().getUrl() + '?optout=' + encodeURIComponent(email) + '&sig=' + ccxSig_(email); } catch (x) {}
+  try { if (allowOptOut) opt = ccxExecUrl_() + '?optout=' + encodeURIComponent(email) + '&sig=' + ccxSig_(email); } catch (x) {}
   return '<div style="background:#faf6ee;padding:24px 12px;font-family:Georgia,serif;color:#3a3352">' +
     '<div style="max-width:560px;margin:0 auto;background:#fffdf7;border:1px solid #e7ddc9;border-radius:14px;overflow:hidden">' +
     '<div style="background:#372b4e;color:#faf6ee;padding:18px 24px"><div style="font:600 11px Arial;letter-spacing:3px;text-transform:uppercase;color:#c9a961">Community Covenant</div>' +
@@ -810,15 +816,18 @@ function covenantPreviewReply() {
 function covenantResendToday() {
   var sh = ccxReplySheet_(), v = sh.getDataRange().getValues(), today = ccxToday_(), n = 0;
   for (var i = 1; i < v.length; i++) {
-    if (ccxRowDate_(v[i][12]) !== today || String(v[i][8]) !== 'SENT' || /^AI/.test(String(v[i][9]))) continue;
+    if (ccxRowDate_(v[i][12]) !== today || String(v[i][8]) !== 'SENT' || (/^AI/.test(String(v[i][9])) && !(CCX.resendOwner && String(v[i][1]).toLowerCase() === CVP.OWNER))) continue;
     var answered = []; try { answered = JSON.parse(v[i][15] || '[]'); } catch (x) {}
     var wrote = String(v[i][7]);
     if (Array.isArray(answered) && answered.length && wrote.charAt(0) !== '[') wrote = JSON.stringify(answered);
     sh.getRange(i + 1, 8, 1, 9).setValues([[wrote, 'QUEUED', 'resend (AI)', '', '', today, v[i][13], new Date(0), '[]']]);
     n++;
   }
-  return 'Re-queued ' + n + '; ' + ccxProcess_({ now: true });
+  return 'Re-queued ' + n + '; ' + ccxProcess_({ now: true, ignoreCap: true });
 }
+
+/** Owner-only test: re-answer YOUR OWN entries from today with a fresh AI reply (ignores the daily limit). */
+function covenantResendMine() { CCX.resendOwner = true; try { return covenantResendToday(); } finally { CCX.resendOwner = false; } }
 
 /* ======================= setup =========================================== */
 function installCovenantConnect() {
@@ -837,6 +846,7 @@ covenantBackfillToday = cvpOwner_(covenantBackfillToday, 'covenantBackfillToday'
 covenantAiTest = cvpOwner_(covenantAiTest, 'covenantAiTest');
 covenantPreviewReply = cvpOwner_(covenantPreviewReply, 'covenantPreviewReply');
 covenantResendToday = cvpOwner_(covenantResendToday, 'covenantResendToday');
+covenantResendMine = cvpOwner_(covenantResendMine, 'covenantResendMine');
 covenantMorningPush = cvpOwner_(covenantMorningPush, 'covenantMorningPush');
 covenantEveningPush = cvpOwner_(covenantEveningPush, 'covenantEveningPush');
 
