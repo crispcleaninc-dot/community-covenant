@@ -18,7 +18,7 @@
         if (!r.ok) throw new Error('Server answered ' + r.status);
         return r.json();
       }).then(function (d) {
-        if (d && d.ok) { if (ok) ok(d.result); }
+        if (d && d.ok) { var res = d.result; try { if (window.ccFilterResult) res = window.ccFilterResult(fn, res); } catch (x) {} if (ok) ok(res); }
         else { var e = new Error((d && d.error) || 'Something went wrong'); if (fail) fail(e); else console.error(e); }
       }).catch(function (e) {
         if (tries < 2 && !/Server answered 4/.test(String(e))) return setTimeout(go, 1200); // one retry for flaky phone data

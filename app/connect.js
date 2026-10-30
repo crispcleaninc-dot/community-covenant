@@ -167,6 +167,61 @@
   }).observe(document.body, { childList: true, subtree: true });
   window.ccAddMics = scanMics;
 
+
+  /* ---------- Music choice: gospel only, or include secular songs ----------
+   * A song counts as secular when its Advisory column in the playlist sheet
+   * says Secular / Explicit / Mature (e.g. "Help Me" by Real Boston Richey).
+   * Default is gospel only; each member can choose to include them. */
+  var MF_KEY = 'cc_music_filter', FLAG_KEY = 'cc_flagged_songs';
+  function mfGet() { try { return localStorage.getItem(MF_KEY) || 'gospel'; } catch (e) { return 'gospel'; } }
+  function mfSet(v) { try { localStorage.setItem(MF_KEY, v); } catch (e) {} }
+  function vidOf(u) { var m = String(u || '').match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/); return m ? m[1] : ''; }
+  var flagged = {}; try { flagged = JSON.parse(localStorage.getItem(FLAG_KEY) || '{}') || {}; } catch (e) {}
+  flagged['lPNdPQRcMnU'] = 1; // Help Me — Real Boston Richey (pre-marked)
+  window.ccFilterResult = function (fn, res) {
+    if ((fn !== 'getReelsMusic' && fn !== 'getMusicPlaylist') || !Array.isArray(res)) return res;
+    if (fn === 'getReelsMusic') {
+      res.forEach(function (s) { if (s && s.advisory) flagged[vidOf(s.youtubeLink)] = 1; });
+      try { localStorage.setItem(FLAG_KEY, JSON.stringify(flagged)); } catch (e) {}
+    }
+    if (mfGet() === 'all') return res;
+    return res.filter(function (s) { return !(s && (s.advisory || flagged[vidOf(s.youtubeLink)])); });
+  };
+  // learn the latest advisory marks once per visit, so the Music tab filters the same songs
+  try { google.script.run.withFailureHandler(function () {}).withSuccessHandler(function () {}).getReelsMusic(); } catch (e) {}
+  function mfBox() {
+    var cur = mfGet();
+    var b = el('<div class="cc-mf" style="background:#fffdf7;border:1px solid #e7ddc9;border-radius:12px;padding:12px 14px;margin:0 0 14px">' +
+      '<b style="color:#372b4e">Music choice</b><div style="font-size:.92em;color:#6b6280;margin:2px 0 8px">Some songs on our list are secular — their message helps some believers, but not everyone wants them. You choose.</div>' +
+      '<label style="display:block;margin:4px 0;font-weight:400"><input type="radio" name="ccmf' + Math.random().toString(36).slice(2, 6) + '" value="gospel"' + (cur !== 'all' ? ' checked' : '') + '> Gospel &amp; worship only</label>' +
+      '<label style="display:block;margin:4px 0;font-weight:400"><input type="radio" value="all"' + (cur === 'all' ? ' checked' : '') + '> Include secular songs (marked with a note)</label>' +
+      '<div class="cc-mfmsg" style="font-size:.88em;color:#3f6b2e;display:none;margin-top:6px"></div></div>');
+    var radios = b.querySelectorAll('input'); radios[1].name = radios[0].name;
+    radios.forEach(function (r) {
+      r.addEventListener('change', function () {
+        mfSet(r.value);
+        document.querySelectorAll('.cc-mf input').forEach(function (o) { o.checked = (o.value === r.value); });
+        var m = b.querySelector('.cc-mfmsg'); m.style.display = 'block';
+        m.textContent = r.value === 'all' ? 'Saved. Secular songs are included, with a note on each.' : 'Saved. Only gospel & worship songs will play.';
+        try { if (typeof loadMusic === 'function') loadMusic(); } catch (e) {}
+      });
+    });
+    return b;
+  }
+  var mv = document.querySelector('#musicView .card'); if (mv) mv.insertBefore(mfBox(), mv.children[1] || null);
+  var sv = document.querySelector('#settingsView'); if (sv) { var c = el('<div class="card"><h3>Music</h3></div>'); c.appendChild(mfBox()); sv.appendChild(c); }
+  // a small switch inside the gospel radio / Wisdom Reels player too
+  new MutationObserver(function () {
+    var reels = document.getElementById('ccReels');
+    if (reels && !reels.querySelector('.cc-mfchip')) {
+      var chip = el('<button type="button" class="cc-mfchip" style="position:absolute;left:14px;bottom:118px;z-index:5;background:rgba(29,22,48,.75);color:#f1d999;border:1px solid rgba(241,217,153,.5);border-radius:16px;padding:6px 12px;font:700 12px \'Source Sans 3\',Arial"></button>');
+      var paint = function () { chip.textContent = mfGet() === 'all' ? 'Music: all songs ▾' : 'Music: gospel only ▾'; };
+      paint();
+      chip.onclick = function (e) { e.stopPropagation(); mfSet(mfGet() === 'all' ? 'gospel' : 'all'); paint(); micTip(mfGet() === 'all' ? 'Secular songs included from the next song list.' : 'Gospel & worship only.'); };
+      reels.appendChild(chip);
+    }
+  }).observe(document.body, { childList: true, subtree: true });
+
   /* ---------- install the app ---------- */
   var deferred = null;
   var inst = el('<div class="cc-install"></div>');
