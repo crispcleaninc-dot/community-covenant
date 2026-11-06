@@ -3598,6 +3598,9 @@
   #ccWelcome a.fnf small { display: block; font-size: .74em; color: #6a6180; }
   #ccWelcome a.fnf em { display: block; font-style: normal; font-weight: 700; font-size: .78em; color: #b8964f; margin-top: 2px; }
   @media (prefers-reduced-motion: reduce) { #ccBrk .orb { animation: none; } }
+  #ccBrk .upn { position: sticky; top: 104px; z-index: 5; margin: 0 0 10px; padding: 10px 12px; border-radius: 12px; background: #f1d999; color: #2a2040; font-size: .9em; }
+  #ccBrk .upn button { float: right; border: 0; border-radius: 999px; padding: 4px 12px; background: #372b4e; color: #fff; font-weight: 700; cursor: pointer; }
+  #ccBrk .swh { text-align: center; font-size: .72em; letter-spacing: 2px; text-transform: uppercase; color: #f1d999; margin: 6px 0 0; animation: ccBob 1.6s ease-in-out infinite; }
   /* ---------- Skits v2 (Nov 6 2026): animated stage + text-thread skits ---------- */
   #ccBrk .sk2 { position: relative; height: 380px; overflow: hidden; background: #120d1f; }
   #ccBrk .sk2 .bgk { position: absolute; inset: -6%; background: center/cover; animation: ccSkKen 18s ease-in-out infinite alternate; }
@@ -3808,6 +3811,120 @@
   TX.forEach(function(x){ x.kind = 'Skit'; x.style = 'text'; x.scene = 'peace'; });
   O = O.concat(TX);
 
+  /* ===== Skits v3 (Nov 6 2026): 35 more Covenant Originals across every age ===== */
+  var ST3 = [
+    { id:'k-veggie', ages:'K', g:1, title:'The Broccoli Battle', scene:'smile', tags:['Temple','workout'], cast:{A:'Jayden',B:'Dad'}, castx:{A:['am_puck','p:#5c3a21:#1b1b1b:#e67e22:short'],B:['am_michael','p:#4a2c17:#1b1b1b:#2c3e50:bald']},
+      lines:[['A',"Dad, broccoli looks like little trees. I don't eat trees."],['B',"Did you know Daniel in the Bible chose vegetables and water for ten days?"],['A',"On purpose?"],['B',"On purpose. And at the end he was stronger and healthier than everybody else."],['A',"Was he a superhero?"],['B',"He was faithful. Taking care of your body is a way to thank God for it."],['A',"Okay. Three little trees. Then I'm a Daniel."]],
+      verse:["Prove thy servants, I beseech thee, ten days; and let them give us pulse to eat, and water to drink.","Daniel 1:12"] },
+    { id:'k-volcano', ages:'K', g:1, title:'Mad Like a Volcano', scene:'creation', tags:['anxiety','Friends'], cast:{A:'Ava',B:'Mom'}, castx:{A:['af_sky','p:#8d5524:#1b1b1b:#c0392b:puff'],B:['af_heart','p:#6b4226:#1b1b1b:#8e5aa8:long']},
+      lines:[['A',"My brother broke my tower and I'm SO mad. I'm a volcano!"],['B',"It's okay to feel mad. What does the volcano want to do?"],['A',"Knock his tower down too."],['B',"The Bible says be angry, but don't sin. Feeling it is okay. Hurting back is not."],['A',"So what do I do with the lava?"],['B',"Squeeze a pillow, take three big breaths, then use your words."],['A',"Breathe... breathe... breathe. Jalen, that made me sad. Can we build it together?"]],
+      verse:["Be ye angry, and sin not: let not the sun go down upon your wrath.","Ephesians 4:26"] },
+    { id:'k-tablet', ages:'K', g:1, title:'Five More Minutes', scene:'peace', tags:['Tech','rest'], cast:{A:'The Tablet',B:'Malik'}, castx:{A:['af_nova','phone'],B:['am_puck','p:#4a2c17:#1b1b1b:#27ae60:short']},
+      lines:[['A',"Five more minutes! Then five more! Then five more!"],['B',"Mom said it's time for bed."],['A',"But the next video starts in three, two..."],['B',"Nope. God made the night for resting."],['A',"Who's going to watch me if you don't?"],['B',"Nobody. You're a tablet. Good night, tablet."],['A',"...Good night, Malik."]],
+      verse:["To every thing there is a season, and a time to every purpose under the heaven.","Ecclesiastes 3:1"] },
+    { id:'k-helper', ages:'K', g:1, title:'The Helper Badge', scene:'smile', tags:['Friends','gratitude'], cast:{A:'Nia',B:'Big Brother'}, castx:{A:['af_sky','p:#8d5524:#1b1b1b:#e88fb0:puff'],B:['am_puck','p:#6b4226:#1b1b1b:#3d6fb6:short']},
+      lines:[['B',"Ugh, I have to do the dishes AND take out the trash."],['A',"I can carry the little trash bag!"],['B',"Why would you help me? It's my chore."],['A',"Because Jesus said serve one another. And because you help me with my shoes."],['B',"Okay, helper. You're getting a badge."],['A',"A real badge?"],['B',"A paper one. But I'll draw it really good."]],
+      verse:["By love serve one another.","Galatians 5:13"] },
+    { id:'t-crush', ages:'TY', title:'The Crush', scene:'together', tags:['Friends','discern'], cast:{A:'Kiara',B:'Maya'}, castx:{A:['af_bella','p:#8d5524:#1b1b1b:#9b59b6:long'],B:['af_nicole','p:#c68642:#3b2414:#2f7d6d:puff']},
+      lines:[['A',"He looked at me in Spanish class. Twice. We're basically married."],['B',"Girl. You're fifteen."],['A',"But what if he's the one?"],['B',"Then he'll still be the one when you're grown. Song of Solomon says don't wake up love before it's time."],['A',"That's in the Bible?"],['B',"Three times. God isn't saying no to love. He's saying not yet, and not rushed."],['A',"Okay. I'll just say hi. A normal, unmarried hi."]],
+      verse:["I charge you, O ye daughters of Jerusalem, that ye stir not up, nor awake my love, till he please.","Song of Solomon 2:7"] },
+    { id:'t-table', ages:'TY', title:'The Lunch Table', scene:'together', tags:['Friends'], cast:{A:'Darius',B:'New Kid'}, castx:{A:['am_puck','p:#4a2c17:#1b1b1b:#c0392b:short'],B:['am_michael','p:#e0ac69:#3b2414:#7f8c8d:short']},
+      lines:[['B',"Is this seat taken? Everywhere else said it was saved."],['A',"Nah, sit down. I'm Darius."],['B',"Thanks. I'm Sam. Nobody's talked to me all week."],['A',"First week is rough. I was new last year."],['B',"Why are you being nice?"],['A',"Somebody did it for me. Pass it on. You play ball?"],['B',"Badly."],['A',"Perfect. So do we."]],
+      verse:["He hath shewed thee, O man, what is good; and what doth the LORD require of thee, but to do justly, and to love mercy, and to walk humbly with thy God?","Micah 6:8"] },
+    { id:'t-curfew', ages:'TY', title:'Curfew', scene:'night', tags:['Friends','recon'], cast:{A:'Jordan',B:'Mom'}, castx:{A:['am_puck','p:#5c3a21:#1b1b1b:#2c3e50:short'],B:['af_heart','p:#5c3a21:#1b1b1b:#8e5aa8:long']},
+      lines:[['A',"Everybody else gets to stay out until midnight."],['B',"I'm not everybody's mother. I'm yours."],['A',"You don't trust me."],['B',"I trust you. I don't trust the hour after eleven."],['A',"So what do I have to do?"],['B',"Keep the eleven o'clock for a month. Text me when you get there. Then we'll talk about more."],['A',"Deal. But I'm writing that down."],['B',"Write it down. I keep my word too."]],
+      verse:["Honour thy father and mother; which is the first commandment with promise.","Ephesians 6:2"] },
+    { id:'t-ragequit', ages:'TY', title:'Rage Quit', scene:'night', tags:['Tech','anxiety'], cast:{A:'The Controller',B:'Trey'}, castx:{A:['am_liam','phone'],B:['am_puck','p:#4a2c17:#1b1b1b:#1f4e8c:short']},
+      lines:[['B',"That's the third time I lost! I'm throwing you across the room!"],['A',"Please don't. I'm the only one who didn't do anything wrong."],['B',"The game is rigged."],['A',"Or you've been playing for four hours and you're tired."],['B',"...Maybe."],['A',"Ruling your spirit is harder than winning a city. Proverbs said it, not me."],['B',"Fine. I'm going outside. You're staying on the charger."]],
+      verse:["He that is slow to anger is better than the mighty; and he that ruleth his spirit than he that taketh a city.","Proverbs 16:32"] },
+    { id:'y-hustle', ages:'TYA', title:'The Side Hustle', scene:'faith', tags:['Career','Finance'], cast:{A:'Marcus',B:'Tasha'}, castx:{A:['am_michael','p:#5c3a21:#1b1b1b:#2c3e50:short'],B:['af_bella','p:#6b4226:#1b1b1b:#c9a961:puff']},
+      lines:[['A',"I've had this business idea for three years. I'm still thinking about it."],['B',"Still thinking, or still talking?"],['A',"...Talking, mostly."],['B',"Proverbs says in all labor there is profit, but just talk leads to poverty."],['A',"So what's step one?"],['B',"Sell one. One customer this week. Then we'll talk about logos."],['A',"One customer. I can do one."]],
+      verse:["In all labour there is profit: but the talk of the lips tendeth only to penury.","Proverbs 14:23"] },
+    { id:'y-date', ages:'YA', title:'First Date Questions', scene:'creation', tags:['discern','recon'], cast:{A:'Andre',B:'Simone'}, castx:{A:['am_fenrir','p:#4a2c17:#1b1b1b:#34495e:short'],B:['af_heart','p:#8d5524:#1b1b1b:#c0392b:puff']},
+      lines:[['B',"So, before we order: where are you headed in five years?"],['A',"Wow. Straight to the interview."],['B',"I'm not in a hurry. I'm just not wandering."],['A',"Fair. I want to own a home, coach youth ball, and be at church more than Easter."],['B',"And faith? Is God first, or just on the list?"],['A',"Working on first. Honestly."],['B',"Honest I can work with. Can two walk together unless they agree?"]],
+      verse:["Can two walk together, except they be agreed?","Amos 3:3"] },
+    { id:'y-breakroom', ages:'YA', title:'The Break Room', scene:'faith', tags:['Career','Friends'], cast:{A:'Keisha',B:'Rob'}, castx:{A:['af_nicole','p:#8d5524:#1b1b1b:#9b59b6:long'],B:['am_michael','p:#e0ac69:#7f7f7f:#2c3e50:short']},
+      lines:[['A',"Did you hear why the new manager really got hired?"],['B',"No, and I don't think I want to."],['A',"Come on, everybody's talking about it."],['B',"That's the problem. Words like that land like wounds."],['A',"So you just stay out of it?"],['B',"I'd rather be the one person she can trust. Want to help me welcome her instead?"],['A',"...Yeah. That's better."]],
+      verse:["The words of a talebearer are as wounds, and they go down into the innermost parts of the belly.","Proverbs 18:8"] },
+    { id:'y-sabbath', ages:'YA', title:'The Seventh Day Off', scene:'peace', tags:['rest','Career'], cast:{A:'The Boss Inside',B:'Lena'}, castx:{A:['am_echo','shadow'],B:['af_bella','p:#6b4226:#1b1b1b:#2f7d6d:puff']},
+      lines:[['A',"Answer that email. It's only Sunday."],['B',"It's my day of rest."],['A',"Rest is for people who are caught up."],['B',"Then nobody would ever rest. God rested, and He wasn't behind."],['A',"You'll fall behind."],['B',"I'll trust Him with Monday."],['A',"..."],['B',"Phone in the drawer. Walk in the park. See you tomorrow, inbox."]],
+      verse:["Six days shalt thou labour, and do all thy work: but the seventh day is the sabbath of the LORD thy God.","Exodus 20:9-10"] },
+    { id:'a-caregiver', ages:'YA', title:'Caring for Mama', scene:'peace', tags:['Friends','strength'], cast:{A:'Brenda',B:'Curtis'}, castx:{A:['af_heart','p:#6b4226:#1b1b1b:#8e5aa8:long'],B:['am_fenrir','p:#4a2c17:#7f7f7f:#2c3e50:bald']},
+      lines:[['A',"I've done Mama's medicine, doctor visits and laundry for six months. Alone."],['B',"I know. I've been working doubles, but that's not an excuse."],['A',"I'm tired, Curtis. I'm not mad. I'm tired."],['B',"Then give me Saturdays and Tuesday nights. Starting this week."],['A',"You mean it?"],['B',"Bear ye one another's burdens. She carried us. We carry her together."]],
+      verse:["Bear ye one another's burdens, and so fulfil the law of Christ.","Galatians 6:2"] },
+    { id:'a-envelope', ages:'YA', title:'The Envelope', scene:'faith', tags:['Finance'], cast:{A:'Gerald',B:'Denise'}, castx:{A:['am_fenrir','p:#4a2c17:#9a9a9a:#34495e:short'],B:['af_heart','p:#5c3a21:#1b1b1b:#c9a961:puff']},
+      lines:[['A',"Money's tight. Maybe we skip giving this month."],['B',"We could. But every time we put God first, the month has held."],['A',"I'm scared the numbers won't work."],['B',"Then let's look at them together tonight. All of them."],['A',"And if it's still short?"],['B',"Then we give what we honestly can, and we trust Him with the gap. Malachi says prove Me."],['A',"Okay. Kitchen table at eight."]],
+      verse:["Bring ye all the tithes into the storehouse... and prove me now herewith, saith the LORD of hosts.","Malachi 3:10"] },
+    { id:'a-porch', ages:'YA', title:'The Porch Light', scene:'night', tags:['forgiveness','recon'], cast:{A:'Darnell',B:'Pops'}, castx:{A:['am_michael','p:#4a2c17:#1b1b1b:#7f8c8d:short'],B:['am_onyx','p:#4a2c17:#d9d9d9:#6b4f9e:gray']},
+      lines:[['A',"Pops... I know I've been gone two years. I spent everything."],['B',"I left the porch light on every night."],['A',"Every night?"],['B',"Every night. I saw you coming from the corner."],['A',"I don't deserve to come back."],['B',"Deserve was never the point. You're my son. Come in, your plate is warm."]],
+      verse:["But when he was yet a great way off, his father saw him, and had compassion, and ran, and fell on his neck, and kissed him.","Luke 15:20"] },
+    { id:'a-retire', ages:'YA', title:'The Retirement Party', scene:'creation', tags:['Career','word'], cast:{A:'Young Coworker',B:'Miss Hattie'}, castx:{A:['af_bella','p:#c68642:#3b2414:#2f7d6d:puff'],B:['bf_emma','p:#5c3a21:#e6e6e6:#8e5aa8:gray']},
+      lines:[['A',"Thirty-four years, Miss Hattie. How did you do it?"],['B',"One shift at a time. And I prayed in the parking lot every morning."],['A',"Every morning?"],['B',"Some mornings that prayer was all I had."],['A',"What do you want people to remember?"],['B',"That I was kind, and that I kept the faith. The rest is just a plaque."]],
+      verse:["I have fought a good fight, I have finished my course, I have kept the faith.","2 Timothy 4:7"] },
+    { id:'c-breaks', kind:'Commercial', ages:'KTYA', g:1, title:'Screen-Time Breaks', scene:'sky', tags:['rest','start'], cast:{A:'Announcer',B:'Member'}, castx:{A:['am_onyx','none'],B:['af_heart','p:#6b4226:#1b1b1b:#c9a961:puff']},
+      lines:[['A',"Scrolling for an hour and feeling worse?"],['B',"Every single night."],['A',"Community Covenant reminds you to take a break, then gives you one minute to breathe and something good to watch."],['B',"Skits, sermons, and a word for my day."],['A',"Come apart and rest a while."]],
+      verse:["Come ye yourselves apart into a desert place, and rest a while.","Mark 6:31"] },
+    { id:'c-study', kind:'Commercial', ages:'TYA', g:1, title:'The Bible Study Library', scene:'faith', tags:['word','study'], cast:{A:'Announcer',B:'Member'}, castx:{A:['am_onyx','none'],B:['am_michael','p:#5c3a21:#1b1b1b:#2f7d6d:short']},
+      lines:[['A',"Hard questions about faith?"],['B',"Like astrology, marriage, or other religions?"],['A',"The Bible Study Library walks you through what Scripture says, one honest study at a time."],['B',"With questions to reflect on."],['A',"Tap Bible Study in the menu."]],
+      verse:["Study to shew thyself approved unto God, a workman that needeth not to be ashamed, rightly dividing the word of truth.","2 Timothy 2:15"] },
+    { id:'c-team', kind:'Commercial', ages:'TYA', g:1, title:'Chat with the Team', scene:'reach', tags:['start','anxiety'], cast:{A:'Announcer',B:'Member'}, castx:{A:['am_onyx','none'],B:['af_bella','p:#8d5524:#1b1b1b:#9b59b6:long']},
+      lines:[['B',"Sometimes I just need a real person."],['A',"Tap Chat with the team. Prayer requests, questions, or you just need to talk."],['B',"And somebody actually reads it?"],['A',"Every message. You are not alone."]],
+      verse:["Bear ye one another's burdens, and so fulfil the law of Christ.","Galatians 6:2"] }
+  ];
+  ST3.forEach(function(o){ o.kind = o.kind || 'Skit'; o.style = 'stage'; });
+  var TX3 = [
+    { id:'x-k-share', series:'Texting a Wise Friend', ages:'K', g:1, title:"Texting Grandpa: My toys", contact:'Grandpa', tags:['Friends','gratitude'], vo:{ me:'af_sky', them:'am_onyx' },
+      lines:[['me',"Grandpa, my cousin wants to play with my new truck and I don't want him to."],['them',"I understand. New things feel special."],['me',"What if he breaks it?"],['them',"Then you'll be sad, and we'll fix it. But what if he has the best day ever because of you?"],['me',"That would be kind of cool."],['them',"The Bible says it's more blessed to give than to receive. Try it for ten minutes."],['me',"Okay. Ten minutes. Then it's my turn."]],
+      verse:["It is more blessed to give than to receive.","Acts 20:35"] },
+    { id:'x-k-lie', series:'Text the Most High', ages:'K', g:1, title:'I told a lie', contact:'The Most High', tags:['forgiveness','word'], vo:{ me:'am_puck', them:'am_onyx' },
+      lines:[['me',"I told Mom I brushed my teeth but I didn't. Now I feel yucky inside."],['them',"Lying lips are abomination to the LORD: but they that deal truly are his delight. (Proverbs 12:22)"],['me',"Are You mad at me?"],['them',"If we confess our sins, he is faithful and just to forgive us our sins. (1 John 1:9)"],['me',"So I should tell Mom too?"],['them',"Children, obey your parents in the Lord: for this is right. (Ephesians 6:1)"],['me',"Okay. Going to tell her. And brush for real."]],
+      verse:["If we confess our sins, he is faithful and just to forgive us our sins, and to cleanse us from all unrighteousness.","1 John 1:9"] },
+    { id:'x-k-school', series:'Text the Most High', ages:'K', g:1, title:'First day at a new school', contact:'The Most High', tags:['anxiety','Friends'], vo:{ me:'af_sky', them:'am_onyx' },
+      lines:[['me',"Tomorrow is my first day at a new school. I don't know anybody."],['them',"Fear thou not; for I am with thee. (Isaiah 41:10)"],['me',"Will You be in my classroom?"],['them',"The LORD is my shepherd; I shall not want. (Psalm 23:1)"],['me',"How do I make a friend?"],['them',"Be kindly affectioned one to another with brotherly love. (Romans 12:10)"],['me',"Okay. I'll smile and say hi to one person."]],
+      verse:["Fear thou not; for I am with thee: be not dismayed; for I am thy God.","Isaiah 41:10"] },
+    { id:'x-k-fish', series:'Texting a Wise Friend', ages:'K', g:1, title:'Texting Grandma: My fish', contact:'Grandma', tags:['grief'], vo:{ me:'am_puck', them:'bf_emma' },
+      lines:[['me',"Grandma, Bubbles died. My fish."],['them',"Oh, sweetheart. I'm so sorry. You took good care of him."],['me',"Does God care about a fish?"],['them',"Jesus said not one little sparrow is forgotten by God. He made Bubbles, and He sees you crying."],['me',"Can we have a goodbye for him?"],['them',"Yes. Draw him a picture, and we'll say thank You to God for him."]],
+      verse:["Are not five sparrows sold for two farthings, and not one of them is forgotten before God?","Luke 12:6"] },
+    { id:'x-t-game', series:'Text the Most High', ages:'TY', title:'Panic before the big game', contact:'The Most High', tags:['anxiety','workout'], vo:{ me:'am_puck', them:'am_onyx' },
+      lines:[['me',"Game in an hour. My hands are shaking. Scouts are coming."],['them',"Be careful for nothing; but in every thing by prayer and supplication with thanksgiving let your requests be made known unto God. (Philippians 4:6)"],['me',"What if I mess up in front of everybody?"],['them',"Let not your heart be troubled, neither let it be afraid. (John 14:27)"],['me',"Okay. Help me play free."],['them',"I can do all things through Christ which strengtheneth me. (Philippians 4:13)"],['me',"Breathing. Praying. Playing for You."]],
+      verse:["I can do all things through Christ which strengtheneth me.","Philippians 4:13"] },
+    { id:'x-t-mirror', series:'Text the Most High', ages:'TY', title:'I hate how I look', contact:'The Most High', tags:['anxiety','Temple'], vo:{ me:'af_bella', them:'am_onyx' },
+      lines:[['me',"Everybody online looks perfect. I hate how I look."],['them',"I will praise thee; for I am fearfully and wonderfully made. (Psalm 139:14)"],['me',"It doesn't feel that way."],['them',"Man looketh on the outward appearance, but the LORD looketh on the heart. (1 Samuel 16:7)"],['me',"Then why do I care so much?"],['them',"Ye are bought with a price. (1 Corinthians 6:20)"],['me',"Unfollowing some accounts. And I'm going to talk to my mom about how I've been feeling."]],
+      verse:["I will praise thee; for I am fearfully and wonderfully made.","Psalm 139:14"] },
+    { id:'x-t-vape', series:'Texting a Wise Friend', ages:'TY', title:'They want me to vape', contact:'Cousin Tre', tags:['Friends','Temple'], vo:{ me:'am_puck', them:'am_fenrir' },
+      lines:[['me',"Everybody at the party is vaping. They keep passing it to me."],['them',"You don't have to explain yourself. 'Nah, I'm good' is a full sentence."],['me',"They'll think I'm lame."],['them',"Real friends won't care. And if they do, that tells you something."],['me',"Can you pick me up?"],['them',"On my way. Text me the address. Bad company corrupts good character. You did right."]],
+      verse:["Be not deceived: evil communications corrupt good manners.","1 Corinthians 15:33"] },
+    { id:'x-t-college', series:'Texting a Wise Friend', ages:'TY', title:'Which college?', contact:'Ms. Green', tags:['Career','discern'], vo:{ me:'af_bella', them:'af_heart' },
+      lines:[['me',"I got into two schools. One is close and cheap. One is far and famous."],['them',"Congratulations! Let's think, not panic."],['me',"Everybody says go famous."],['them',"Everybody isn't paying your loans. Write down cost, program, and where you'll grow in faith."],['me',"And then?"],['them',"Pray over the list for a week. God directs the steps of people who acknowledge Him."],['me',"Okay. List tonight. Prayer all week."]],
+      verse:["In all thy ways acknowledge him, and he shall direct thy paths.","Proverbs 3:6"] },
+    { id:'x-y-laidoff', series:'Text the Most High', ages:'YA', title:'I got laid off', contact:'The Most High', tags:['Career','Finance','anxiety'], vo:{ me:'am_michael', them:'am_onyx' },
+      lines:[['me',"They let twenty of us go today. I didn't see it coming."],['them',"For I know the thoughts that I think toward you, saith the LORD, thoughts of peace, and not of evil, to give you an expected end. (Jeremiah 29:11)"],['me',"I have bills and a family."],['them',"I have been young, and now am old; yet have I not seen the righteous forsaken, nor his seed begging bread. (Psalm 37:25)"],['me',"Where do I even start?"],['them',"In all thy ways acknowledge him, and he shall direct thy paths. (Proverbs 3:6)"],['me',"Updating my resume tonight and calling three people tomorrow."]],
+      verse:["For I know the thoughts that I think toward you, saith the LORD, thoughts of peace, and not of evil.","Jeremiah 29:11"] },
+    { id:'x-y-lonely', series:'Texting a Wise Friend', ages:'YA', title:'New city, no friends', contact:'Big Sis', tags:['Friends','anxiety'], vo:{ me:'af_bella', them:'af_heart' },
+      lines:[['me',"Moved for the job. Three months in and I still eat dinner alone."],['them',"That's hard. Lonely is real. Have you found a church yet?"],['me',"I watch online."],['them',"Online is good for a storm. But you need faces. Go in person this Sunday and sign up for one small group."],['me',"What if it's awkward?"],['them',"It will be. Go anyway. Then call me after, and tell me everybody's name."]],
+      verse:["Not forsaking the assembling of ourselves together, as the manner of some is.","Hebrews 10:25"] },
+    { id:'x-y-card', series:'Text the Most High', ages:'YA', title:'Card at the limit', contact:'The Most High', tags:['Finance'], vo:{ me:'af_heart', them:'am_onyx' },
+      lines:[['me',"My credit card is maxed out and I keep using the next one."],['them',"The rich ruleth over the poor, and the borrower is servant to the lender. (Proverbs 22:7)"],['me',"I feel trapped."],['them',"Owe no man any thing, but to love one another. (Romans 13:8)"],['me',"Where do I start?"],['them',"He that is faithful in that which is least is faithful also in much. (Luke 16:10)"],['me',"Cutting up one card tonight. Smallest balance first."]],
+      verse:["The borrower is servant to the lender.","Proverbs 22:7"] },
+    { id:'x-y-dad', series:'Text the Most High', ages:'YA', title:'Do I have to forgive my dad?', contact:'The Most High', tags:['forgiveness','recon'], vo:{ me:'am_michael', them:'am_onyx' },
+      lines:[['me',"My dad wasn't there. Now he wants a relationship. Do I have to forgive him?"],['them',"For if ye forgive men their trespasses, your heavenly Father will also forgive you. (Matthew 6:14)"],['me',"Forgiving feels like saying it was okay."],['them',"Be ye kind one to another, tenderhearted, forgiving one another, even as God for Christ's sake hath forgiven you. (Ephesians 4:32)"],['me',"And if he hurts me again?"],['them',"If it be possible, as much as lieth in you, live peaceably with all men. (Romans 12:18)"],['me',"Okay. Coffee, in public, one hour. A start."]],
+      verse:["Forgiving one another, even as God for Christ's sake hath forgiven you.","Ephesians 4:32"] },
+    { id:'x-a-argue', series:'Text the Most High', ages:'YA', title:'We keep arguing', contact:'The Most High', tags:['recon','Friends'], vo:{ me:'af_heart', them:'am_onyx' },
+      lines:[['me',"Same argument, third night in a row. We're both exhausted."],['them',"A soft answer turneth away wrath: but grievous words stir up anger. (Proverbs 15:1)"],['me',"He started it, though."],['them',"Let all bitterness, and wrath, and anger, and clamour, and evil speaking, be put away from you. (Ephesians 4:31)"],['me',"So what do I do tonight?"],['them',"Let not the sun go down upon your wrath. (Ephesians 4:26)"],['me',"Asking him to pray with me before bed. Lower voice. Shorter sentences."]],
+      verse:["A soft answer turneth away wrath: but grievous words stir up anger.","Proverbs 15:1"] },
+    { id:'x-a-teen', series:'Texting a Wise Friend', ages:'YA', title:"My teenager won't talk to me", contact:'Mother Jenkins', tags:['Friends','recon'], vo:{ me:'af_heart', them:'bf_emma' },
+      lines:[['me',"My son just says 'fine' and goes to his room. I miss him."],['them',"Baby, that's fifteen. It isn't forever."],['me',"How do I reach him?"],['them',"Ride in the car with him. Teenagers talk when you're not looking at them."],['me',"And if he still won't?"],['them',"Keep the door open, keep your voice soft, and keep praying. Train him up; he won't depart from it."],['me',"Car rides and quiet. Okay."]],
+      verse:["Fathers, provoke not your children to anger, lest they be discouraged.","Colossians 3:21"] },
+    { id:'x-a-results', series:'Text the Most High', ages:'YA', title:'Waiting on test results', contact:'The Most High', tags:['anxiety','Temple','strength'], vo:{ me:'af_heart', them:'am_onyx' },
+      lines:[['me',"The doctor called me back in. I'm scared of what they'll say."],['them',"God is our refuge and strength, a very present help in trouble. (Psalm 46:1)"],['me',"What if it's bad?"],['them',"Fear thou not; for I am with thee: be not dismayed; for I am thy God. (Isaiah 41:10)"],['me',"I don't feel strong."],['them',"My grace is sufficient for thee: for my strength is made perfect in weakness. (2 Corinthians 12:9)"],['me',"Asking my sister to come with me. Holding on."]],
+      verse:["God is our refuge and strength, a very present help in trouble.","Psalm 46:1"] },
+    { id:'x-a-older', series:'Text the Most High', ages:'YA', title:'Getting older', contact:'The Most High', tags:['strength','word'], vo:{ me:'bf_emma', them:'am_onyx' },
+      lines:[['me',"Seventy this year. Sometimes I feel like I'm not useful anymore."],['them',"And even to your old age I am he; and even to hoar hairs will I carry you. (Isaiah 46:4)"],['me',"My knees say otherwise."],['them',"They shall still bring forth fruit in old age. (Psalm 92:14)"],['me',"What fruit can I still bring?"],['them',"One generation shall praise thy works to another. (Psalm 145:4)"],['me',"Calling my grandbaby tonight to tell her how God brought me through."]],
+      verse:["They shall still bring forth fruit in old age; they shall be fat and flourishing.","Psalm 92:14"] }
+  ];
+  TX3.forEach(function(x){ x.kind = 'Skit'; x.style = 'text'; x.scene = 'peace'; });
+  O = O.concat(ST3, TX3);
+
   /* ---------- Clips from the creators' own YouTube channels (they stay on their channels; credited, with a Follow link).
      [youtube id, title, creator, length, ages, tags, g] ---------- */
   var V = [
@@ -3901,10 +4018,10 @@
     return tab === 'foryou' ? a.slice(0, 8) : a; }
 
   /* ---------- the break screen ---------- */
-  var tab = 'breathe', speakChain = 0, radioWasOn = false;
+  var tab = 'breathe', speakChain = 0, radioWasOn = false, shown = [];
   var TABS = [['breathe','Breathe'],['foryou','For you'],['skits','Skits & commercials'],['sermons','Sermons & stories'],['originals','Covenant Originals'],['texts','Text the Most High']];
   function thumb(x){ return x.yt ? 'https://i.ytimg.com/vi/' + x.yt + '/mqdefault.jpg' : U(SCENE[x.scene] || SCENE.peace, 300); }
-  function card(x){ return '<button class="card2" onclick="ccPlayBreak(\'' + x.id + '\')"><span class="th" style="background-image:url(\'' + thumb(x) + '\')"><i>' + esc(x.len || (x.lines.length > 7 ? '1 min' : '45 sec')) + '</i></span><span><span class="k">' + esc(x.kind) + '</span><br><span class="t">' + esc(x.title) + '</span><br><span class="a">' + esc(x.who) + '</span></span></button>'; }
+  function card(x){ return '<button class="card2" onclick="ccPlayFrom(\'' + x.id + '\')"><span class="th" style="background-image:url(\'' + thumb(x) + '\')"><i>' + esc(x.len || (x.lines.length > 7 ? '1 min' : '45 sec')) + '</i></span><span><span class="k">' + esc(x.kind) + '</span><br><span class="t">' + esc(x.title) + '</span><br><span class="a">' + esc(x.who) + '</span></span></button>'; }
   function renderTabs(){ document.getElementById('ccBrkTabs').innerHTML = TABS.map(function(t){ return '<button class="' + (tab === t[0] ? 'on' : '') + '" onclick="ccBreakTab(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join(''); }
   function every(){ var v = ls('ccBreakEvery'); if (v === null || v === undefined) { var b = band(); return b === 'K' ? 15 : b === 'T' ? 20 : 30; } return v; }
   function renderSettings(){ var e = every(); return '<div class="set">Remind me to take a screen-time break every:<br>' + [0, 15, 20, 30, 45, 60].map(function(m){ return '<button class="' + (e === m ? 'on' : '') + '" onclick="ccBreakEvery(' + m + ')">' + (m ? m + ' min' : 'Off') + '</button>'; }).join('') + '</div>'; }
@@ -3915,34 +4032,59 @@
         '<div class="row" style="justify-content:center;margin-top:16px"><button class="btn2 gold" onclick="ccBreakTab(\'foryou\')">Watch something short</button><button class="btn2" onclick="ccCloseBreak()">Back to my covenant</button></div>' + renderSettings() + '</div>');
       var n = 0, el = document.getElementById('ccBrTxt'), t = setInterval(function(){ if (!document.getElementById('ccBrTxt') || tab !== 'breathe') return clearInterval(t); n++; el.textContent = n % 2 ? 'Breathe out…' : 'Breathe in…'; }, 4000);
       return; }
-    var a = list(tab);
+    var a = list(tab); shown = a; curX = null;
     body('<p class="why">' + esc(why()) + '</p>' + (a.length ? a.map(card).join('') : '<p>Nothing here yet.</p>') + renderSettings());
   }
   window.ccBreakTab = function(t){ tab = t; renderTab(); };
+  window.ccPlayFrom = function(id){ Q = shown.slice(); ccPlayBreak(id); };
   window.ccBreakEvery = function(m){ ls('ccBreakEvery', m); active = 0; renderTab(); };
   window.ccOpenBreak = function(t, playId){
     document.getElementById('ccBrkNudge').classList.remove('on');
     var w = document.getElementById('ccWelcome'); if (w && w.style.display !== 'none') w.setAttribute('data-brk', '1');
     tab = t || 'breathe'; document.getElementById('ccBrk').classList.add('on'); document.body.style.overflow = 'hidden'; active = 0;
+    if (t === 'play') { tab = 'foryou'; Q = list('foryou'); if (Q[0]) { ccPlayBreak(Q[0].id); return; } }
     if (playId) ccPlayBreak(playId); else renderTab();
   };
-  window.ccCloseBreak = function(){ stopSpeak(); resumeRadio(); document.getElementById('ccBrkBody').innerHTML = ''; document.getElementById('ccBrk').classList.remove('on'); document.body.style.overflow = ''; active = 0; };
+  window.ccCloseBreak = function(){ curX = null; clearInterval(upTimer); try { if (ytB && ytB.destroy) ytB.destroy(); } catch(e){} ytB = null; stopSpeak(); resumeRadio(); document.getElementById('ccBrkBody').innerHTML = ''; document.getElementById('ccBrk').classList.remove('on'); document.body.style.overflow = ''; active = 0; };
 
   function pauseRadio(){ var m = document.getElementById('ccTMusic'); radioWasOn = !!(m && m.classList.contains('on')); if (radioWasOn && typeof ccRadioToggle === 'function') try { ccRadioToggle(); } catch(e){} }
   function resumeRadio(){ if (radioWasOn && typeof ccRadioToggle === 'function') try { ccRadioToggle(); } catch(e){} radioWasOn = false; }
   function markSeen(id){ var s = ls('ccBrkSeen') || {}; s[id] = Date.now(); ls('ccBrkSeen', s); }
-  function nextOf(x){ var a = list(tab === 'breathe' ? 'foryou' : tab).filter(function(y){ return y.id !== x.id; }); return a[0]; }
-  function after(x){ var n = nextOf(x); return '<div class="row"><button class="btn2 gold" onclick="ccCloseBreak()">Back to my covenant</button>' + (n ? '<button class="btn2" onclick="ccPlayBreak(\'' + n.id + '\')">Next: ' + esc(n.title.length > 30 ? n.title.slice(0, 28) + '…' : n.title) + '</button>' : '') + '<button class="btn2" onclick="ccBreakTab(\'' + (tab === 'breathe' ? 'foryou' : tab) + '\')">More</button></div>'; }
+  /* Continuous play (Nov 6 2026): skits and clips play one after another like Wisdom Reels; swipe up/down to move; when the list ends, Wisdom Reels start. */
+  var Q = [], curX = null, upTimer = null, ytB = null;
+  function autoOn(){ return ls('ccBrkAuto') !== false; }
+  function queueFor(x){ if (!Q.some(function(y){ return y.id === x.id; })) { Q = list(tab === 'breathe' || tab === 'play' ? 'foryou' : tab); if (!Q.some(function(y){ return y.id === x.id; })) Q.unshift(x); } }
+  function nextOf(x){ var i = -1; Q.forEach(function(y, k){ if (y.id === x.id) i = k; }); if (i >= 0) return Q[i + 1]; var a = list(tab === 'breathe' ? 'foryou' : tab).filter(function(y){ return y.id !== x.id; }); return a[0]; }
+  function prevOf(x){ var i = -1; Q.forEach(function(y, k){ if (y.id === x.id) i = k; }); return i > 0 ? Q[i - 1] : null; }
+  function onEnd(x){
+    if (!autoOn() || curX !== x || !document.getElementById('ccBrk').classList.contains('on')) return;
+    var n = nextOf(x), sec = 3, el = document.createElement('div'); el.className = 'upn';
+    function draw(){ el.innerHTML = (n ? 'Up next: <b>' + esc(n.title) + '</b> in ' + sec : 'Next: <b>Wisdom Reels</b> with gospel music in ' + sec) + ' <button onclick="ccStopAuto()">Stop</button>'; }
+    draw(); var bd = document.getElementById('ccBrkBody'); bd.insertBefore(el, bd.firstChild);
+    clearInterval(upTimer); upTimer = setInterval(function(){ sec--; if (sec > 0) { draw(); return; } clearInterval(upTimer);
+      if (curX !== x) return; if (n) ccPlayBreak(n.id); else { ccCloseBreak(); if (typeof ccOpenReels === 'function') ccOpenReels(true); } }, 1000);
+  }
+  window.ccStopAuto = function(){ clearInterval(upTimer); var u = document.querySelector('#ccBrk .upn'); if (u) u.remove(); };
+  window.ccToggleBrkAuto = function(){ ls('ccBrkAuto', !autoOn()); var b = document.getElementById('ccAutoB'); if (b) b.textContent = 'Autoplay: ' + (autoOn() ? 'on' : 'off'); if (!autoOn()) ccStopAuto(); };
+  (function(){ var y0 = null, t0 = 0, bd = document.getElementById('ccBrkBody');
+    bd.addEventListener('touchstart', function(e){ if (!curX) return; y0 = e.touches[0].clientY; t0 = Date.now(); }, { passive: true });
+    bd.addEventListener('touchend', function(e){ if (y0 === null || !curX) return; var dy = e.changedTouches[0].clientY - y0; y0 = null; if (Date.now() - t0 > 700 || Math.abs(dy) < 80) return;
+      var t = dy < 0 ? nextOf(curX) : prevOf(curX); if (t) ccPlayBreak(t.id); else if (dy < 0) { ccCloseBreak(); if (typeof ccOpenReels === 'function') ccOpenReels(true); } }, { passive: true });
+  })();
+  function after(x){ var n = nextOf(x); return '<p class="swh">Swipe up for the next one &middot; down to go back</p><div class="row"><button class="btn2" id="ccAutoB" onclick="ccToggleBrkAuto()">Autoplay: ' + (autoOn() ? 'on' : 'off') + '</button></div><div class="row"><button class="btn2 gold" onclick="ccCloseBreak()">Back to my covenant</button>' + (n ? '<button class="btn2" onclick="ccPlayBreak(\'' + n.id + '\')">Next: ' + esc(n.title.length > 30 ? n.title.slice(0, 28) + '…' : n.title) + '</button>' : '') + '<button class="btn2" onclick="ccBreakTab(\'' + (tab === 'breathe' ? 'foryou' : tab) + '\')">More</button></div>'; }
   window.ccPlayBreak = function(id){
     var x = ALL.filter(function(y){ return y.id === id; })[0]; if (!x || !allowed(x)) return;
-    markSeen(id); if (tab === 'breathe') tab = 'foryou'; renderTabs();
+    markSeen(id); if (tab === 'breathe' || tab === 'play') tab = 'foryou'; renderTabs(); queueFor(x); clearInterval(upTimer); try { if (ytB && ytB.destroy) ytB.destroy(); } catch(e){} ytB = null;
     if (x.yt) {
       pauseRadio();
-      body('<div class="stage"><iframe src="https://www.youtube.com/embed/' + x.yt + '?autoplay=1&playsinline=1&rel=0&modestbranding=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="' + esc(x.title) + '"></iframe></div>' +
+      var useApi = !!(window.YT && YT.Player);
+      body('<div class="stage">' + (useApi ? '<div id="ccYTb" style="width:100%;aspect-ratio:16/9"></div>' : '<iframe src="https://www.youtube.com/embed/' + x.yt + '?autoplay=1&playsinline=1&rel=0&modestbranding=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="' + esc(x.title) + '"></iframe>') + '</div>' +
         '<div class="card2" style="cursor:default"><span><span class="k">' + esc(x.kind) + '</span><br><span class="t">' + esc(x.title) + '</span><br><span class="a">' + esc(x.who) + ' · ' + esc(x.len) + '</span></span></div>' +
         '<p class="credit2">This clip plays from ' + esc(x.who.split(' · ')[0]) + '’s own YouTube channel. <a href="https://www.youtube.com/watch?v=' + x.yt + '" target="_blank" rel="noopener">Watch and follow them on YouTube ↗</a></p>' + after(x));
+      curX = x;
+      if (useApi) try { ytB = new YT.Player('ccYTb', { width: '100%', height: '100%', videoId: x.yt, playerVars: { autoplay: 1, playsinline: 1, rel: 0, modestbranding: 1 }, events: { onStateChange: function(e){ if (e.data === 0) onEnd(x); } } }); } catch(e){}
       return; }
-    playSkit(x);
+    playSkit(x); curX = x;
   };
 
   /* ---------- skit player v2 (Nov 6 2026): animated characters or a text thread, read in natural recorded voices ----------
@@ -4003,7 +4145,7 @@
       if (chain !== speakChain) return;
       var el = document.querySelector('#ccSkL [data-i="' + i + '"]');
       if (!el) { var v = document.getElementById('ccSkV'); var b = document.getElementById('ccSkB'); if (b) b.classList.remove('on');
-        if (v) { v.classList.add('on'); v.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); play(AUD + x.id + '/v.mp3', 4000, function(){}); } return; }
+        if (v) { v.classList.add('on'); v.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); play(AUD + x.id + '/v.mp3', 4000, function(){ onEnd(x); }); } else onEnd(x); return; }
       var l = x.lines[i], ms = Math.max(1600, l[1].length * 62);
       function show(){
         if (chain !== speakChain) return;
@@ -4047,7 +4189,7 @@
       A(FB_GROUP, 'Faith and Findings Forum', 'Our Facebook group: biblical takes on what’s going on in the world') +
       A(LINKTREE, 'Faith & Findings on Linktree', 'Every link in one place') +
       A(SITE + 'chat.html', 'Chat with the team', 'Talk to the Community Covenant team') +
-      B("ccOpenBreak('skits')", 'Skits & commercials', 'Short, faith-filled and made for your age')); }
+      B("ccOpenBreak('play')", 'Skits & commercials', 'Short, faith-filled and made for your age')); }
   ];
   var ICON_FB = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.3v7A10 10 0 0 0 22 12z"/></svg>';
   var ICON_LT = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M10.6 2h2.8v5.6l4-4 2 2-4.3 4.1H21v2.8h-6l4.3 4.2-2 2-5.3-5.4-5.3 5.4-2-2 4.3-4.2H3V9.7h5.9L4.6 5.6l2-2 4 4zM10.6 15h2.8v7h-2.8z"/></svg>';
@@ -4056,7 +4198,7 @@
     Array.prototype.forEach.call(strip.children, function(d, i){ if (!TILES[i]) return; d.setAttribute('role', 'button'); d.setAttribute('tabindex', '0');
       d.onclick = TILES[i]; d.onkeydown = function(e){ if (e.key === 'Enter') TILES[i](); }; });
     var acts = document.querySelector('#ccWelcome .acts');
-    if (acts && !document.getElementById('ccwBrk')) { var b = document.createElement('button'); b.id = 'ccwBrk'; b.className = 'ccw-btn glass'; b.textContent = 'Skits, sermons & screen-time breaks'; b.onclick = function(){ ccOpenBreak('foryou'); };
+    if (acts && !document.getElementById('ccwBrk')) { var b = document.createElement('button'); b.id = 'ccwBrk'; b.className = 'ccw-btn glass'; b.textContent = 'Skits, sermons & screen-time breaks'; b.onclick = function(){ ccOpenBreak('play'); };
       acts.insertBefore(b, acts.children[1] || null); }
     var foot = document.querySelector('#ccWelcome .foot');
     if (foot && !document.getElementById('ccwLinks')) { var l = document.createElement('div'); l.className = 'links'; l.id = 'ccwLinks';
@@ -4078,7 +4220,7 @@
   (function addNav(){
     var nav = document.querySelector('#appPage .nav'); if (!nav) return setTimeout(addNav, 900);
     if (document.getElementById('ccNavBrk')) return;
-    var b = document.createElement('button'); b.id = 'ccNavBrk'; b.textContent = 'Screen Breaks'; b.onclick = function(){ ccOpenBreak('foryou'); };
+    var b = document.createElement('button'); b.id = 'ccNavBrk'; b.textContent = 'Screen Breaks'; b.onclick = function(){ ccOpenBreak('play'); };
     var r = document.getElementById('ccNavReels'); nav.insertBefore(b, r ? r.nextSibling : (nav.children[1] || null));
   })();
 })();
