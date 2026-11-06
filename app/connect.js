@@ -259,6 +259,32 @@
     inst.innerHTML = '<b>Opened from Facebook?</b> Everything works here. To install it on your phone, tap the <b>⋯</b> menu and choose <b>Open in browser</b>.';
     inst.style.display = 'block';
   }
+  /* Nov 6 2026: "Get the app" right on the welcome screen and in the menu, for phones, tablets and computers. */
+  function installHelp() {
+    var ua = navigator.userAgent;
+    var how = inFB ? 'Tap the <b>⋯</b> menu at the top right, choose <b>Open in browser</b>, then tap <b>Get the app</b> again.'
+      : isIOS ? 'In <b>Safari</b>, tap the <b>Share</b> button <span style="font-size:1.2em">⬆︎</span>, then <b>Add to Home Screen</b>, then <b>Add</b>.'
+      : /android/i.test(ua) ? 'In <b>Chrome</b>, tap the <b>⋮</b> menu at the top right, then <b>Install app</b> (or <b>Add to Home screen</b>).'
+      : /edg\//i.test(ua) ? 'In <b>Edge</b>, click the <b>⋯</b> menu, then <b>Apps</b> › <b>Install this site as an app</b>.'
+      : 'In <b>Chrome</b>, click the <b>install icon</b> at the right end of the address bar (a small screen with a down arrow), or open the <b>⋮</b> menu › <b>Cast, save and share</b> › <b>Install page as app</b>.';
+    var m = el('<div class="cc-modal"><div style="background:#fffdf7;color:#2a2040;border-radius:18px;padding:20px 22px;max-width:420px;font:16px/1.5 Arial,sans-serif"><b style="font-family:Georgia,serif;font-size:1.4em;display:block;margin-bottom:6px">Get the app on this device</b>' + how +
+      '<p style="margin:12px 0 0;font-size:.9em;color:#5a5170">Once installed it opens from its own icon like any app, and works with no internet.</p><button class="x" style="position:static;display:block;margin:14px 0 0;background:#372b4e;color:#fff;border-radius:999px;padding:8px 18px;font-size:15px">OK</button></div></div>');
+    m.addEventListener('click', function (e) { if (e.target === m || e.target.className === 'x') m.remove(); });
+    document.body.appendChild(m);
+  }
+  window.ccGetApp = function () {
+    if (deferred) { deferred.prompt(); deferred.userChoice.then(function () { deferred = null; }); return; }
+    installHelp();
+  };
+  if (!standalone) {
+    var wacts = document.querySelector('#ccWelcome .acts');
+    if (wacts) { var gb = el('<button class="ccw-btn glass" type="button">⬇ Get the app on this device</button>'); gb.onclick = window.ccGetApp; wacts.appendChild(gb); }
+    (function addGetNav() {
+      var nav = document.querySelector('#appPage .nav'); if (!nav) return setTimeout(addGetNav, 1000);
+      if (document.getElementById('ccNavGet')) return;
+      var b = document.createElement('button'); b.id = 'ccNavGet'; b.textContent = 'Get the app'; b.onclick = window.ccGetApp; nav.appendChild(b);
+    })();
+  }
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
     navigator.serviceWorker.register(SITE + 'sw.js', { scope: SITE }).catch(function () {});
     /* Offline-first (Nov 6 2026): once the app is open with internet, quietly save every skit and Wisdom Reels
@@ -270,7 +296,7 @@
       try { localStorage.setItem('ccOfflineMedia', JSON.stringify({ done: d.done, total: d.total })); } catch (e) {}
       var n = document.getElementById('ccOffNote');
       if (!n) { var foot = document.querySelector('#ccWelcome .foot'); if (!foot) return; n = document.createElement('div'); n.id = 'ccOffNote'; n.style.cssText = 'padding:0 22px 22px;font-size:.72em;color:#b9add2'; foot.parentNode.insertBefore(n, foot.nextSibling); }
-      n.textContent = d.done >= d.total ? 'Ready to use offline ✓ every skit and Wisdom Reel is saved on this device.' : 'Saving for offline use: ' + d.done + ' of ' + d.total + ' recordings…';
+      n.innerHTML = (d.done >= d.total ? 'Ready to use offline ✓ every skit and Wisdom Reel is saved on this device.' : 'Saving for offline use: ' + d.done + ' of ' + d.total + ' recordings…') + '<br><span style="opacity:.8">Saved inside the app’s own storage on this phone or computer (about 32 MB), not in your Downloads or Files. Clearing this browser’s site data for the app removes it.</span>';
     });
   }
 
