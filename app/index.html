@@ -2284,7 +2284,9 @@
   function vpLoad(){ try { return JSON.parse(localStorage.getItem(VP_KEY) || 'null') || {}; } catch(e){ return {}; } }
   function vpSave(){ try { localStorage.setItem(VP_KEY, JSON.stringify(vp)); } catch(e){} }
   var vp = vpLoad();
+  if (!vp.v6) { if ((!vp.style || vp.style === 'auto') && !vp.name) vp.style = 'natural'; vp.v6 = 1; vpSave(); } /* v6: move the old default to the natural recorded voice once */
   var VSTYLES = {
+    natural: { label: 'Natural recorded voice', sub: 'Deep and human-sounding, same on every phone', pitch: 1, rate: 1 },
     auto:    { label: 'Most natural', sub: 'Best voice on this phone', pitch: 1, rate: .93 },
     deep:    { label: 'Deep voice', sub: 'Lower, slower, male where available', pitch: .72, rate: .88, re: /\b(male|guy|davis|andrew|christopher|eric|roger|steffan|brian|tony|jason|daniel|alex|aaron|fred|ryan|thomas|oliver|george|arthur|james|reed|evan|nathan|tom|william|liam|abeo|chilemba|luke|rishi)\b/i },
     warm:    { label: 'Warm woman\u2019s voice', sub: 'Gentle and clear', pitch: 1.05, rate: .92, re: /\b(female|aria|jenny|ava|emma|michelle|sara|samantha|zira|susan|karen|moira|tessa|serena|allison|joanna|kendra|libby|sonia|natasha|zoe|nicky|victoria|ezinne|asilia|leah|imani)\b/i },
@@ -2312,7 +2314,7 @@
     var el = document.getElementById('ccVoiceSheet'); if (!el) return;
     var st = VSTYLES[vp.style] || VSTYLES.auto, h = '<div class="vh">Choose a voice<button onclick="ccVoiceClose()" aria-label="Close">&times;</button></div><div class="vstyles">';
     Object.keys(VSTYLES).forEach(function(k){
-      var ok = !ccDeviceVoiceOK() ? !!CC_CLOUD[k] : (!VSTYLES[k].lang || !!pickFor(k)), on = (vp.style || 'auto') === k && !vp.name;
+      var ok = !ccDeviceVoiceOK() ? !!CC_CLOUD[k] : (!VSTYLES[k].lang || !!pickFor(k)), on = (vp.style || 'natural') === k && !vp.name;
       h += '<button class="vs' + (on ? ' on' : '') + '"' + (ok ? '' : ' disabled') + ' onclick="ccVoiceSet(\'' + k + '\')">' + VSTYLES[k].label + '<small>' + (ok ? VSTYLES[k].sub : 'Not on this phone yet') + '</small></button>';
     });
     h += '</div>';
@@ -2329,7 +2331,7 @@
   /* Wisdom Reels v3: read-aloud on EVERY device. When the browser has no voices (Facebook and Instagram in-app browsers, some tablets),
      the app plays a spoken clip made by its own server instead. */
   var CC_SAMPLE = 'Trust in the Lord with all thine heart, and lean not unto thine own understanding.';
-  var CC_CLOUD = { auto: { tl: 'en-US', rate: 1, pitch: 1 }, deep: { tl: 'en-US', rate: 1, pitch: .84 }, warm: { tl: 'en-US', rate: .98, pitch: 1 }, african: { tl: 'en-NG', rate: .98, pitch: 1 }, british: { tl: 'en-GB', rate: 1, pitch: 1 } };
+  var CC_CLOUD = { natural: { tl: 'en-US', rate: 1, pitch: 1 }, auto: { tl: 'en-US', rate: 1, pitch: 1 }, deep: { tl: 'en-US', rate: 1, pitch: .84 }, warm: { tl: 'en-US', rate: .98, pitch: 1 }, african: { tl: 'en-NG', rate: .98, pitch: 1 }, british: { tl: 'en-GB', rate: 1, pitch: 1 } };
   var ccAudio = null, ccClipCache = {}, ccCloudToken = 0;
   var CC_SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
   function ccDeviceVoiceOK(){ return !!synth && enVoices().length > 0; }
@@ -2405,7 +2407,7 @@
   window.ccVoiceName = function(i){ var x = enVoices()[i]; if (!x) return; vp.name = x.name; vpSave(); renderVoices(); ccVoiceTry(); };
   window.ccVoiceRate = function(x){ vp.rate = +x; vpSave(); var s = document.getElementById('ccVRv'); if (s) s.textContent = (+x).toFixed(2) + 'x'; };
   window.ccVoicePitch = function(x){ vp.pitch = +x; vpSave(); var s = document.getElementById('ccVPv'); if (s) s.textContent = (+x).toFixed(2); };
-  window.ccVoiceTry = function(){ if (!ccDeviceVoiceOK()) { ccCloudSay(CC_SAMPLE, true); return; } if (!synth) { toast('Read-aloud isn\u2019t available on this device'); return; } synth.cancel(); var u = new SpeechSynthesisUtterance('Trust in the Lord with all thine heart, and lean not unto thine own understanding.'); ccApplyVoice(u); duck(true); u.onend = u.onerror = function(){ duck(false); }; synth.speak(u); };
+  window.ccVoiceTry = function(){ if (ccRecOn()) { var a = ccAudioEl(); ccUnlock(); a.onended = null; a.onerror = null; a.src = CC_REC + '9.mp3'; a.playbackRate = 1; var pp = a.play(); if (pp && pp.catch) pp.catch(function(){}); return; } if (!ccDeviceVoiceOK()) { ccCloudSay(CC_SAMPLE, true); return; } if (!synth) { toast('Read-aloud isn\u2019t available on this device'); return; } synth.cancel(); var u = new SpeechSynthesisUtterance('Trust in the Lord with all thine heart, and lean not unto thine own understanding.'); ccApplyVoice(u); duck(true); u.onend = u.onerror = function(){ duck(false); }; synth.speak(u); };
   /* Wisdom Reels v5 (2026-11-01): reels move on by themselves on EVERY device, including the installed desktop app.
      Desktop Chrome's online voices stop after about 15 seconds and never report that they finished, so the next reel never came.
      Now each reel is read one sentence at a time, and a safety timer moves to the next reel if the voice or audio goes quiet. */
@@ -2422,7 +2424,27 @@
     setTimeout(function(){ if (auto && current === from) { feed.scrollTop = nx.offsetTop; } }, 1200);
   }
   function ccAfterRead(manual){ ccDisarm(); duck(false); if (auto && !manual) setTimeout(function(){ if (auto) ccNext(); }, 1600); }
+  /* Wisdom Reels v6 (2026-11-06): natural recorded voice (deep, human-sounding) is the default. Files: assets/reels/<reel number>.mp3.
+     If a file can't play, the reel falls back to the voice it used before. The other voice choices are all still in the picker. */
+  var CC_REC = ((window.COVENANT_CONFIG && window.COVENANT_CONFIG.SITE_URL) || 'https://crispcleaninc-dot.github.io/community-covenant/') + 'assets/reels/';
+  function ccRecOn(){ return (vp.style || 'natural') === 'natural' && !vp.name; }
+  function ccRecSpeak(section, manual){
+    var ri = +section.getAttribute('data-i'), r = R[ri], a = ccAudioEl(), my = ++ccCloudToken, done = false;
+    ccUnlock(); if (synth) { try { synth.cancel(); } catch(e){} }
+    ccDisarm(); if (auto && !manual) ccArm(ccEstMs(ccReelText(r), 1) + 20000);
+    function fallback(){ if (done || my !== ccCloudToken) return; done = true; duck(false); if (ccDeviceVoiceOK()) speakOld(section, manual); else ccCloudSpeak(section, manual); }
+    a.onended = function(){ if (my !== ccCloudToken) return; done = true; duck(false); ccAfterRead(manual); };
+    a.onerror = fallback;
+    a.preservesPitch = true; a.mozPreservesPitch = true; a.webkitPreservesPitch = true;
+    a.src = CC_REC + ri + '.mp3'; a.playbackRate = vp.rate ? Math.max(.6, Math.min(1.5, +vp.rate / .93)) : 1;
+    duck(true); var p = a.play(); if (p && p.catch) p.catch(function(){ if (manual) fallback(); else { duck(false); toast('Tap Listen to hear this reel'); } });
+    try { var feed = document.getElementById('ccFeed'), nx = feed && feed.children[current + 1]; if (nx) { var pre = new Audio(); pre.preload = 'auto'; pre.src = CC_REC + nx.getAttribute('data-i') + '.mp3'; } } catch(e){}
+  }
   function speak(section, manual){
+    if (ccRecOn()) { ccRecSpeak(section, manual); return; }
+    speakOld(section, manual);
+  }
+  function speakOld(section, manual){
     if (!ccDeviceVoiceOK()) { ccCloudSpeak(section, manual); return; }
     if (!synth) { toast('Read-aloud isn’t available on this device'); return; }
     var r = R[+section.getAttribute('data-i')];
