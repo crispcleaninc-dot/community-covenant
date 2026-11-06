@@ -2236,7 +2236,7 @@
   };
   function build(){
     if (built) return; built = true;
-    var order = R.map(function(_, i){ return i; }).filter(function(i){ return !ccTopic || R[i][6] === ccTopic; });
+    var order = R.map(function(_, i){ return i; }).filter(function(i){ return (!ccTopic || R[i][6] === ccTopic) && (!window.ccReelSet || R[i][0] === window.ccReelSet); }); /* ccReelSet: photo-set filter for the welcome tiles (Nov 6 2026) */
     for (var i = order.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = order[i]; order[i] = order[j]; order[j] = t; }
     var feed = document.getElementById('ccFeed');
     feed.innerHTML = order.map(function(ri, k){
@@ -2386,6 +2386,7 @@
   };
   window.ccSetTopic = function(i){
     ccTopic = i < 0 ? '' : (CC_TOPICS[i] || '');
+    if (i !== -2) window.ccReelSet = ''; /* picking a topic clears the welcome-tile photo filter; -2 = keep it (His creation tile) */
     var lbl = document.getElementById('ccTopicLbl'); if (lbl) lbl.innerHTML = escV(ccTopic || 'All topics') + ' &#9662;';
     ccVoiceClose();
     var was = auto; if (auto) ccToggleAuto();
@@ -3467,6 +3468,405 @@
 })();
 </script>
 <!-- ===== end Bible Study Library v1.0 ===== -->
+
+<!-- ===== Screen-Time Breaks v1.0 (Nov 6 2026) — ADDITIVE. Paste at the very END of Index (after the last line). Nothing above is changed.
+     Adds: screen-time break reminders, short skits & commercials (Covenant Originals, read aloud in two voices),
+     credited sermon & skit clips from the creators' own YouTube channels, all matched to the member's age, interests,
+     daily focus, covenant day and the Bible study they opened last. Kids only ever see kid content.
+     Also: the three welcome tiles now open something, plus Faith & Findings (Facebook) and Linktree links. ===== -->
+<style>
+  #ccBrk { position: fixed; inset: 0; z-index: 9400; background: #1d1630; color: #fff; display: none; overflow-y: auto; -webkit-overflow-scrolling: touch; font-family: 'Source Sans 3', sans-serif; }
+  #ccBrk.on { display: block; }
+  #ccBrk .bh { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; background: linear-gradient(180deg, #1d1630 70%, rgba(29,22,48,0)); }
+  #ccBrk .bh b { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.35em; font-weight: 700; }
+  #ccBrk .bh b small { display: block; font-family: 'Source Sans 3', sans-serif; font-size: .5em; letter-spacing: 2px; color: #f1d999; text-transform: uppercase; }
+  #ccBrk .x { width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.08); color: #fff; font-size: 22px; cursor: pointer; }
+  #ccBrk .tabs { display: flex; gap: 6px; padding: 0 16px 10px; overflow-x: auto; scrollbar-width: none; }
+  #ccBrk .tabs button { flex: none; border-radius: 999px; padding: 8px 14px; border: 1px solid rgba(255,255,255,.3); background: transparent; color: #fff; font: 700 .82em 'Source Sans 3', sans-serif; cursor: pointer; }
+  #ccBrk .tabs button.on { background: #f1d999; color: #2a2040; border-color: #f1d999; }
+  #ccBrk .wrap { padding: 0 16px 40px; max-width: 620px; margin: 0 auto; }
+  #ccBrk .why { font-size: .78em; color: #c9bfdc; margin: 0 0 12px; }
+  #ccBrk .card2 { display: flex; gap: 12px; align-items: center; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 10px; margin-bottom: 10px; cursor: pointer; text-align: left; width: 100%; color: #fff; font: inherit; }
+  #ccBrk .card2 .th { width: 96px; height: 64px; border-radius: 10px; background: #000 center/cover; flex: none; position: relative; }
+  #ccBrk .card2 .th i { position: absolute; left: 6px; bottom: 5px; font-style: normal; font-size: .62em; font-weight: 700; letter-spacing: 1px; background: rgba(0,0,0,.6); padding: 2px 6px; border-radius: 6px; }
+  #ccBrk .card2 .k { font-size: .62em; letter-spacing: 2px; color: #f1d999; text-transform: uppercase; font-weight: 700; }
+  #ccBrk .card2 .t { font-weight: 700; font-size: .95em; line-height: 1.25; }
+  #ccBrk .card2 .a { font-size: .76em; color: #c9bfdc; }
+  #ccBrk .stage { border-radius: 18px; overflow: hidden; background: #000; position: relative; margin-bottom: 12px; }
+  #ccBrk .stage iframe { width: 100%; aspect-ratio: 16/9; border: 0; display: block; }
+  #ccBrk .credit2 { font-size: .78em; color: #c9bfdc; margin: -4px 0 12px; }
+  #ccBrk .credit2 a, #ccBrk a.lnk { color: #f1d999; }
+  #ccBrk .skit { position: relative; min-height: 380px; background: center/cover; display: flex; flex-direction: column; justify-content: flex-end; }
+  #ccBrk .skit::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20,14,36,.25), rgba(20,14,36,.92)); }
+  #ccBrk .skit > * { position: relative; z-index: 1; }
+  #ccBrk .skit .ttl { position: absolute; top: 12px; left: 14px; right: 14px; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.25em; font-weight: 700; text-shadow: 0 1px 8px rgba(0,0,0,.6); }
+  #ccBrk .skit .ttl small { display: block; font-family: 'Source Sans 3', sans-serif; font-size: .52em; letter-spacing: 2px; color: #f1d999; text-transform: uppercase; }
+  #ccBrk .lines { padding: 70px 14px 12px; display: flex; flex-direction: column; gap: 8px; }
+  #ccBrk .ln { max-width: 84%; padding: 9px 13px; border-radius: 16px; font-size: .98em; line-height: 1.35; opacity: 0; transform: translateY(8px); transition: opacity .35s, transform .35s; }
+  #ccBrk .ln.on { opacity: 1; transform: none; }
+  #ccBrk .ln b { display: block; font-size: .66em; letter-spacing: 1.5px; text-transform: uppercase; opacity: .8; margin-bottom: 2px; }
+  #ccBrk .ln.A { align-self: flex-start; background: rgba(255,255,255,.92); color: #2a2040; border-bottom-left-radius: 4px; }
+  #ccBrk .ln.B { align-self: flex-end; background: #f1d999; color: #2a2040; border-bottom-right-radius: 4px; }
+  #ccBrk .ln.C { align-self: center; background: rgba(0,0,0,.55); color: #fff; font-style: italic; text-align: center; max-width: 92%; }
+  #ccBrk .ln.dark { background: #2b2b33; color: #e9e9ef; }
+  #ccBrk .vv { margin: 4px 14px 14px; padding: 10px 12px; border-left: 3px solid #f1d999; font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 1.05em; opacity: 0; transition: opacity .5s; }
+  #ccBrk .vv.on { opacity: 1; }
+  #ccBrk .vv b { display: block; font-style: normal; font-family: 'Source Sans 3', sans-serif; font-size: .62em; letter-spacing: 2px; color: #f1d999; text-transform: uppercase; margin-top: 4px; }
+  #ccBrk .row { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 14px; }
+  #ccBrk .btn2 { border: 0; border-radius: 999px; padding: 12px 18px; font: 700 .9em 'Source Sans 3', sans-serif; cursor: pointer; background: rgba(255,255,255,.14); color: #fff; border: 1px solid rgba(255,255,255,.3); }
+  #ccBrk .btn2.gold { background: linear-gradient(135deg, #f1d999, #c9a961); color: #2a2040; border: 0; }
+  #ccBrk .breathe { text-align: center; padding: 26px 10px 10px; }
+  #ccBrk .orb { width: 150px; height: 150px; border-radius: 50%; margin: 10px auto 16px; background: radial-gradient(circle at 40% 35%, #f6e7bd, #c9a961 60%, #8a6f39); box-shadow: 0 0 60px rgba(241,217,153,.35); animation: ccOrb 8s ease-in-out infinite; }
+  @keyframes ccOrb { 0%,100% { transform: scale(.72); } 50% { transform: scale(1); } }
+  #ccBrk .breathe h3 { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.7em; margin: 0 0 4px; color: #fff; }
+  #ccBrk .breathe p { color: #d9d0ea; margin: 0 0 4px; }
+  #ccBrk .set { margin-top: 18px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.12); font-size: .82em; color: #c9bfdc; }
+  #ccBrk .set button { margin: 4px 4px 0 0; padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.3); background: transparent; color: #fff; font: 700 .9em 'Source Sans 3', sans-serif; cursor: pointer; }
+  #ccBrk .set button.on { background: #f1d999; color: #2a2040; }
+  #ccBrkNudge { position: fixed; left: 12px; right: 12px; top: 14px; z-index: 9350; max-width: 520px; margin: 0 auto; background: #fffdf7; color: #2a2040; border: 1px solid #c9a961; border-radius: 16px; padding: 12px 14px; box-shadow: 0 12px 30px rgba(0,0,0,.25); display: none; font-family: 'Source Sans 3', sans-serif; }
+  #ccBrkNudge.on { display: block; }
+  #ccBrkNudge b { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.2em; }
+  #ccBrkNudge p { margin: 2px 0 8px; font-size: .9em; }
+  #ccBrkNudge button { border: 0; border-radius: 999px; padding: 8px 14px; font: 700 .85em 'Source Sans 3', sans-serif; cursor: pointer; margin-right: 6px; background: #372b4e; color: #fff; }
+  #ccBrkNudge button.l { background: #efe7d6; color: #372b4e; }
+  #ccSheet2 { position: fixed; left: 0; right: 0; bottom: 0; z-index: 9500; background: #fffdf7; color: #2a2040; border-radius: 20px 20px 0 0; padding: 18px 18px 26px; box-shadow: 0 -10px 30px rgba(0,0,0,.3); transform: translateY(110%); transition: transform .3s; max-width: 620px; margin: 0 auto; font-family: 'Source Sans 3', sans-serif; }
+  #ccSheet2.on { transform: none; }
+  #ccSheet2 h4 { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.45em; margin: 0 0 4px; }
+  #ccSheet2 p { margin: 0 0 12px; font-size: .92em; color: #5a5170; }
+  #ccSheet2 a, #ccSheet2 button.it { display: block; width: 100%; box-sizing: border-box; text-align: left; padding: 12px 14px; margin-bottom: 8px; border-radius: 12px; background: #f4eee1; color: #2a2040; text-decoration: none; font: 700 .95em 'Source Sans 3', sans-serif; border: 0; cursor: pointer; }
+  #ccSheet2 a small, #ccSheet2 button.it small { display: block; font-weight: 400; font-size: .82em; color: #6a6180; }
+  #ccSheet2 .close { position: absolute; top: 10px; right: 14px; border: 0; background: none; font-size: 26px; color: #6a6180; cursor: pointer; }
+  #ccSheetBg { position: fixed; inset: 0; z-index: 9490; background: rgba(20,15,30,.5); display: none; }
+  #ccSheetBg.on { display: block; }
+  #ccWelcome .strip div { cursor: pointer; }
+  #ccWelcome .strip div::after { content: "\203A"; position: absolute; right: 9px; top: 6px; font-size: 1.2em; font-weight: 700; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.6); }
+  #ccWelcome .links { display: flex; gap: 8px; flex-wrap: wrap; padding: 4px 22px 0; }
+  #ccWelcome .links a { display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.3); color: #fff; text-decoration: none; font: 700 .8em 'Source Sans 3', sans-serif; background: rgba(255,255,255,.08); }
+  #ccWelcome .links svg { width: 16px; height: 16px; }
+  @media (prefers-reduced-motion: reduce) { #ccBrk .orb { animation: none; } }
+</style>
+
+<div id="ccBrk" role="dialog" aria-label="Screen-time break">
+  <div class="bh"><b>Screen-Time Break<small id="ccBrkSub">Breathe &middot; watch &middot; get back to life</small></b><button class="x" onclick="ccCloseBreak()" aria-label="Close">&times;</button></div>
+  <div class="tabs" id="ccBrkTabs"></div>
+  <div class="wrap" id="ccBrkBody"></div>
+</div>
+<div id="ccBrkNudge" role="status"><b>Time for a screen-time break?</b><p id="ccBrkNudgeTxt">You've been on for a while. Stand up, breathe, and watch something short.</p><button onclick="ccOpenBreak('breathe')">Take a break</button><button class="l" onclick="ccSnoozeBreak()">In 10 minutes</button></div>
+<div id="ccSheetBg" onclick="ccSheetClose()"></div>
+<div id="ccSheet2" role="dialog"></div>
+
+<script>
+(function(){
+  var SITE = (window.COVENANT_CONFIG && window.COVENANT_CONFIG.SITE_URL) || 'https://crispcleaninc-dot.github.io/community-covenant/';
+  var FB_GROUP = 'https://www.facebook.com/groups/943044184469864';
+  var LINKTREE = 'https://linktr.ee/FaithandFindings';
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function ls(k, v){ try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || 'null'); localStorage.setItem(k, JSON.stringify(v)); } catch(e){ return null; } }
+  function U(id, w){ return 'https://images.unsplash.com/' + id + '?auto=format&fit=crop&q=70&w=' + (w || 900); }
+  var SCENE = { creation: 'photo-1540979388789-6cee28a1cdc9', peace: 'photo-1507126882445-434b04530d1a', together: 'photo-1530047139082-5435ca3c4614', walk: 'photo-1529003532648-93cc0f57b7eb', faith: 'photo-1509021436665-8f07dbf5bf1d', smile: 'photo-1508002366005-75a695ee2d17', reach: 'photo-1586726370832-3440a511e479', sky: 'photo-1494548162494-384bba4ab999', night: 'photo-1475924156734-496f6cac6ec1' };
+
+  /* ---------- who is watching: age band, interests, focus, covenant day, last Bible study ---------- */
+  function me(){ try { return (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null; } catch(e){ return null; } }
+  function band(){ var u = me(); if (!u) return ''; var a = String((u.profile && u.profile.age) || u.age || '');
+    if (a.indexOf('Under 12') !== -1) return 'K'; if (a.indexOf('Teen') !== -1) return 'T'; if (a.indexOf('Young Adult') !== -1) return 'Y'; if (a) return 'A'; return ''; }
+  function interests(){ var u = me(); return String((u && u.profile && u.profile.interests) || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean); }
+  function focus(){ var u = me(); return (u && u.dailyFocus) || ''; }
+  function covDay(){ var u = me(); if (!u || !u.covenantStart) return 0; var s = new Date(u.covenantStart); if (isNaN(s)) return 0; s.setHours(0,0,0,0); var t = new Date(); t.setHours(0,0,0,0); return Math.floor((t - s) / 864e5) + 1; }
+  // remember which Bible study the member opened last
+  document.addEventListener('toggle', function(e){ var d = e.target; if (d && d.matches && d.matches('details.bsl-topic') && d.open) ls('ccLastStudy', d.getAttribute('data-id')); }, true);
+
+  /* ---------- Covenant Originals: short skits & commercials, read aloud in two voices ----------
+     ages: K = under 12, T = teen, Y = young adult, A = adult/senior.  g = fine for anyone (shown before sign-in). */
+  var O = [
+    { id:'k-brave', kind:'Skit', ages:'K', g:1, title:'Brave and Worry', scene:'sky', tags:['anxiety','word'],
+      cast:{A:'Worry',B:'Brave'}, lines:[['A',"What if I get the answer wrong in class? What if everybody laughs?"],['B',"Hey Worry, you always say 'what if.' Want to hear a 'what is'?"],['A',"...Okay."],['B',"What IS true: God is with you right now. In the classroom, at the lunch table, everywhere."],['A',"Even at the spelling test?"],['B',"Especially at the spelling test! Let's take a lion breath. In through your nose... and ROAR it out."],['A',"Roar! ...I feel a little smaller now."],['B',"That's how it works. Hand God the 'what ifs.' Keep the 'what is.'"]],
+      verse:["Be strong and of a good courage; be not afraid, neither be thou dismayed: for the LORD thy God is with thee whithersoever thou goest.","Joshua 1:9"] },
+    { id:'k-lunch', kind:'Skit', ages:'K', g:1, title:'The Lunch Box', scene:'together', tags:['Friends','gratitude'],
+      cast:{A:'Jordan',B:'Maya'}, lines:[['A',"I forgot my lunch. My stomach is growling like a bear."],['B',"I have two sandwiches and one apple. Want a sandwich?"],['A',"But then you'll have less."],['B',"Jesus took five loaves and two fish and fed a whole crowd. I think one sandwich can stretch."],['A',"Thank you! Tomorrow I'll bring cookies for both of us."],['B',"Deal. That's how friends get woven together."]],
+      verse:["Two are better than one; because they have a good reward for their labour.","Ecclesiastes 4:9"] },
+    { id:'k-jars', kind:'Skit', ages:'K', g:1, title:'Three Jars', scene:'smile', tags:['Finance'],
+      cast:{A:'Eli',B:'Grandma'}, lines:[['A',"Grandma, I got ten dollars for my birthday! I'm spending it ALL on candy."],['B',"That's a lot of candy. Can I show you my three jars first?"],['A',"Jars?"],['B',"This one says GIVE. This one says SAVE. This one says SPEND."],['A',"So... some to give, some to save, and the rest for candy?"],['B',"Now you're thinking like a steward. Everything we have is God's, and He trusts us with it."],['A',"One dollar to give, four to save for a bike, five for candy. That's still a LOT of candy."]],
+      verse:["Honour the LORD with thy substance, and with the firstfruits of all thine increase.","Proverbs 3:9"] },
+    { id:'k-detective', kind:'Skit', ages:'K', g:1, title:'The Thank-You Detective', scene:'smile', tags:['gratitude'],
+      cast:{A:'Sam',B:'Detective Dot'}, lines:[['B',"Detective Dot here. I'm looking for clues of God's goodness today."],['A',"I didn't see any. Today was boring."],['B',"Hmm. Did you wake up this morning?"],['A',"Yes."],['B',"Clue number one! Did you eat breakfast?"],['A',"Pancakes."],['B',"Clue number two! Who made you laugh today?"],['A',"My little brother, with his silly dance."],['B',"Case closed. Today was full of gifts. You just had to look."],['A',"Can I be a Thank-You Detective too?"],['B',"The badge is yours. Find four clues before bed."]],
+      verse:["In every thing give thanks: for this is the will of God in Christ Jesus concerning you.","1 Thessalonians 5:18"] },
+    { id:'k-sky', kind:'Skit', ages:'KT', g:1, title:'Who Painted the Sky?', scene:'creation', tags:['times','math','creation','word'],
+      cast:{A:'Zoe',B:'Mom'}, lines:[['A',"Mom, look! The sky is orange and pink and purple."],['B',"Who do you think painted it?"],['A',"God did. But why does the sun go down at all?"],['B',"On day four, God made the sun, moon and stars to keep time: days, seasons and years."],['A',"So the sky is like God's clock?"],['B',"God's clock, and God's art. Every sunset says, 'I'm still in charge.'"],['A',"Then good night, God. Thanks for the painting."]],
+      verse:["And God said, Let there be lights in the firmament of the heaven to divide the day from the night; and let them be for signs, and for seasons, and for days, and years.","Genesis 1:14"] },
+    { id:'t-advocate', kind:'Skit', ages:'TYA', title:'The Accuser & the Advocate: Hallway Edition', scene:'night', tags:['forgiveness','warfare','recon'],
+      cast:{A:'The Accuser',B:'The Advocate',C:'Narrator'}, dark:'A', lines:[['A',"Look at this one. Lied to his mom. Skipped youth group. Said something ugly in the group chat."],['B',"All true."],['A',"So he's mine. He doesn't even pray anymore."],['B',"He prayed last night. Quietly. He said, 'God, I'm sorry. Help me.'"],['A',"Words. He'll do it again."],['B',"Maybe. And when he comes back, mercy will still be standing right here."],['A',"You can't keep paying for him."],['B',"It was paid in full. Case dismissed."],['C',"When you mess up, don't run from God. Run to Him."]],
+      verse:["And if any man sin, we have an advocate with the Father, Jesus Christ the righteous.","1 John 2:1"] },
+    { id:'t-scroll', kind:'Skit', ages:'TY', title:'One More Scroll', scene:'night', tags:['Tech','rest','anxiety'],
+      cast:{A:'The Phone',B:'Jada',C:'Narrator'}, dark:'A', lines:[['A',"Just one more video. You've got time."],['B',"It's one in the morning. I have practice at seven."],['A',"Okay, but this one is really funny."],['B',"That's what you said forty videos ago."],['A',"Fine. But you'll miss everything."],['B',"I'd rather not miss my life. You're going on the charger. Across the room."],['A',"...Rude."],['B',"God, thank You for today. Help me rest."],['C',"Your attention is treasure. Spend it where your heart wants to live."]],
+      verse:["For where your treasure is, there will your heart be also.","Matthew 6:21"] },
+    { id:'t-practice', kind:'Skit', ages:'TY', title:"Practice Doesn't Lie", scene:'walk', tags:['Temple','workout','Career'],
+      cast:{A:'Marcus',B:'Coach'}, lines:[['A',"Coach, I want to start, but I hate the early workouts."],['B',"Everybody wants the Friday lights. Nobody wants the Tuesday sprints."],['A',"So how do you push when you're tired?"],['B',"You remember who you're running for. Your body is a temple, not a trophy."],['A',"Temple, not trophy."],['B',"Show up. Drink water. Sleep. Pray before you play. The rest is God's."],['A',"Tuesday sprints it is."]],
+      verse:["And whatsoever ye do, do it heartily, as to the Lord, and not unto men.","Colossians 3:23"] },
+    { id:'t-chat', kind:'Skit', ages:'TY', title:'The Group Chat', scene:'together', tags:['Friends'],
+      cast:{A:'Tasha',B:'Bri'}, lines:[['A',"Did you see what they said about Kayla in the group chat?"],['B',"Yeah. I didn't laugh-react."],['A',"Everybody else did."],['B',"Imagine being Kayla, reading it."],['A',"...Yeah. That would hurt."],['B',"I'm going to message her. Just, 'Hey, you good?'"],['A',"Can I add my name to that?"],['B',"Now that's the kind of group chat I want."]],
+      verse:["Let no corrupt communication proceed out of your mouth, but that which is good to the use of edifying, that it may minister grace unto the hearers.","Ephesians 4:29"] },
+    { id:'y-interview', kind:'Skit', ages:'YA', title:'The Interview', scene:'faith', tags:['Career','start'],
+      cast:{A:'The Interviewer',B:'Andre'}, lines:[['A',"Your resume is thin. Why should we hire you?"],['B',"I show up early, I finish what I start, and I learn fast."],['A',"Everybody says that."],['B',"Then call my old supervisor. Ask who stayed late to clean the stockroom nobody wanted to touch."],['A',"...You'd work like that here?"],['B',"I work like God is my boss. Because He is."],['A',"Can you start Monday?"]],
+      verse:["Seest thou a man diligent in his business? he shall stand before kings; he shall not stand before mean men.","Proverbs 22:29"] },
+    { id:'y-payday', kind:'Skit', ages:'TYA', title:'Payday', scene:'smile', tags:['Finance'],
+      cast:{A:'The Paycheck',B:'Nia'}, lines:[['A',"Hey! I just landed. Let's celebrate. New shoes? Dinner out? Both?"],['B',"Hold on. Rent first."],['A',"Boring."],['B',"Then the tithe, then savings, then the bills."],['A',"Am I even going to be fun?"],['B',"You'll be fun on purpose. Twenty dollars set aside for joy, no guilt."],['A',"...I respect that."],['B',"Count the cost before you build. That's how a tower stands."]],
+      verse:["For which of you, intending to build a tower, sitteth not down first, and counteth the cost, whether he have sufficient to finish it?","Luke 14:28"] },
+    { id:'y-again', kind:'Skit', ages:'YA', title:'Same Mistake, New Mercy', scene:'reach', tags:['forgiveness','recon','discern','keepgoing'],
+      cast:{A:'Shame',B:'Grace'}, dark:'A', lines:[['A',"You promised God you'd stop. And here you are again."],['B',"She's here, though. She came back."],['A',"She'll fail again."],['B',"Then she'll get up again. A just man falls seven times and rises up again."],['A',"How many times will you let her?"],['B',"Mercy isn't a punch card. It's new every morning."],['B',"Get up, daughter. We'll walk this one out together."]],
+      verse:["For a just man falleth seven times, and riseth up again.","Proverbs 24:16"] },
+    { id:'a-court', kind:'Skit', ages:'YA', title:'The Courtroom', scene:'night', tags:['warfare','forgiveness','recon'],
+      cast:{A:'The Accuser',B:'The Advocate',C:'The Judge'}, dark:'A', lines:[['A',"Your Honor, I have the record. Every word. Every failure. Every late night she said she'd quit."],['C',"Advocate?"],['B',"We don't dispute the record."],['A',"Then she's mine."],['B',"The record was nailed to a cross. Paid in full, signed in blood."],['C',"Is there any charge left?"],['B',"None, Your Honor. There is therefore now no condemnation."],['C',"Case dismissed. Go home, child."]],
+      verse:["There is therefore now no condemnation to them which are in Christ Jesus, who walk not after the flesh, but after the Spirit.","Romans 8:1"] },
+    { id:'a-fast', kind:'Skit', ages:'YA', title:'The Fast', scene:'peace', tags:['fasting','keepgoing'],
+      cast:{A:'Hunger',B:'Ruth'}, dark:'A', lines:[['A',"It's noon. You've earned a snack."],['B',"I'm fasting until six."],['A',"Who's going to know?"],['B',"My Father sees in secret."],['A',"You're grumpy, though."],['B',"Then I'll wash my face and pray instead of complain."],['A',"What's the point?"],['B',"To tell my flesh it's not in charge, and to make room to hear God."],['A',"...Six o'clock, then."],['B',"Six o'clock. Bring the soup."]],
+      verse:["But thou, when thou fastest, anoint thine head, and wash thy face; that thou appear not unto men to fast, but unto thy Father which is in secret.","Matthew 6:17-18"] },
+    { id:'a-seasons', kind:'Skit', ages:'YA', title:'Two Calendars', scene:'creation', tags:['times','Career','keepgoing'],
+      cast:{A:'Denise',B:'Gloria'}, lines:[['A',"I'm forty-six. I thought I'd be further by now."],['B',"Further on whose calendar?"],['A',"Mine, I guess."],['B',"There's yours, and there's His. His has seasons, not deadlines."],['A',"So this is a season?"],['B',"Planting looks like nothing for a while. Then harvest shows up all at once."],['A',"I don't want to waste the waiting."],['B',"Then don't. Water what you planted."]],
+      verse:["To every thing there is a season, and a time to every purpose under the heaven.","Ecclesiastes 3:1"] },
+    { id:'a-legacy', kind:'Skit', ages:'YA', title:"Grandmother's Bible", scene:'faith', tags:['word','grief'],
+      cast:{A:'Grandson',B:'Grandmother'}, lines:[['A',"Grandma, why is every page of your Bible underlined?"],['B',"Because every page held me up at some point."],['A',"Which one held you the most?"],['B',"The one I read the night your grandfather passed. Psalm 30. Joy cometh in the morning."],['A',"Did it?"],['B',"It came slow. But it came. And now this Bible is yours."],['A',"Mine?"],['B',"Somebody has to keep the underlining going."]],
+      verse:["One generation shall praise thy works to another, and shall declare thy mighty acts.","Psalm 145:4"] },
+    { id:'c-seal', kind:'Commercial', ages:'TYA', g:1, title:'Seal Your Day', scene:'walk', tags:['start'],
+      cast:{A:'Announcer',B:'Member'}, lines:[['A',"Feeling scattered? Try the Community Covenant daily page."],['B',"Scripture at the top, my walk, four gratitudes, and then I seal it."],['A',"And the team answers your log the same day."],['B',"I'm not doing this alone anymore."],['A',"Community Covenant. Woven together with those next to you."]],
+      verse:["That their hearts might be comforted, being knit together in love.","Colossians 2:2"] },
+    { id:'c-help', kind:'Commercial', ages:'TYA', g:1, title:'Ask for Help', scene:'reach', tags:['word','start'],
+      cast:{A:'Announcer',B:'Member'}, lines:[['A',"Got a Bible question you're scared to ask?"],['B',"Like what 'revelation' even means?"],['A',"Type it into Ask for Help. You get an answer from Scripture, and a real person on the team sees it."],['B',"Even at two in the morning?"],['A',"Even then. And if today feels too heavy, call or text 988."]],
+      verse:["If any of you lack wisdom, let him ask of God, that giveth to all men liberally, and upbraideth not; and it shall be given him.","James 1:5"] },
+    { id:'c-reels', kind:'Commercial', ages:'KTYA', g:1, title:'Wisdom Reels', scene:'sky', tags:['word'],
+      cast:{A:'Announcer',B:'Kid'}, lines:[['A',"Need a word from God in thirty seconds?"],['B',"Swipe up!"],['A',"Wisdom Reels: a picture, a verse, and a question to think on."],['B',"With gospel music!"],['A',"Tap Wisdom Reels any time."]],
+      verse:["Thy word is a lamp unto my feet, and a light unto my path.","Psalm 119:105"] }
+  ];
+
+  /* ---------- Clips from the creators' own YouTube channels (they stay on their channels; credited, with a Follow link).
+     [youtube id, title, creator, length, ages, tags, g] ---------- */
+  var V = [
+    ['pCyEY0xm_BQ',"What to do when the devil comes against you",'Godbacked Guy (Obinna Ejimogu)','1:30','TYA',['warfare','skit']],
+    ['D0Z33UmqJlc',"When your name is mentioned for evil",'Godbacked Guy (Obinna Ejimogu)','1:26','TYA',['warfare','skit']],
+    ['Jy38IQu-e5k',"When the devil tries to attack you",'Godbacked Guy (Obinna Ejimogu)','1:13','TYA',['warfare','skit']],
+    ['As0OQPJtb58',"How the devil steals from us",'Godbacked Guy (Obinna Ejimogu)','1:30','TYA',['warfare','skit']],
+    ['vJ06sqnhhwQ',"Should you fear the devil when you fall to sin?",'Godbacked Guy (Obinna Ejimogu)','1:18','TYA',['forgiveness','warfare','skit']],
+    ['lVoyjf1lAFg',"When we fall to sin and struggle with guilt",'Godbacked Guy (Obinna Ejimogu)','4:16','TYA',['forgiveness','skit','keepgoing']],
+    ['DNu1HR4k7SQ',"When your prayer is answered in an unexpected way",'Godbacked Guy (Obinna Ejimogu)','1:42','TYA',['word','skit']],
+    ['92_8DgcMb8I',"When we keep making promises to God",'Godbacked Guy (Obinna Ejimogu)','3:36','TYA',['forgiveness','skit','keepgoing']],
+    ['CS7m_YWSNF8',"When you pray to God to show you your spouse",'Godbacked Guy (Obinna Ejimogu)','4:42','YA',['recon','discern','skit']],
+    ['vBfXJtG2tLk',"Chants of Victory (Godbacked)",'Godbacked Guy (Obinna Ejimogu)','2:56','TYA',['warfare','music']],
+    ['gtc7F7Rhsm4',"I Didn't Say It Would Be Easy: Be Strong",'Bishop T.D. Jakes · The Potter’s House','2:34','TYA',['strength','keepgoing','sermon'],1],
+    ['GLe78jcF_-s',"When Everything Changes, God Doesn't",'Dr. Tony Evans','4:31','TYA',['strength','grief','sermon'],1],
+    ['GD_OOZRIyQ0',"God Offers a Real Solution to Worry",'Dr. Tony Evans','3:11','TYA',['anxiety','sermon'],1],
+    ['qHvTcOmcbLI',"Where Is God When Your World Is Falling Apart?",'Dr. Tony Evans','11:04','YA',['grief','strength','sermon']],
+    ['7RIqntFglzg',"Finding Wisdom in a Distorted World",'Dr. Tony Evans','10:24','YA',['word','Career','sermon']],
+    ['Vg92pZoHlCc',"Faith Can Change Your Destiny",'Dr. Tony Evans','12:05','YA',['word','start','sermon']],
+    ['EeUw-dLso2E',"How to Keep the Faith",'Pastor Sarah Jakes Roberts','3:45','TYA',['keepgoing','strength','sermon'],1],
+    ['8TL6df6Dsf0',"When All You've Known Is Negativity",'Pastor Sarah Jakes Roberts','8:20','YA',['anxiety','recon','sermon']],
+    ['1X8HAy9Sj7c',"He's Still Healing: Pastor Sarah's Testimony",'Pastor Sarah Jakes Roberts','10:15','YA',['Temple','grief','sermon']],
+    ['LloFz5fl0Wg',"Focus on God, Not Your Problems",'Dr. Charles Stanley · In Touch','5:38','TYA',['anxiety','word','sermon'],1],
+    ['sWoefJmon5o',"The Purpose for Your Trials",'Dr. Charles Stanley · In Touch','3:48','TYA',['strength','keepgoing','sermon'],1],
+    ['unkRYlnnl7c',"Three Barriers Between You and God",'Dr. Charles Stanley · In Touch','5:20','YA',['word','forgiveness','sermon']],
+    ['V2OKUg8NQY8',"A Comforting Message in Fearful Times",'Dr. Charles Stanley · In Touch','12:17','YA',['anxiety','sermon']],
+    ['LKvXwsE1wXU',"The Key to Financial Blessing",'Dr. Charles Stanley · In Touch','2:31','TYA',['Finance','sermon'],1],
+    ['xcQ8Oft9GgM',"God's Plan for Our Finances",'Dr. Charles Stanley · In Touch','0:33','TYA',['Finance','sermon'],1],
+    ['oa5_UMwBFcA',"Clean",'Jackie Hill Perry','2:17','TYA',['forgiveness','Creativity','sermon']],
+    ['_c99IlwYWVs',"The Secret to Surrender",'Jackie Hill Perry','9:06','YA',['word','fasting','sermon']],
+    ['WqEHZeaPFxY',"The Enemy Is After Your Consistency",'Dr. Dharius Daniels','11:11','YA',['keepgoing','warfare','sermon']],
+    ['LTPqEG-4cqs',"The One Thing You Need to Understand About Your Purpose",'Dr. Dharius Daniels','11:11','YA',['Career','start','sermon']],
+    ['8C7oRgHy5Qw',"You Need Clarity for Your Goals & Purpose",'Dr. Dharius Daniels','12:30','YA',['Career','sermon']],
+    ['lFZOi6Y2-OU',"A Good Worshiper Remembers What God Has Done",'Dr. Dharius Daniels','12:29','YA',['gratitude','sermon']],
+    ['HCLuq_5o7_o',"The Reason You Can Trust God (Even When It Seems Hard)",'BibleProject','5:12','TYA',['strength','word','study'],1],
+    ['b54d_GhBthI',"This May Change How We Think About Struggles",'BibleProject','6:02','TYA',['strength','keepgoing','study'],1],
+    ['sR4AT0LMJ5c',"The Difference Between God's Tests and the Enemy's",'BibleProject','6:17','TYA',['warfare','discern','study'],1],
+    ['uib2G8GkG60',"How You Know You Belong to God",'BibleProject','6:09','TYA',['forgiveness','start','study'],1],
+    ['6KQLOuIKaRA',"Shema: Listen",'BibleProject','3:26','TYA',['word','study'],1],
+    ['aS4iM6KpPYo',"What It Means to Love God With All Your Heart",'BibleProject','3:50','TYA',['word','recon','study'],1],
+    ['9aaVy1AmFX4',"What It Means to Love God With All Your Strength",'BibleProject','4:43','TYA',['Temple','workout','study'],1],
+    ['HGHqu9-DtXk',"Gospel of Mark: Animated Overview",'BibleProject','9:32','TYA',['word','study'],1],
+    ['ej_6dVdJSIU',"Book of Romans: Animated Overview",'BibleProject','7:47','TYA',['word','forgiveness','study'],1],
+    ['CGbNw855ksw',"Book of Acts: Animated Overview",'BibleProject','8:16','TYA',['word','Friends','study'],1],
+    ['hI9rDikU-FM',"Baby Moses",'Saddleback Kids','2:40','K',['word','kids'],1],
+    ['zUhs-MWoTbg',"God's Promise for Abraham",'Saddleback Kids','2:05','K',['word','times','kids'],1],
+    ['OAv9rZl2U5g',"The Walls of Jericho",'Saddleback Kids','3:16','K',['strength','kids'],1],
+    ['NuedVFB8-7Y',"Slapstick Theater: David and Goliath",'Saddleback Kids','3:11','K',['anxiety','strength','kids','skit'],1],
+    ['OumzcFxfIfw',"David Chosen to Be King",'Saddleback Kids','3:01','K',['word','kids'],1],
+    ['bEM_X25DWPk',"Daniel in the Lions' Den",'Saddleback Kids','3:50','K',['anxiety','fasting','kids'],1],
+    ['f7cCV-IELLY',"The Fiery Furnace",'Saddleback Kids','3:48','K',['strength','Friends','kids'],1],
+    ['WOSadLyqshg',"Jonah and the Fish",'Saddleback Kids','2:59','K',['forgiveness','kids'],1],
+    ['R9L0reK8kdg',"David and Jonathan",'Saddleback Kids','6:34','K',['Friends','kids'],1],
+    ['S6rj9cAJrWE',"Jesus Feeds the 5,000",'Saddleback Kids','2:10','K',['gratitude','Friends','kids'],1],
+    ['U69Ag6wEyB0',"Jesus Walks on Water",'Saddleback Kids','2:31','K',['anxiety','kids'],1],
+    ['osfQg4yKtq8',"The Good Samaritan",'Saddleback Kids','3:09','K',['Friends','kids'],1],
+    ['syYixa4ZRPY',"The Parable of the Wealthy Man",'Saddleback Kids','2:18','K',['Finance','kids'],1],
+    ['mc-x4qKY6Wc',"The Temptation of Jesus",'Saddleback Kids','2:38','K',['fasting','word','kids'],1],
+    ['fJnj_SAlh8Y',"God's Story: Creation",'Crossroads Kids’ Club','3:35','K',['creation','times','math','kids'],1],
+    ['KsXPZT5ojkU',"Fruit of the Spirit: Love",'Crossroads Kids’ Club','2:29','K',['Friends','kids'],1],
+    ['0eEHT6dCKbI',"God's Story: Moses",'Crossroads Kids’ Club','3:53','K',['word','kids'],1],
+    ['hGs1WfRKIoM',"God's Story: Jacob and Esau",'Crossroads Kids’ Club','4:19','K',['recon','Friends','kids'],1]
+  ].map(function(v){ return { id:'yt-' + v[0], yt:v[0], kind: v[5].indexOf('skit') !== -1 ? 'Skit' : (v[5].indexOf('kids') !== -1 ? 'Bible story' : (v[5].indexOf('study') !== -1 ? 'Study' : (v[5].indexOf('music') !== -1 ? 'Song' : 'Sermon'))), title:v[1], who:v[2], len:v[3], ages:v[4], tags:v[5], g:v[6] }; });
+  O.forEach(function(o){ o.who = 'Covenant Originals'; });
+  var ALL = O.concat(V);
+
+  /* ---------- matching ---------- */
+  var STUDY_TAG = { astro:'astro', recon:'recon', discern:'discern', times:'times', math:'math' };
+  var FOCUS_TAG = { fasting:'fasting', workout:'workout', gratitude:'gratitude', word:'word' };
+  function allowed(x){ var b = band(); return b ? x.ages.indexOf(b) !== -1 : !!x.g; }
+  function why(){ var p = [], b = band(), ints = interests(), f = focus(), st = ls('ccLastStudy'), d = covDay();
+    var names = { K:'kids', T:'teens', Y:'young adults', A:'adults' };
+    p.push(b ? 'Picked for ' + names[b] : 'Picks for everyone (sign in for picks made for you)');
+    if (ints.length) p.push('your interests: ' + ints.join(', ')); if (f) p.push('today’s focus: ' + f);
+    if (st) p.push('the Bible study you opened last'); if (d) p.push('day ' + d + ' of your covenant');
+    return p.join(' · '); }
+  function score(x){ var s = Math.random() * 1.5, ints = interests(), f = focus(), st = ls('ccLastStudy'), d = covDay(), seen = ls('ccBrkSeen') || {};
+    ints.forEach(function(i){ if (x.tags.indexOf(i) !== -1) s += 3; });
+    if (f && x.tags.indexOf(FOCUS_TAG[f] || f) !== -1) s += 2.5;
+    if (st && x.tags.indexOf(STUDY_TAG[st] || st) !== -1) s += 3;
+    if (d && d <= 3 && x.tags.indexOf('start') !== -1) s += 2;
+    if (d >= 7 && x.tags.indexOf('keepgoing') !== -1) s += 2;
+    if (!seen[x.id]) s += 2; if (!x.yt) s += .8;
+    return s; }
+  function list(tab){ var a = ALL.filter(allowed);
+    if (tab === 'skits') a = a.filter(function(x){ return x.kind === 'Skit' || x.kind === 'Commercial'; });
+    if (tab === 'sermons') a = a.filter(function(x){ return x.kind === 'Sermon' || x.kind === 'Study' || x.kind === 'Bible story' || x.kind === 'Song'; });
+    if (tab === 'originals') a = a.filter(function(x){ return !x.yt; });
+    a = a.map(function(x){ return [score(x), x]; }).sort(function(p, q){ return q[0] - p[0]; }).map(function(p){ return p[1]; });
+    return tab === 'foryou' ? a.slice(0, 8) : a; }
+
+  /* ---------- the break screen ---------- */
+  var tab = 'breathe', speakChain = 0, radioWasOn = false;
+  var TABS = [['breathe','Breathe'],['foryou','For you'],['skits','Skits & commercials'],['sermons','Sermons & stories'],['originals','Covenant Originals']];
+  function thumb(x){ return x.yt ? 'https://i.ytimg.com/vi/' + x.yt + '/mqdefault.jpg' : U(SCENE[x.scene] || SCENE.peace, 300); }
+  function card(x){ return '<button class="card2" onclick="ccPlayBreak(\'' + x.id + '\')"><span class="th" style="background-image:url(\'' + thumb(x) + '\')"><i>' + esc(x.len || (x.lines.length > 7 ? '1 min' : '45 sec')) + '</i></span><span><span class="k">' + esc(x.kind) + '</span><br><span class="t">' + esc(x.title) + '</span><br><span class="a">' + esc(x.who) + '</span></span></button>'; }
+  function renderTabs(){ document.getElementById('ccBrkTabs').innerHTML = TABS.map(function(t){ return '<button class="' + (tab === t[0] ? 'on' : '') + '" onclick="ccBreakTab(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join(''); }
+  function every(){ var v = ls('ccBreakEvery'); if (v === null || v === undefined) { var b = band(); return b === 'K' ? 15 : b === 'T' ? 20 : 30; } return v; }
+  function renderSettings(){ var e = every(); return '<div class="set">Remind me to take a screen-time break every:<br>' + [0, 15, 20, 30, 45, 60].map(function(m){ return '<button class="' + (e === m ? 'on' : '') + '" onclick="ccBreakEvery(' + m + ')">' + (m ? m + ' min' : 'Off') + '</button>'; }).join('') + '</div>'; }
+  function body(h){ stopSpeak(); document.getElementById('ccBrkBody').innerHTML = h; document.getElementById('ccBrk').scrollTop = 0; }
+  function renderTab(){ renderTabs();
+    if (tab === 'breathe') {
+      body('<div class="breathe"><div class="orb"></div><h3 id="ccBrTxt">Breathe in&hellip;</h3><p>Stand up, roll your shoulders, look at something far away.</p><p><i>“Be still, and know that I am God.”</i> Psalm 46:10</p>' +
+        '<div class="row" style="justify-content:center;margin-top:16px"><button class="btn2 gold" onclick="ccBreakTab(\'foryou\')">Watch something short</button><button class="btn2" onclick="ccCloseBreak()">Back to my covenant</button></div>' + renderSettings() + '</div>');
+      var n = 0, el = document.getElementById('ccBrTxt'), t = setInterval(function(){ if (!document.getElementById('ccBrTxt') || tab !== 'breathe') return clearInterval(t); n++; el.textContent = n % 2 ? 'Breathe out…' : 'Breathe in…'; }, 4000);
+      return; }
+    var a = list(tab);
+    body('<p class="why">' + esc(why()) + '</p>' + (a.length ? a.map(card).join('') : '<p>Nothing here yet.</p>') + renderSettings());
+  }
+  window.ccBreakTab = function(t){ tab = t; renderTab(); };
+  window.ccBreakEvery = function(m){ ls('ccBreakEvery', m); active = 0; renderTab(); };
+  window.ccOpenBreak = function(t, playId){
+    document.getElementById('ccBrkNudge').classList.remove('on');
+    var w = document.getElementById('ccWelcome'); if (w && w.style.display !== 'none') w.setAttribute('data-brk', '1');
+    tab = t || 'breathe'; document.getElementById('ccBrk').classList.add('on'); document.body.style.overflow = 'hidden'; active = 0;
+    if (playId) ccPlayBreak(playId); else renderTab();
+  };
+  window.ccCloseBreak = function(){ stopSpeak(); resumeRadio(); document.getElementById('ccBrkBody').innerHTML = ''; document.getElementById('ccBrk').classList.remove('on'); document.body.style.overflow = ''; active = 0; };
+
+  function pauseRadio(){ var m = document.getElementById('ccTMusic'); radioWasOn = !!(m && m.classList.contains('on')); if (radioWasOn && typeof ccRadioToggle === 'function') try { ccRadioToggle(); } catch(e){} }
+  function resumeRadio(){ if (radioWasOn && typeof ccRadioToggle === 'function') try { ccRadioToggle(); } catch(e){} radioWasOn = false; }
+  function markSeen(id){ var s = ls('ccBrkSeen') || {}; s[id] = Date.now(); ls('ccBrkSeen', s); }
+  function nextOf(x){ var a = list(tab === 'breathe' ? 'foryou' : tab).filter(function(y){ return y.id !== x.id; }); return a[0]; }
+  function after(x){ var n = nextOf(x); return '<div class="row"><button class="btn2 gold" onclick="ccCloseBreak()">Back to my covenant</button>' + (n ? '<button class="btn2" onclick="ccPlayBreak(\'' + n.id + '\')">Next: ' + esc(n.title.length > 30 ? n.title.slice(0, 28) + '…' : n.title) + '</button>' : '') + '<button class="btn2" onclick="ccBreakTab(\'' + (tab === 'breathe' ? 'foryou' : tab) + '\')">More</button></div>'; }
+  window.ccPlayBreak = function(id){
+    var x = ALL.filter(function(y){ return y.id === id; })[0]; if (!x || !allowed(x)) return;
+    markSeen(id); if (tab === 'breathe') tab = 'foryou'; renderTabs();
+    if (x.yt) {
+      pauseRadio();
+      body('<div class="stage"><iframe src="https://www.youtube.com/embed/' + x.yt + '?autoplay=1&playsinline=1&rel=0&modestbranding=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="' + esc(x.title) + '"></iframe></div>' +
+        '<div class="card2" style="cursor:default"><span><span class="k">' + esc(x.kind) + '</span><br><span class="t">' + esc(x.title) + '</span><br><span class="a">' + esc(x.who) + ' · ' + esc(x.len) + '</span></span></div>' +
+        '<p class="credit2">This clip plays from ' + esc(x.who.split(' · ')[0]) + '’s own YouTube channel. <a href="https://www.youtube.com/watch?v=' + x.yt + '" target="_blank" rel="noopener">Watch and follow them on YouTube ↗</a></p>' + after(x));
+      return; }
+    playSkit(x);
+  };
+
+  /* ---------- skit player: lines appear one at a time and are read aloud in two voices ---------- */
+  var synth = window.speechSynthesis;
+  function voices(){ if (!synth) return []; return synth.getVoices().filter(function(v){ return /^en/i.test(v.lang); }); }
+  function stopSpeak(){ speakChain++; try { if (synth) synth.cancel(); } catch(e){} }
+  var PITCH = { A: 1.08, B: 0.86, C: 1 };
+  function playSkit(x){
+    var dark = x.dark || '';
+    body('<div class="stage skit" style="background-image:url(\'' + U(SCENE[x.scene] || SCENE.peace, 900) + '\')"><div class="ttl"><small>' + esc(x.kind) + ' · Covenant Originals</small>' + esc(x.title) + '</div><div class="lines" id="ccSkL">' +
+      x.lines.map(function(l, i){ return '<div class="ln ' + l[0] + (dark === l[0] ? ' dark' : '') + '" data-i="' + i + '"><b>' + esc(x.cast[l[0]] || '') + '</b>' + esc(l[1]) + '</div>'; }).join('') +
+      '</div><div class="vv" id="ccSkV">“' + esc(x.verse[0]) + '”<b>' + esc(x.verse[1]) + ' (KJV)</b></div></div>' +
+      '<div class="row"><button class="btn2" id="ccSkPlay" onclick="ccSkitReplay(\'' + x.id + '\')">Play again</button><button class="btn2" id="ccSkMute" onclick="ccSkitMute()">' + (ls('ccSkitMute') ? 'Sound off' : 'Sound on') + '</button></div>' + after(x));
+    run(x);
+  }
+  window.ccSkitReplay = function(id){ ccPlayBreak(id); };
+  window.ccSkitMute = function(){ var m = !ls('ccSkitMute'); ls('ccSkitMute', m); var b = document.getElementById('ccSkMute'); if (b) b.textContent = m ? 'Sound off' : 'Sound on'; if (m) try { synth && synth.cancel(); } catch(e){} };
+  function run(x){
+    var chain = ++speakChain, vs = voices(), i = 0;
+    var vA = vs[0] || null, vB = vs.filter(function(v){ return v !== vA && v.name.split(' ')[0] !== (vA && vA.name.split(' ')[0]); })[0] || vs[1] || vA;
+    function step(){
+      if (chain !== speakChain) return;
+      var el = document.querySelector('#ccSkL .ln[data-i="' + i + '"]');
+      if (!el) { var v = document.getElementById('ccSkV'); if (v) { v.classList.add('on'); say(x.verse[0] + '. ' + x.verse[1].replace(':', ', verse '), 'C', function(){}); } return; }
+      el.classList.add('on'); el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      var who = x.lines[i][0]; say(x.lines[i][1], who, function(){ i++; setTimeout(step, 350); });
+    }
+    function say(text, who, done){
+      var ms = Math.max(1600, text.length * 62);
+      if (ls('ccSkitMute') || !synth || !vs.length) { setTimeout(function(){ if (chain === speakChain) done(); }, ms); return; }
+      var fin = false, guard = setTimeout(function(){ if (!fin) { fin = true; done(); } }, ms + 4000);
+      try { var u = new SpeechSynthesisUtterance(text); u.voice = who === 'B' ? vB : vA; u.pitch = PITCH[who] || 1; u.rate = 1;
+        u.onend = u.onerror = function(){ if (!fin) { fin = true; clearTimeout(guard); if (chain === speakChain) done(); } };
+        synth.speak(u); } catch(e){ clearTimeout(guard); setTimeout(done, ms); }
+    }
+    setTimeout(step, 500);
+  }
+
+  /* ---------- screen-time reminder: counts only time the app is open on screen ---------- */
+  var active = 0, snoozeUntil = 0;
+  setInterval(function(){
+    if (document.visibilityState !== 'visible') return;
+    if (document.getElementById('ccBrk').classList.contains('on')) return;
+    active += 15; var e = every(); if (!e) return;
+    if (active >= e * 60 && Date.now() > snoozeUntil) {
+      var u = me(), nm = u && (u.nickname || (u.name || '').split(' ')[0]);
+      document.getElementById('ccBrkNudgeTxt').textContent = (nm ? nm + ', you' : 'You') + '’ve been on for ' + e + ' minutes. Stand up, breathe, and watch something short.';
+      document.getElementById('ccBrkNudge').classList.add('on'); active = 0;
+    }
+  }, 15000);
+  window.ccSnoozeBreak = function(){ snoozeUntil = Date.now() + 10 * 60000; document.getElementById('ccBrkNudge').classList.remove('on'); };
+
+  /* ---------- bottom sheet (welcome tiles) ---------- */
+  window.ccSheetClose = function(){ document.getElementById('ccSheet2').classList.remove('on'); document.getElementById('ccSheetBg').classList.remove('on'); };
+  function sheet(h){ var s = document.getElementById('ccSheet2'); s.innerHTML = '<button class="close" onclick="ccSheetClose()" aria-label="Close">&times;</button>' + h; document.getElementById('ccSheetBg').classList.add('on'); requestAnimationFrame(function(){ s.classList.add('on'); }); }
+  function A(href, t, sub){ return '<a href="' + href + '" target="_blank" rel="noopener">' + t + (sub ? '<small>' + sub + '</small>' : '') + '</a>'; }
+  function B(js, t, sub){ return '<button class="it" onclick="ccSheetClose();' + js + '">' + t + (sub ? '<small>' + sub + '</small>' : '') + '</button>'; }
+  var TILES = [
+    function(){ sheet('<h4>A hand held out</h4><p>You don’t have to carry it alone. Someone is here.</p>' +
+      A(SITE + 'chat.html', 'Chat with the team', 'A real person from Community Covenant answers') +
+      A('tel:3139882400', 'Pray with someone: 313-988-2400', '103.5 WMUZ The Light prayer line, off air, all night') +
+      A('tel:988', 'Call or text 988', 'Any time, day or night. Free and confidential') +
+      B("ccOpenBreak('breathe')", 'Take a one-minute breath', 'Breathe, then a short word from God')); },
+    function(){ window.ccReelSet = 'creation'; if (typeof ccSetTopic === 'function') ccSetTopic(-2); var l = document.getElementById('ccTopicLbl'); if (l) l.innerHTML = 'His creation &#9662;'; ccOpenReels(false); },
+    function(){ sheet('<h4>Your people</h4><p>Woven together with those next to you. Find your community.</p>' +
+      A(FB_GROUP, 'Faith and Findings Forum', 'Our Facebook group: biblical takes on what’s going on in the world') +
+      A(LINKTREE, 'Faith & Findings on Linktree', 'Every link in one place') +
+      A(SITE + 'chat.html', 'Chat with the team', 'Talk to the Community Covenant team') +
+      B("ccOpenBreak('skits')", 'Skits & commercials', 'Short, faith-filled and made for your age')); }
+  ];
+  var ICON_FB = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.3v7A10 10 0 0 0 22 12z"/></svg>';
+  var ICON_LT = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M10.6 2h2.8v5.6l4-4 2 2-4.3 4.1H21v2.8h-6l4.3 4.2-2 2-5.3-5.4-5.3 5.4-2-2 4.3-4.2H3V9.7h5.9L4.6 5.6l2-2 4 4zM10.6 15h2.8v7h-2.8z"/></svg>';
+  function wireWelcome(){
+    var strip = document.getElementById('ccwStrip'); if (!strip || !strip.children.length) return setTimeout(wireWelcome, 400);
+    Array.prototype.forEach.call(strip.children, function(d, i){ if (!TILES[i]) return; d.setAttribute('role', 'button'); d.setAttribute('tabindex', '0');
+      d.onclick = TILES[i]; d.onkeydown = function(e){ if (e.key === 'Enter') TILES[i](); }; });
+    var acts = document.querySelector('#ccWelcome .acts');
+    if (acts && !document.getElementById('ccwBrk')) { var b = document.createElement('button'); b.id = 'ccwBrk'; b.className = 'ccw-btn glass'; b.textContent = 'Skits, sermons & screen-time breaks'; b.onclick = function(){ ccOpenBreak('foryou'); };
+      acts.insertBefore(b, acts.children[1] || null); }
+    var foot = document.querySelector('#ccWelcome .foot');
+    if (foot && !document.getElementById('ccwLinks')) { var l = document.createElement('div'); l.className = 'links'; l.id = 'ccwLinks';
+      l.innerHTML = '<a href="' + FB_GROUP + '" target="_blank" rel="noopener">' + ICON_FB + 'Faith &amp; Findings on Facebook</a><a href="' + LINKTREE + '" target="_blank" rel="noopener">' + ICON_LT + 'Linktree</a>';
+      foot.parentNode.insertBefore(l, foot); }
+  }
+  wireWelcome();
+
+  // "Screen Breaks" in the menu after sign-in
+  (function addNav(){
+    var nav = document.querySelector('#appPage .nav'); if (!nav) return setTimeout(addNav, 900);
+    if (document.getElementById('ccNavBrk')) return;
+    var b = document.createElement('button'); b.id = 'ccNavBrk'; b.textContent = 'Screen Breaks'; b.onclick = function(){ ccOpenBreak('foryou'); };
+    var r = document.getElementById('ccNavReels'); nav.insertBefore(b, r ? r.nextSibling : (nav.children[1] || null));
+  })();
+})();
+</script>
+<!-- ===== end Screen-Time Breaks v1.0 ===== -->
 
 <script src="connect.js"></script>
 </body>

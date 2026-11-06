@@ -1,6 +1,6 @@
 /* Community Covenant service worker: offline shell + phone notifications. */
 try { importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js'); } catch (e) {}
-var CACHE = 'cc-shell-v3';
+var CACHE = 'cc-shell-v4'; // v4 (2026-11-06): Screen-Time Breaks + clickable welcome tiles
 var SHELL = ['./', 'app/', 'app/bridge.js', 'app/connect.js', 'config.js', 'chat.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 self.addEventListener('install', function (e) { e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).catch(function () {})); self.skipWaiting(); });
 self.addEventListener('activate', function (e) { e.waitUntil(caches.keys().then(function (k) { return Promise.all(k.filter(function (n) { return n !== CACHE; }).map(function (n) { return caches.delete(n); })); })); self.clients.claim(); });

@@ -8,6 +8,7 @@ App:  https://crispcleaninc-dot.github.io/community-covenant/app/
 ## How it fits together
 - `index.html` – landing page with the how-it-works video
 - `app/index.html` – the Community Covenant app (same app as the Apps Script version, nothing removed)
+  - Screen-Time Breaks (Nov 6 2026): break reminders, Covenant Originals skits & commercials, and credited sermon/skit clips from the creators' own YouTube channels, matched to age, interests, daily focus, covenant day and last Bible study. Kids only see kid content. Welcome tiles open help / His creation reels / Your people (Facebook group + Linktree).
 - `app/bridge.js` – sends the app's `google.script.run` calls to the Apps Script server
 - `app/connect.js` – add-ons: install to home screen, how-it-works video, chat button, Scripture-backed Ask for Help, speak-to-type mic on every box, phone notifications
 - `chat.html` – members chat with the team · `team.html` – the team desk (TEAM_PIN)
