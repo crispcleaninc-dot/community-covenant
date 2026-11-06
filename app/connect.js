@@ -261,6 +261,17 @@
   }
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
     navigator.serviceWorker.register(SITE + 'sw.js', { scope: SITE }).catch(function () {});
+    /* Offline-first (Nov 6 2026): once the app is open with internet, quietly save every skit and Wisdom Reels
+       recording on this device so read-aloud works with no signal. Progress shows under the welcome screen. */
+    var prep = function () { if (navigator.onLine === false) return; navigator.serviceWorker.ready.then(function (reg) { if (reg.active) reg.active.postMessage({ type: 'cc-prepare-offline' }); }).catch(function () {}); };
+    setTimeout(prep, 6000); window.addEventListener('online', function () { setTimeout(prep, 3000); });
+    navigator.serviceWorker.addEventListener('message', function (ev) {
+      var d = ev.data || {}; if (d.type !== 'cc-media') return;
+      try { localStorage.setItem('ccOfflineMedia', JSON.stringify({ done: d.done, total: d.total })); } catch (e) {}
+      var n = document.getElementById('ccOffNote');
+      if (!n) { var foot = document.querySelector('#ccWelcome .foot'); if (!foot) return; n = document.createElement('div'); n.id = 'ccOffNote'; n.style.cssText = 'padding:0 22px 22px;font-size:.72em;color:#b9add2'; foot.parentNode.insertBefore(n, foot.nextSibling); }
+      n.textContent = d.done >= d.total ? 'Ready to use offline ✓ every skit and Wisdom Reel is saved on this device.' : 'Saving for offline use: ' + d.done + ' of ' + d.total + ' recordings…';
+    });
   }
 
   /* ---------- chat button + identity for the chat page ---------- */

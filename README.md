@@ -16,3 +16,9 @@ App:  https://crispcleaninc-dot.github.io/community-covenant/app/
 - `server/CovenantConnect.gs` – copy of the server add-on (the live copy is in the Apps Script project "Community Covenant", last file)
 
 Server settings live in Apps Script → Project Settings → Script properties (APP_HOME_URL, TEAM_PIN, ANTHROPIC_API_KEY, ONESIGNAL_APP_ID, ONESIGNAL_REST_KEY, REPLIES).
+
+## Offline (Nov 6 2026)
+- `app/bridge.js` keeps every answer the app reads on the device and queues every save made offline; the queue uploads in order when the connection returns (status bar at the top shows Offline / uploading / all caught up).
+- `sw.js` keeps the app files, fonts, photos already seen, and every skit and Wisdom Reels recording on the device.
+- When you add new recordings, regenerate `assets/offline-files.json` (list of every .mp3 under assets/) so they are saved for offline use too.
+- Needs the internet: creating an account, password reset, Scripture AI answers (the question is kept for the team), YouTube sermon clips and gospel radio, the how-it-works video.

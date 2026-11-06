@@ -2526,7 +2526,7 @@
   window.ccOpenReels = function(withMusic){
     build(); document.getElementById('ccReels').classList.add('on'); document.body.style.overflow = 'hidden';
     var w = document.getElementById('ccWelcome'); if (w) w.style.display = 'none';
-    if (withMusic) { startRadio(); if (!auto) ccToggleAuto(); }
+    if (withMusic) { if (navigator.onLine !== false) startRadio(); else toast('Gospel music needs the internet. The reading still plays offline.'); if (!auto) ccToggleAuto(); }
   };
   window.ccCloseReels = function(){ document.getElementById('ccReels').classList.remove('on'); document.body.style.overflow = ''; if (auto) ccToggleAuto(); };
 
@@ -3994,7 +3994,7 @@
   /* ---------- matching ---------- */
   var STUDY_TAG = { astro:'astro', recon:'recon', discern:'discern', times:'times', math:'math' };
   var FOCUS_TAG = { fasting:'fasting', workout:'workout', gratitude:'gratitude', word:'word' };
-  function allowed(x){ var b = band(); return b ? x.ages.indexOf(b) !== -1 : !!x.g; }
+  function allowed(x){ if (x.yt && navigator.onLine === false) return false; /* YouTube clips need the internet; skits work offline */ var b = band(); return b ? x.ages.indexOf(b) !== -1 : !!x.g; }
   function why(){ var p = [], b = band(), ints = interests(), f = focus(), st = ls('ccLastStudy'), d = covDay();
     var names = { K:'kids', T:'teens', Y:'young adults', A:'adults' };
     p.push(b ? 'Picked for ' + names[b] : 'Picks for everyone (sign in for picks made for you)');
