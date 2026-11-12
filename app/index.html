@@ -2294,6 +2294,13 @@
     african: { label: 'African accent', sub: 'Nigeria, Kenya, Ghana, South Africa', pitch: .95, rate: .9, lang: /^en[-_](NG|KE|ZA|GH|TZ|UG)/i, re: /nigeria|kenya|south africa|ghana|tanzania|uganda|abeo|ezinne|chilemba|asilia|imani|elimu/i },
     british: { label: 'British accent', sub: 'English (UK)', pitch: .96, rate: .92, lang: /^en[-_]GB/i }
   };
+  /* Voices v7 (Nov 12 2026): two more recorded voices, same on every phone. Files: assets/reels-woman/ and assets/reels-elder/. */
+  VSTYLES.natural.rec = 'reels/';
+  (function(){ var add = {
+      woman: { label: 'Recorded woman\u2019s voice', sub: 'Warm and clear, same on every phone', pitch: 1.05, rate: .92, re: VSTYLES.warm.re, rec: 'reels-woman/' },
+      elder: { label: 'Old Bible voice', sub: 'Slow and aged, like a church reading', pitch: .8, rate: .8, re: VSTYLES.deep.re, rec: 'reels-elder/' } },
+    o = {}; o.natural = VSTYLES.natural; o.woman = add.woman; o.elder = add.elder;
+    Object.keys(VSTYLES).forEach(function(k){ if (!o[k]) o[k] = VSTYLES[k]; }); VSTYLES = o; })();
   function enVoices(){ return synth ? synth.getVoices().filter(function(x){ return /^en/i.test(x.lang); }) : []; }
   function rankV(x, preferUS){ var n = x.name; return (/natural|neural|online|premium|enhanced|wavenet/i.test(n) ? 4 : 0) + (/google/i.test(n) ? 2 : 0) + (x.localService === false ? 1 : 0) + (preferUS && /^en[-_]US/i.test(x.lang) ? 1 : 0); }
   function pickFor(style){
@@ -2333,7 +2340,7 @@
   /* Wisdom Reels v3: read-aloud on EVERY device. When the browser has no voices (Facebook and Instagram in-app browsers, some tablets),
      the app plays a spoken clip made by its own server instead. */
   var CC_SAMPLE = 'Trust in the Lord with all thine heart, and lean not unto thine own understanding.';
-  var CC_CLOUD = { natural: { tl: 'en-US', rate: 1, pitch: 1 }, auto: { tl: 'en-US', rate: 1, pitch: 1 }, deep: { tl: 'en-US', rate: 1, pitch: .84 }, warm: { tl: 'en-US', rate: .98, pitch: 1 }, african: { tl: 'en-NG', rate: .98, pitch: 1 }, british: { tl: 'en-GB', rate: 1, pitch: 1 } };
+  var CC_CLOUD = { natural: { tl: 'en-US', rate: 1, pitch: 1 }, woman: { tl: 'en-US', rate: .98, pitch: 1 }, elder: { tl: 'en-GB', rate: .9, pitch: .84 }, auto: { tl: 'en-US', rate: 1, pitch: 1 }, deep: { tl: 'en-US', rate: 1, pitch: .84 }, warm: { tl: 'en-US', rate: .98, pitch: 1 }, african: { tl: 'en-NG', rate: .98, pitch: 1 }, british: { tl: 'en-GB', rate: 1, pitch: 1 } };
   var ccAudio = null, ccClipCache = {}, ccCloudToken = 0;
   var CC_SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
   function ccDeviceVoiceOK(){ return !!synth && enVoices().length > 0; }
@@ -2410,7 +2417,7 @@
   window.ccVoiceName = function(i){ var x = enVoices()[i]; if (!x) return; vp.name = x.name; vpSave(); renderVoices(); ccVoiceTry(); };
   window.ccVoiceRate = function(x){ vp.rate = +x; vpSave(); var s = document.getElementById('ccVRv'); if (s) s.textContent = (+x).toFixed(2) + 'x'; };
   window.ccVoicePitch = function(x){ vp.pitch = +x; vpSave(); var s = document.getElementById('ccVPv'); if (s) s.textContent = (+x).toFixed(2); };
-  window.ccVoiceTry = function(){ if (ccRecOn()) { var a = ccAudioEl(); ccUnlock(); a.onended = null; a.onerror = null; a.src = CC_REC + '9.mp3'; a.playbackRate = 1; var pp = a.play(); if (pp && pp.catch) pp.catch(function(){}); return; } if (!ccDeviceVoiceOK()) { ccCloudSay(CC_SAMPLE, true); return; } if (!synth) { toast('Read-aloud isn\u2019t available on this device'); return; } synth.cancel(); var u = new SpeechSynthesisUtterance('Trust in the Lord with all thine heart, and lean not unto thine own understanding.'); ccApplyVoice(u); duck(true); u.onend = u.onerror = function(){ duck(false); }; synth.speak(u); };
+  window.ccVoiceTry = function(){ if (ccRecOn()) { var a = ccAudioEl(); ccUnlock(); a.onended = null; a.onerror = null; a.src = ccRecUrl(9); a.playbackRate = 1; var pp = a.play(); if (pp && pp.catch) pp.catch(function(){}); return; } if (!ccDeviceVoiceOK()) { ccCloudSay(CC_SAMPLE, true); return; } if (!synth) { toast('Read-aloud isn\u2019t available on this device'); return; } synth.cancel(); var u = new SpeechSynthesisUtterance('Trust in the Lord with all thine heart, and lean not unto thine own understanding.'); ccApplyVoice(u); duck(true); u.onend = u.onerror = function(){ duck(false); }; synth.speak(u); };
   /* Wisdom Reels v5 (2026-11-01): reels move on by themselves on EVERY device, including the installed desktop app.
      Desktop Chrome's online voices stop after about 15 seconds and never report that they finished, so the next reel never came.
      Now each reel is read one sentence at a time, and a safety timer moves to the next reel if the voice or audio goes quiet. */
@@ -2430,7 +2437,8 @@
   /* Wisdom Reels v6 (2026-11-06): natural recorded voice (deep, human-sounding) is the default. Files: assets/reels/<reel number>.mp3.
      If a file can't play, the reel falls back to the voice it used before. The other voice choices are all still in the picker. */
   var CC_REC = ((window.COVENANT_CONFIG && window.COVENANT_CONFIG.SITE_URL) || 'https://crispcleaninc-dot.github.io/community-covenant/') + 'assets/reels/';
-  function ccRecOn(){ return (vp.style || 'natural') === 'natural' && !vp.name; }
+  function ccRecOn(){ var st = VSTYLES[vp.style || 'natural']; return !!(st && st.rec) && !vp.name; }
+  function ccRecUrl(i){ var st = VSTYLES[vp.style || 'natural'] || VSTYLES.natural; return CC_REC.replace(/reels\/$/, '') + (st.rec || 'reels/') + i + '.mp3'; }
   function ccRecSpeak(section, manual){
     var ri = +section.getAttribute('data-i'), r = R[ri], a = ccAudioEl(), my = ++ccCloudToken, done = false;
     ccUnlock(); if (synth) { try { synth.cancel(); } catch(e){} }
@@ -2439,9 +2447,9 @@
     a.onended = function(){ if (my !== ccCloudToken) return; done = true; duck(false); ccAfterRead(manual); };
     a.onerror = fallback;
     a.preservesPitch = true; a.mozPreservesPitch = true; a.webkitPreservesPitch = true;
-    a.src = CC_REC + ri + '.mp3'; a.playbackRate = vp.rate ? Math.max(.6, Math.min(1.5, +vp.rate / .93)) : 1;
+    a.src = ccRecUrl(ri); a.playbackRate = vp.rate ? Math.max(.6, Math.min(1.5, +vp.rate / .93)) : 1;
     duck(true); var p = a.play(); if (p && p.catch) p.catch(function(){ if (manual) fallback(); else { duck(false); toast('Tap Listen to hear this reel'); } });
-    try { var feed = document.getElementById('ccFeed'), nx = feed && feed.children[current + 1]; if (nx) { var pre = new Audio(); pre.preload = 'auto'; pre.src = CC_REC + nx.getAttribute('data-i') + '.mp3'; } } catch(e){}
+    try { var feed = document.getElementById('ccFeed'), nx = feed && feed.children[current + 1]; if (nx) { var pre = new Audio(); pre.preload = 'auto'; pre.src = ccRecUrl(nx.getAttribute('data-i')); } } catch(e){}
   }
   function speak(section, manual){
     if (ccRecOn()) { ccRecSpeak(section, manual); return; }

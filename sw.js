@@ -6,7 +6,7 @@
  *  - Fonts, photos and thumbnails: kept after the first time they are seen.
  *  - Calls to the Apps Script server are never cached here (app/bridge.js handles offline data). */
 try { importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js'); } catch (e) {}
-var CACHE = 'cc-shell-v5';
+var CACHE = 'cc-shell-v6';
 var MEDIA = 'cc-media-v1';
 var RUNTIME = 'cc-runtime-v1';
 var SHELL = ['./', 'index.html', 'app/', 'app/index.html', 'app/bridge.js', 'app/connect.js', 'config.js', 'chat.html', 'manifest.webmanifest',
@@ -81,7 +81,7 @@ self.addEventListener('fetch', function (e) {
   if (r.method !== 'GET') return; // server calls (POST) are handled by app/bridge.js
   var u = new URL(r.url);
   if (u.origin === location.origin) {
-    if (/\/assets\/(skits|reels)\/.+\.mp3$/.test(u.pathname)) { e.respondWith(fromMedia(r)); return; }
+    if (/\/assets\/(skits|reels|reels-woman|reels-elder)\/.+\.mp3$/.test(u.pathname)) { e.respondWith(fromMedia(r)); return; }
     if (/\.mp4$/.test(u.pathname)) return; // let the browser stream the video (online only)
     // Fresh copy first (so updates show right away), saved copy if offline or very slow.
     e.respondWith(timeout(fetch(r), 7000).then(function (res) {
