@@ -2309,7 +2309,7 @@
     if (!chosen) chosen = pickFor(vp.style || 'auto') || voice;
     if (chosen) { u.voice = chosen; u.lang = chosen.lang; }
     u.rate = vp.rate ? +vp.rate : st.rate; u.pitch = (vp.pitch != null && vp.pitch !== '') ? +vp.pitch : st.pitch;
-    u.volume = window.ccVolGet ? ccVolGet('scripture') / 100 : 1; /* Sound v1: scripture volume */
+    u.volume = window.ccVolGet ? Math.min(1, ccVolGet('scripture') / 100) : 1; /* Sound v1: scripture volume (phone voices top out at 100%) */
   }
   function escV(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function renderVoices(){
@@ -2338,8 +2338,8 @@
   var CC_SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
   function ccDeviceVoiceOK(){ return !!synth && enVoices().length > 0; }
   function ccAudioEl(){
-    if (!ccAudio) { ccAudio = document.createElement('audio'); ccAudio.setAttribute('playsinline', ''); ccAudio.preload = 'auto'; document.body.appendChild(ccAudio); }
-    try { ccAudio.volume = window.ccVolGet ? ccVolGet('scripture') / 100 : 1; } catch(e){} /* Sound v1: scripture volume */
+    if (!ccAudio) { ccAudio = document.createElement('audio'); ccAudio.setAttribute('playsinline', ''); ccAudio.crossOrigin = 'anonymous'; /* Sound v1.1: lets the Scripture voice be boosted */ ccAudio.preload = 'auto'; document.body.appendChild(ccAudio); }
+    try { if (window.ccScriptureApply) ccScriptureApply(ccAudio); else ccAudio.volume = 1; } catch(e){} /* Sound v1: scripture volume (v1.1: can go above 100%) */
     return ccAudio;
   }
   function ccUnlock(){ var a = ccAudioEl(); if (!a.getAttribute('data-unlocked')) { a.setAttribute('data-unlocked', '1'); try { a.src = CC_SILENT; var p = a.play(); if (p && p.catch) p.catch(function(){}); } catch(e){} } }
@@ -2516,7 +2516,7 @@
   /* Sound v1 (Nov 12 2026): music volume is the member's choice; while Scripture is read the music drops to about a quarter of it */
   var ccDucked = false;
   function ccMusicVol(){ return window.ccVolGet ? ccVolGet('music') : 65; }
-  function duck(on){ ccDucked = !!on; try { if (yt && yt.setVolume) yt.setVolume(on ? Math.round(ccMusicVol() * .28) : ccMusicVol()); } catch(e){} }
+  function duck(on){ ccDucked = !!on; try { if (yt && yt.setVolume) yt.setVolume(on ? Math.round(ccMusicVol() * .15) : ccMusicVol()); /* v1.1: music drops lower so the words stand out */ } catch(e){} }
   window.ccRadioApplyVol = function(){ duck(ccDucked); };
   window.ccRadioLoad = function(cb){ loadSongs(function(){ cb(songs.slice(), si, playing); }); };
   window.ccRadioPick = function(id, t, a){
@@ -4266,22 +4266,44 @@
 </style>
 <script>
 (function(){
-  var DEF = { music: 65, scripture: 100 }, KEY = 'ccVol_';
-  window.ccVolGet = function(k){ var v = null; try { v = localStorage.getItem(KEY + k); } catch(e){} v = v === null ? DEF[k] : +v; return isNaN(v) ? DEF[k] : Math.max(0, Math.min(100, v)); };
+  var DEF = { music: 65, scripture: 160 }, KEY = 'ccVol_', MAX = { music: 100, scripture: 200 };
+  window.ccVolGet = function(k){ var v = null; try { v = localStorage.getItem(KEY + k); } catch(e){} v = v === null ? DEF[k] : +v; return isNaN(v) ? DEF[k] : Math.max(0, Math.min(MAX[k] || 100, v)); };
   window.ccVolSet = function(k, v){
-    v = Math.max(0, Math.min(100, Math.round(+v))); try { localStorage.setItem(KEY + k, v); } catch(e){}
+    v = Math.max(0, Math.min(MAX[k] || 100, Math.round(+v))); try { localStorage.setItem(KEY + k, v); } catch(e){}
     document.querySelectorAll('.ccs-vol[data-k="' + k + '"]').forEach(function(r){ if (+r.value !== v) r.value = v; var o = r.parentNode.querySelector('output'); if (o) o.textContent = v + '%'; });
     if (k === 'music' && window.ccRadioApplyVol) ccRadioApplyVol();
-    if (k === 'scripture') document.querySelectorAll('audio').forEach(function(a){ try { a.volume = v / 100; } catch(e){} });
+    if (k === 'scripture') document.querySelectorAll('audio').forEach(function(a){ try { ccScriptureApply(a); } catch(e){} });
   };
+
+  /* Sound v1.1 (Nov 12 2026): louder Scripture. The read-aloud audio runs through a volume booster (up to 200%)
+     with a limiter so loud words never crackle. Starts on the first tap, because phones only allow sound after a tap. */
+  var AC = null, boosted = [];
+  function startBoost(){
+    if (AC) { if (AC.state === 'suspended') try { AC.resume(); } catch(e){} return; }
+    try { var C = window.AudioContext || window.webkitAudioContext; if (!C) return; AC = new C(); } catch(e){ AC = null; return; }
+    document.querySelectorAll('audio').forEach(function(a){ if (a.crossOrigin === 'anonymous') attach(a); });
+  }
+  function attach(a){
+    if (!AC || a._ccGain) return;
+    try { var src = AC.createMediaElementSource(a), g = AC.createGain(), lim = AC.createDynamicsCompressor();
+      lim.threshold.value = -6; lim.knee.value = 4; lim.ratio.value = 12; lim.attack.value = .003; lim.release.value = .2;
+      src.connect(g); g.connect(lim); lim.connect(AC.destination); a._ccGain = g; boosted.push(a); } catch(e){}
+  }
+  window.ccScriptureApply = function(a){
+    var v = ccVolGet('scripture') / 100;
+    if (a.crossOrigin === 'anonymous' && AC && AC.state !== 'closed') attach(a);
+    if (a._ccGain) { a.volume = 1; a._ccGain.gain.value = v; if (AC.state === 'suspended') try { AC.resume(); } catch(e){} }
+    else a.volume = Math.min(1, v);
+  };
+  ['pointerdown', 'touchstart', 'keydown'].forEach(function(t){ document.addEventListener(t, startBoost, { capture: true, passive: true }); });
   var IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function vidOf(u){ var m = String(u || '').match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/); return m ? m[1] : ''; }
   function sliders(){
     var h = '';
     [['music', 'Music'], ['scripture', 'Scripture']].forEach(function(p){ var v = ccVolGet(p[0]);
-      h += '<div class="ccs-row"><label>' + p[1] + '</label><input type="range" class="ccs-vol" data-k="' + p[0] + '" min="0" max="100" step="5" value="' + v + '" aria-label="' + p[1] + ' volume" oninput="ccVolSet(\'' + p[0] + '\', this.value)"><output>' + v + '%</output></div>'; });
-    h += '<div class="ccs-note">Music softens on its own while Scripture is being read.' + (IOS ? ' <b>On iPhone and iPad</b>, Apple doesn’t let apps opened in a browser change sound levels, so these sliders may not change anything there. Use your phone’s side volume buttons instead.' : '') + '</div>';
+      h += '<div class="ccs-row"><label>' + p[1] + '</label><input type="range" class="ccs-vol" data-k="' + p[0] + '" min="0" max="' + (MAX[p[0]] || 100) + '" step="5" value="' + v + '" aria-label="' + p[1] + ' volume" oninput="ccVolSet(\'' + p[0] + '\', this.value)"><output>' + v + '%</output></div>'; });
+    h += '<div class="ccs-note">Scripture can go up to 200% for a louder reading. Music softens on its own while Scripture is being read.' + (IOS ? ' <b>On iPhone and iPad</b>, the Scripture slider works, but Apple may not let the Music slider change the YouTube player. Use your side volume buttons for the music.' : '') + '</div>';
     return h;
   }
   function soundBox(){ var d = document.createElement('div'); d.className = 'ccs-box'; d.innerHTML = '<b>Sound</b>' + sliders(); return d; }
