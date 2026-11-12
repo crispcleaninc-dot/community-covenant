@@ -81,7 +81,7 @@ self.addEventListener('fetch', function (e) {
   if (r.method !== 'GET') return; // server calls (POST) are handled by app/bridge.js
   var u = new URL(r.url);
   if (u.origin === location.origin) {
-    if (/\/assets\/(skits|reels|reels-woman|reels-elder)\/.+\.mp3$/.test(u.pathname)) { e.respondWith(fromMedia(r)); return; }
+    if (/\/assets\/(skits|reels|reels-woman|reels-elder|reels-fiery)\/.+\.mp3$/.test(u.pathname)) { e.respondWith(fromMedia(r)); return; }
     if (/\.mp4$/.test(u.pathname)) return; // let the browser stream the video (online only)
     // Fresh copy first (so updates show right away), saved copy if offline or very slow.
     e.respondWith(timeout(fetch(r), 7000).then(function (res) {

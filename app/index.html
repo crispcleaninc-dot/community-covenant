@@ -2298,8 +2298,9 @@
   VSTYLES.natural.rec = 'reels/';
   (function(){ var add = {
       woman: { label: 'Recorded woman\u2019s voice', sub: 'Warm and clear, same on every phone', pitch: 1.05, rate: .92, re: VSTYLES.warm.re, rec: 'reels-woman/' },
-      elder: { label: 'Old Bible voice', sub: 'Slow and aged, like a church reading', pitch: .8, rate: .8, re: VSTYLES.deep.re, rec: 'reels-elder/' } },
-    o = {}; o.natural = VSTYLES.natural; o.woman = add.woman; o.elder = add.elder;
+      elder: { label: 'Old Bible voice', sub: 'Slow and aged, like a church reading', pitch: .8, rate: .8, re: VSTYLES.deep.re, rec: 'reels-elder/' },
+      fiery: { label: 'Bold fiery preacher', sub: 'Big, bold, rally-style word', pitch: .92, rate: 1.02, re: VSTYLES.deep.re, rec: 'reels-fiery/' } },
+    o = {}; o.natural = VSTYLES.natural; o.woman = add.woman; o.elder = add.elder; o.fiery = add.fiery;
     Object.keys(VSTYLES).forEach(function(k){ if (!o[k]) o[k] = VSTYLES[k]; }); VSTYLES = o; })();
   function enVoices(){ return synth ? synth.getVoices().filter(function(x){ return /^en/i.test(x.lang); }) : []; }
   function rankV(x, preferUS){ var n = x.name; return (/natural|neural|online|premium|enhanced|wavenet/i.test(n) ? 4 : 0) + (/google/i.test(n) ? 2 : 0) + (x.localService === false ? 1 : 0) + (preferUS && /^en[-_]US/i.test(x.lang) ? 1 : 0); }
@@ -2340,7 +2341,7 @@
   /* Wisdom Reels v3: read-aloud on EVERY device. When the browser has no voices (Facebook and Instagram in-app browsers, some tablets),
      the app plays a spoken clip made by its own server instead. */
   var CC_SAMPLE = 'Trust in the Lord with all thine heart, and lean not unto thine own understanding.';
-  var CC_CLOUD = { natural: { tl: 'en-US', rate: 1, pitch: 1 }, woman: { tl: 'en-US', rate: .98, pitch: 1 }, elder: { tl: 'en-GB', rate: .9, pitch: .84 }, auto: { tl: 'en-US', rate: 1, pitch: 1 }, deep: { tl: 'en-US', rate: 1, pitch: .84 }, warm: { tl: 'en-US', rate: .98, pitch: 1 }, african: { tl: 'en-NG', rate: .98, pitch: 1 }, british: { tl: 'en-GB', rate: 1, pitch: 1 } };
+  var CC_CLOUD = { natural: { tl: 'en-US', rate: 1, pitch: 1 }, woman: { tl: 'en-US', rate: .98, pitch: 1 }, elder: { tl: 'en-GB', rate: .9, pitch: .84 }, fiery: { tl: 'en-US', rate: 1.05, pitch: .9 }, auto: { tl: 'en-US', rate: 1, pitch: 1 }, deep: { tl: 'en-US', rate: 1, pitch: .84 }, warm: { tl: 'en-US', rate: .98, pitch: 1 }, african: { tl: 'en-NG', rate: .98, pitch: 1 }, british: { tl: 'en-GB', rate: 1, pitch: 1 } };
   var ccAudio = null, ccClipCache = {}, ccCloudToken = 0;
   var CC_SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
   function ccDeviceVoiceOK(){ return !!synth && enVoices().length > 0; }
