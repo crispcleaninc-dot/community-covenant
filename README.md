@@ -9,6 +9,7 @@ App:  https://crispcleaninc-dot.github.io/community-covenant/app/
 - `index.html` – landing page with the how-it-works video
 - `app/index.html` – the Community Covenant app (same app as the Apps Script version, nothing removed)
   - Screen-Time Breaks (Nov 6 2026): break reminders, Covenant Originals skits & commercials, and credited sermon/skit clips from the creators' own YouTube channels, matched to age, interests, daily focus, covenant day and last Bible study. Kids only see kid content. Welcome tiles open help / His creation reels / Your people (Facebook group + Linktree).
+  - Sound & Song Search (Nov 12 2026): search box on the Music tab with a Play here button on every song; Music and Scripture volume sliders (Music tab, Settings, and a Sound sheet opened from the gospel radio bar and the Wisdom Reels top bar, which also searches songs). Saved per device. Music still softens while Scripture is read.
 - `app/bridge.js` – sends the app's `google.script.run` calls to the Apps Script server
 - `app/connect.js` – add-ons: install to home screen, how-it-works video, chat button, Scripture-backed Ask for Help, speak-to-type mic on every box, phone notifications
 - `chat.html` – members chat with the team · `team.html` – the team desk (TEAM_PIN)

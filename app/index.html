@@ -2118,6 +2118,7 @@
   #ccRadio .adv { display: none; margin-top: 4px; font-size: .7em; line-height: 1.25; color: #2a2040; background: #f1d999; border-radius: 8px; padding: 4px 7px; font-weight: 700; white-space: normal; }
   #ccRadio .adv.on { display: block; }
   @media (max-width: 420px) { #ccRadio .ctl button { width: 31px; } #ccRadio .ctl { gap: 3px; } }
+  #ccRadio .ctl { flex-wrap: wrap; } /* Sound v1: room for the search + volume buttons */
 
   /* ---------- FLOATING REELS BUTTON ---------- */
   #ccReelBtn { position: fixed; right: 14px; bottom: 16px; z-index: 8000; border: 0; border-radius: 999px; padding: 6px 16px 6px 6px; display: flex; align-items: center; gap: 10px; background: var(--plum); color: #fff; font: 700 .85em 'Source Sans 3', sans-serif; box-shadow: 0 10px 26px rgba(55,43,78,.35); cursor: pointer; }
@@ -2308,6 +2309,7 @@
     if (!chosen) chosen = pickFor(vp.style || 'auto') || voice;
     if (chosen) { u.voice = chosen; u.lang = chosen.lang; }
     u.rate = vp.rate ? +vp.rate : st.rate; u.pitch = (vp.pitch != null && vp.pitch !== '') ? +vp.pitch : st.pitch;
+    u.volume = window.ccVolGet ? ccVolGet('scripture') / 100 : 1; /* Sound v1: scripture volume */
   }
   function escV(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function renderVoices(){
@@ -2337,6 +2339,7 @@
   function ccDeviceVoiceOK(){ return !!synth && enVoices().length > 0; }
   function ccAudioEl(){
     if (!ccAudio) { ccAudio = document.createElement('audio'); ccAudio.setAttribute('playsinline', ''); ccAudio.preload = 'auto'; document.body.appendChild(ccAudio); }
+    try { ccAudio.volume = window.ccVolGet ? ccVolGet('scripture') / 100 : 1; } catch(e){} /* Sound v1: scripture volume */
     return ccAudio;
   }
   function ccUnlock(){ var a = ccAudioEl(); if (!a.getAttribute('data-unlocked')) { a.setAttribute('data-unlocked', '1'); try { a.src = CC_SILENT; var p = a.play(); if (p && p.catch) p.catch(function(){}); } catch(e){} } }
@@ -2504,13 +2507,26 @@
       yt = new YT.Player('ccYT', { width: 150, height: 84, videoId: songs[si].id,
         playerVars: { autoplay: 1, playsinline: 1, controls: 0, rel: 0, modestbranding: 1 },
         events: {
-          onReady: function(e){ e.target.setVolume(65); e.target.playVideo(); },
+          onReady: function(e){ e.target.setVolume(ccMusicVol()); e.target.playVideo(); },
           onStateChange: function(e){ playing = e.data === 1; document.getElementById('ccTMusic').classList.toggle('on', playing); if (e.data === 0) ccRadioNext(); },
           onError: function(){ setTimeout(ccRadioNext, 400); }
         } });
     });
   }
-  function duck(on){ try { if (yt && yt.setVolume) yt.setVolume(on ? 18 : 65); } catch(e){} }
+  /* Sound v1 (Nov 12 2026): music volume is the member's choice; while Scripture is read the music drops to about a quarter of it */
+  var ccDucked = false;
+  function ccMusicVol(){ return window.ccVolGet ? ccVolGet('music') : 65; }
+  function duck(on){ ccDucked = !!on; try { if (yt && yt.setVolume) yt.setVolume(on ? Math.round(ccMusicVol() * .28) : ccMusicVol()); } catch(e){} }
+  window.ccRadioApplyVol = function(){ duck(ccDucked); };
+  window.ccRadioLoad = function(cb){ loadSongs(function(){ cb(songs.slice(), si, playing); }); };
+  window.ccRadioPick = function(id, t, a){
+    if (navigator.onLine === false) { toast('Music needs the internet'); return; }
+    loadSongs(function(){
+      var k = -1; songs.forEach(function(s, i){ if (s.id === id) k = i; });
+      if (k < 0) { songs.splice(si + 1, 0, { t: t || 'Song', a: a || '', id: id, x: false }); k = songs.length > 1 ? si + 1 : 0; }
+      si = k; startRadio();
+    });
+  };
   window.ccRadioNext = function(){ if (!songs.length) return; si = (si + 1) % songs.length; label(); if (yt) yt.loadVideoById(songs[si].id); };
   window.ccRadioDown = function(){
     if (!songs.length) return; var s = songs[si], h = dnLoad(); h[s.id] = 1; try { localStorage.setItem(DN_KEY, JSON.stringify(h)); } catch(e){}
@@ -4226,6 +4242,125 @@
 })();
 </script>
 <!-- ===== end Screen-Time Breaks v1.0 ===== -->
+
+<!-- ===== Sound & Song Search v1.0 (Nov 12 2026): search to pick your music + volume for music and Scripture. Additive. ===== -->
+<style>
+  .ccs-box{background:#fffdf7;border:1px solid #e7ddc9;border-radius:12px;padding:12px 14px;margin:0 0 14px}
+  .ccs-box b{color:#372b4e}
+  .ccs-row{display:flex;align-items:center;gap:10px;margin:8px 0}
+  .ccs-row label{flex:0 0 92px;margin:0;font-weight:600;font-size:.9em;color:#3a3352}
+  .ccs-row input[type=range]{flex:1;accent-color:#372b4e;height:28px}
+  .ccs-row output{flex:0 0 40px;text-align:right;font-weight:700;color:#372b4e;font-size:.9em}
+  .ccs-note{font-size:.84em;color:#6b6280;margin-top:6px;line-height:1.4}
+  .ccs-search{width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid #e7ddc9;border-radius:12px;background:#f1e9d9;font:inherit;font-size:1em;color:#3a3352;margin:0 0 6px}
+  .ccs-play{margin-left:10px;border:0;border-radius:999px;background:#372b4e;color:#fff;font:700 .82em 'Source Sans 3',Arial;padding:6px 12px;cursor:pointer}
+  #ccSnd{position:fixed;left:0;right:0;bottom:0;z-index:9600;background:#fffdf7;color:#3a3352;border-radius:18px 18px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.3);max-height:78vh;display:flex;flex-direction:column;transform:translateY(105%);transition:transform .25s;font-family:'Source Sans 3',Arial,sans-serif}
+  #ccSnd.on{transform:none}
+  #ccSnd .hd{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px;font-family:'Cormorant Garamond',Georgia,serif;font-size:1.3em;font-weight:700;color:#372b4e}
+  #ccSnd .hd button{border:0;background:none;font-size:1.6em;line-height:1;color:#372b4e;cursor:pointer}
+  #ccSnd .bd{padding:0 16px 18px;overflow:auto}
+  #ccSnd .sl{margin-top:4px}
+  #ccSnd .it{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 4px;border-bottom:1px dashed #e7ddc9;cursor:pointer}
+  #ccSnd .it.on{background:#f1e9d9;border-radius:8px}
+  #ccSnd .it small{display:block;color:#8d8271}
+</style>
+<script>
+(function(){
+  var DEF = { music: 65, scripture: 100 }, KEY = 'ccVol_';
+  window.ccVolGet = function(k){ var v = null; try { v = localStorage.getItem(KEY + k); } catch(e){} v = v === null ? DEF[k] : +v; return isNaN(v) ? DEF[k] : Math.max(0, Math.min(100, v)); };
+  window.ccVolSet = function(k, v){
+    v = Math.max(0, Math.min(100, Math.round(+v))); try { localStorage.setItem(KEY + k, v); } catch(e){}
+    document.querySelectorAll('.ccs-vol[data-k="' + k + '"]').forEach(function(r){ if (+r.value !== v) r.value = v; var o = r.parentNode.querySelector('output'); if (o) o.textContent = v + '%'; });
+    if (k === 'music' && window.ccRadioApplyVol) ccRadioApplyVol();
+    if (k === 'scripture') document.querySelectorAll('audio').forEach(function(a){ try { a.volume = v / 100; } catch(e){} });
+  };
+  var IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function vidOf(u){ var m = String(u || '').match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/); return m ? m[1] : ''; }
+  function sliders(){
+    var h = '';
+    [['music', 'Music'], ['scripture', 'Scripture']].forEach(function(p){ var v = ccVolGet(p[0]);
+      h += '<div class="ccs-row"><label>' + p[1] + '</label><input type="range" class="ccs-vol" data-k="' + p[0] + '" min="0" max="100" step="5" value="' + v + '" aria-label="' + p[1] + ' volume" oninput="ccVolSet(\'' + p[0] + '\', this.value)"><output>' + v + '%</output></div>'; });
+    h += '<div class="ccs-note">Music softens on its own while Scripture is being read.' + (IOS ? ' <b>On iPhone and iPad</b>, Apple doesn’t let apps opened in a browser change sound levels, so these sliders may not change anything there. Use your phone’s side volume buttons instead.' : '') + '</div>';
+    return h;
+  }
+  function soundBox(){ var d = document.createElement('div'); d.className = 'ccs-box'; d.innerHTML = '<b>Sound</b>' + sliders(); return d; }
+
+  /* ---- Music tab: search box + volume, and a Play button on every song ---- */
+  var mv = document.querySelector('#musicView .card'), pc = document.getElementById('playlistContainer');
+  if (mv && pc) {
+    mv.insertBefore(soundBox(), pc);
+    var q = document.createElement('input'); q.type = 'search'; q.className = 'ccs-search'; q.id = 'ccMusicSearch'; q.placeholder = 'Search songs or artists…'; q.setAttribute('aria-label', 'Search songs');
+    var none = document.createElement('p'); none.className = 'hint'; none.style.display = 'none'; none.textContent = 'No songs match that search.';
+    mv.insertBefore(q, pc); pc.parentNode.insertBefore(none, pc.nextSibling);
+    var filter = function(){ var t = q.value.trim().toLowerCase(), shown = 0, rows = pc.children;
+      for (var i = 0; i < rows.length; i++) { var r = rows[i]; if (r.tagName !== 'DIV') continue; var ok = !t || r.textContent.toLowerCase().indexOf(t) > -1; r.style.display = ok ? '' : 'none'; if (ok) shown++; }
+      none.style.display = (t && !shown && pc.querySelector('div')) ? '' : 'none'; };
+    q.addEventListener('input', filter);
+    var enhance = function(){
+      Array.prototype.forEach.call(pc.children, function(r){
+        if (r.tagName !== 'DIV' || r.getAttribute('data-ccs')) return; r.setAttribute('data-ccs', '1');
+        var a = r.querySelector('a[href]'), id = a && vidOf(a.getAttribute('href')); if (!id) return;
+        var t = (r.querySelector('strong') || {}).textContent || '', ar = ((r.querySelector('.hint') || {}).textContent || '').replace(/^\s*—\s*/, '');
+        var b = document.createElement('button'); b.type = 'button'; b.className = 'ccs-play'; b.textContent = '▶ Play here';
+        b.onclick = function(){ if (window.ccRadioPick) ccRadioPick(id, t, ar); };
+        a.parentNode.insertBefore(b, a.nextSibling);
+      });
+      filter();
+    };
+    new MutationObserver(enhance).observe(pc, { childList: true });
+    enhance();
+  }
+  /* ---- Settings: Sound card ---- */
+  var sv = document.getElementById('settingsView');
+  if (sv) { var c = document.createElement('div'); c.className = 'card'; c.innerHTML = '<h3>Sound</h3>'; c.appendChild(soundBox()); sv.appendChild(c); }
+
+  /* ---- Pop-up sheet: pick a song by search + volume (from the gospel radio bar and Wisdom Reels) ---- */
+  var sh = null, list = [];
+  function paint(){
+    var box = sh.querySelector('.ls'); if (!box) return;
+    var t = (sh.querySelector('.ccs-search').value || '').trim().toLowerCase();
+    var cur = window.ccRadioCur || '';
+    var rows = list.filter(function(s){ return !t || (s.t + ' ' + s.a).toLowerCase().indexOf(t) > -1; });
+    box.innerHTML = rows.length ? rows.map(function(s){ return '<div class="it' + (s.id === cur ? ' on' : '') + '" data-id="' + esc(s.id) + '"><span><b>' + esc(s.t) + '</b><small>' + esc(s.a) + (s.x ? ' · secular' : '') + '</small></span><button type="button" class="ccs-play">▶</button></div>'; }).join('')
+      : '<p class="hint">' + (list.length ? 'No songs match that search.' : 'Loading songs…') + '</p>';
+  }
+  window.ccSoundOpen = function(focusSearch){
+    if (!sh) {
+      sh = document.createElement('div'); sh.id = 'ccSnd'; sh.setAttribute('role', 'dialog'); sh.setAttribute('aria-label', 'Pick a song and set volume');
+      sh.innerHTML = '<div class="hd">Music &amp; Sound<button type="button" onclick="ccSoundClose()" aria-label="Close">&times;</button></div><div class="bd"><div class="sl"></div><input type="search" class="ccs-search" placeholder="Search songs or artists…" aria-label="Search songs"><div class="ls"></div></div>';
+      document.body.appendChild(sh);
+      sh.querySelector('.ccs-search').addEventListener('input', paint);
+      sh.querySelector('.ls').addEventListener('click', function(e){ var it = e.target.closest('.it'); if (!it) return; var id = it.getAttribute('data-id'), s = list.filter(function(x){ return x.id === id; })[0]; if (s && window.ccRadioPick) { ccRadioPick(s.id, s.t, s.a); window.ccRadioCur = s.id; paint(); } });
+    }
+    sh.querySelector('.sl').innerHTML = sliders();
+    paint();
+    if (window.ccRadioLoad) ccRadioLoad(function(songs, i){ list = songs; window.ccRadioCur = (songs[i] || {}).id || window.ccRadioCur; paint(); });
+    requestAnimationFrame(function(){ sh.classList.add('on'); if (focusSearch) sh.querySelector('.ccs-search').focus(); });
+  };
+  window.ccSoundClose = function(){ if (sh) sh.classList.remove('on'); };
+  // buttons on the gospel radio bar: Search songs + Volume
+  var ctl = document.querySelector('#ccRadio .ctl');
+  if (ctl && !document.getElementById('ccsRadioSearch')) {
+    var b1 = document.createElement('button'); b1.id = 'ccsRadioSearch'; b1.setAttribute('aria-label', 'Search and pick a song'); b1.title = 'Pick a song';
+    b1.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.5 6.5 0 1 0 9.5 16a6.47 6.47 0 0 0 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>';
+    b1.onclick = function(){ ccSoundOpen(true); };
+    var b2 = document.createElement('button'); b2.setAttribute('aria-label', 'Volume for music and Scripture'); b2.title = 'Volume';
+    b2.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4zM14 3.23v2.06a7 7 0 0 1 0 13.42v2.06A9 9 0 0 0 14 3.23z"/></svg>';
+    b2.onclick = function(){ ccSoundOpen(false); };
+    ctl.insertBefore(b2, ctl.lastElementChild); ctl.insertBefore(b1, b2);
+  }
+  // a Sound button on the Wisdom Reels top bar (works even when music is off, for the Scripture voice)
+  var tb = document.querySelector('#ccReels .tbtns');
+  if (tb && !document.getElementById('ccsReelsSnd')) {
+    var b3 = document.createElement('button'); b3.id = 'ccsReelsSnd'; b3.setAttribute('aria-label', 'Sound: volume and song search');
+    b3.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4zM14 3.23v2.06a7 7 0 0 1 0 13.42v2.06A9 9 0 0 0 14 3.23z"/></svg>Sound';
+    b3.onclick = function(e){ e.stopPropagation(); ccSoundOpen(false); };
+    tb.insertBefore(b3, tb.lastElementChild);
+  }
+})();
+</script>
+<!-- ===== end Sound & Song Search v1.0 ===== -->
 
 <script src="connect.js"></script>
 </body>
