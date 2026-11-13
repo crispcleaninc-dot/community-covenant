@@ -1,4 +1,4 @@
-/* Cyars Notify v1.0 — opt-in phone/computer notifications, shared by all of Ciarne's installable apps.
+/* Cyars Notify v1.1 — opt-in phone/computer notifications, shared by all of Ciarne's installable apps.
  *
  * What it does
  *  - Adds a small bell button. Nothing is sent until the person taps it and turns notifications ON.
@@ -15,6 +15,8 @@
  *   CyarsNotify.schedule({ id, type, title, body, at, url, repeat })   // type: appointment|deadline|unfinished|todo
  *   CyarsNotify.cancel(id)        CyarsNotify.done(id)        CyarsNotify.list()
  *   CyarsNotify.open()            CyarsNotify.isOn()
+ *   CyarsNotify.announce(title, body, url)   // 'App updates & news' alert, e.g. after a new version
+ *   (The app is also announced automatically when a new version of it installs itself.)
  *
  * Include with:  a script tag for notify.js with data-app="App Name" and defer
  * The app's sw.js must load notify-sw.js (importScripts) so alerts can show and be tapped.
@@ -23,7 +25,7 @@
   'use strict';
   if (window.CyarsNotify) return;
 
-  var VERSION = '1.0';
+  var VERSION = '1.1';
   var CONFIG_URL = 'https://crispcleaninc-dot.github.io/family-hub/notify/config.json';
   var me = document.currentScript;
   var APP = (me && me.getAttribute('data-app')) || document.title || 'App';
@@ -33,14 +35,15 @@
     ['appointment', 'Appointments'],
     ['deadline', 'Deadlines'],
     ['unfinished', 'Unfinished items'],
-    ['todo', 'Things to do']
+    ['todo', 'Things to do'],
+    ['updates', 'App updates & news']
   ];
   var TYPE_LABEL = {}; TYPES.forEach(function (t) { TYPE_LABEL[t[0]] = t[1]; });
 
   /* ---------- saved state (this device, this app) ---------- */
   function read() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
   var S = read();
-  S.prefs = S.prefs || { on: false, types: { appointment: true, deadline: true, unfinished: true, todo: true }, quietStart: '21:30', quietEnd: '07:00' };
+  S.prefs = S.prefs || { on: false, types: { appointment: true, deadline: true, unfinished: true, todo: true, updates: true }, quietStart: '21:30', quietEnd: '07:00' };
   S.items = S.items || [];
   S.device = S.device || ('d' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
 
@@ -207,6 +210,26 @@
     }).catch(function () {});
   }
 
+  /* ---------- app updates & news ---------- */
+  function announce(title, body, url) {
+    if (!S.prefs.on || !supported() || Notification.permission !== 'granted') return false;
+    if (S.prefs.types.updates === false || inQuiet(new Date())) return false;
+    show({ id: 'update', type: 'updates', title: title || (APP + ' was updated'), body: body || 'A new version is ready. Tap to open it.', url: url || location.href });
+    return true;
+  }
+  // a new version of the app took over on this device -> tell the person (not on first install)
+  function watchUpdates() {
+    if (!('serviceWorker' in navigator)) return;
+    var had = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (!had) { had = true; return; }
+      var k = KEY + ':updAt', last = 0; try { last = +localStorage.getItem(k) || 0; } catch (e) {}
+      if (Date.now() - last < 6e4) return;
+      try { localStorage.setItem(k, String(Date.now())); } catch (e) {}
+      announce(APP + ' was updated', 'The newest version is on this device now.');
+    });
+  }
+
   /* ---------- public API ---------- */
   function schedule(it) {
     if (!it || !it.title) return null;
@@ -358,9 +381,10 @@
   }
 
   /* ---------- start ---------- */
-  window.CyarsNotify = { version: VERSION, schedule: schedule, cancel: cancel, done: done, list: function () { return S.items.slice(); }, open: open, isOn: function () { return !!S.prefs.on; } };
+  window.CyarsNotify = { version: VERSION, schedule: schedule, cancel: cancel, done: done, list: function () { return S.items.slice(); }, open: open, announce: announce, isOn: function () { return !!S.prefs.on; } };
   function start() {
     mountBell();
+    watchUpdates();
     mirrorForWorker();
     pullFromWorker().then(function () { checkDue(); renderBadge(); });
     setInterval(checkDue, 30000);

@@ -1,4 +1,4 @@
-/* Cyars Notify v1.0 — service-worker side. Loaded from each app's sw.js with importScripts('notify-sw.js').
+/* Cyars Notify v1.1 — service-worker side. Loaded from each app's sw.js with importScripts('notify-sw.js').
  *  - Shows alerts pushed from the Cyars Notify Hub (Firebase) when the app is closed.
  *  - Opens the right app page when an alert is tapped.
  *  - Where the device allows background checks (installed app on Android/Chrome), fires
@@ -23,7 +23,7 @@
     var m = d.getHours() * 60 + d.getMinutes();
     return q1 < q2 ? (m >= q1 && m < q2) : (m >= q1 || m < q2);
   }
-  var LABEL = { appointment: 'Appointments', deadline: 'Deadlines', unfinished: 'Unfinished items', todo: 'Things to do' };
+  var LABEL = { appointment: 'Appointments', deadline: 'Deadlines', unfinished: 'Unfinished items', todo: 'Things to do', updates: 'App updates & news' };
 
   /* push from the hub (Firebase Cloud Messaging, data message) */
   self.addEventListener('push', function (e) {
