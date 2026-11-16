@@ -1,0 +1,46 @@
+s1_bills_7101 ok 68875
+s1_bills_7102 try0 HTTP Error 402: Payment Required
+s1_bills_7102 try1 HTTP Error 402: Payment Required
+s1_bills_7102 ok 67769
+s2_door_7201 try0 HTTP Error 402: Payment Required
+s2_door_7201 try1 HTTP Error 402: Payment Required
+s2_door_7201 ok 55597
+s2_door_7202 try0 HTTP Error 402: Payment Required
+s2_door_7202 try1 HTTP Error 402: Payment Required
+s2_door_7202 ok 57657
+s3_couch_7301 try0 HTTP Error 402: Payment Required
+s3_couch_7301 try1 HTTP Error 402: Payment Required
+s3_couch_7301 ok 63069
+s3_couch_7302 try0 HTTP Error 402: Payment Required
+s3_couch_7302 try1 HTTP Error 402: Payment Required
+s3_couch_7302 ok 63934
+s4_listen_7401 try0 HTTP Error 402: Payment Required
+s4_listen_7401 try1 HTTP Error 402: Payment Required
+s4_listen_7401 ok 66592
+s4_listen_7402 try0 HTTP Error 402: Payment Required
+s4_listen_7402 try1 HTTP Error 402: Payment Required
+s4_listen_7402 try2 HTTP Error 503: Service Unavailable
+s4_listen_7402 try3 HTTP Error 402: Payment Required
+s4_listen_7402 try4 HTTP Error 402: Payment Required
+s5_type_7501 try0 HTTP Error 503: Service Unavailable
+s5_type_7501 try1 HTTP Error 402: Payment Required
+s5_type_7501 try2 HTTP Error 402: Payment Required
+s5_type_7501 ok 70637
+s5_type_7502 try0 HTTP Error 402: Payment Required
+s5_type_7502 try1 HTTP Error 402: Payment Required
+s5_type_7502 ok 61057
+s6_morning_7601 try0 HTTP Error 402: Payment Required
+s6_morning_7601 try1 HTTP Error 402: Payment Required
+s6_morning_7601 try2 HTTP Error 503: Service Unavailable
+s6_morning_7601 try3 HTTP Error 402: Payment Required
+s6_morning_7601 try4 HTTP Error 402: Payment Required
+s6_morning_7602 try0 HTTP Error 503: Service Unavailable
+s6_morning_7602 try1 HTTP Error 402: Payment Required
+s6_morning_7602 try2 HTTP Error 402: Payment Required
+s6_morning_7602 ok 70786
+s7_hug_7701 try0 HTTP Error 402: Payment Required
+s7_hug_7701 try1 HTTP Error 402: Payment Required
+s7_hug_7701 try2 HTTP Error 503: Service Unavailable
+s7_hug_7701 try3 HTTP Error 402: Payment Required
+s7_hug_7701 try4 HTTP Error 402: Payment Required
+s7_hug_7702 ok 69834
