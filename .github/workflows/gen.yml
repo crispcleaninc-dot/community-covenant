@@ -1,6 +1,6 @@
 name: ad-media-gen
 on: { push: { branches: [ad-media-gen], paths: ['gen/run.py', 'gen/prompts.json', '.github/workflows/gen.yml'] } }
-permissions: { contents: read }
+permissions: { contents: write }
 jobs:
   gen:
     runs-on: ubuntu-latest
@@ -8,5 +8,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: pip install -q gradio_client && SHOTS=${{ matrix.shots }} python3 gen/run.py
-      - uses: actions/upload-artifact@v4
-        with: { name: 'img-${{ matrix.shots }}', path: gen/out2 }
+      - run: |
+          git config user.name "ad-media-gen"; git config user.email "noreply@anthropic.com"
+          git checkout -b ad-img-${{ matrix.shots }} && git add gen/out2 && git commit -m "images ${{ matrix.shots }}" && git push -f origin ad-img-${{ matrix.shots }}
