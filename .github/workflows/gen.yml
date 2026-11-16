@@ -1,0 +1,12 @@
+name: ad-media-gen
+on: { push: { branches: [ad-media-gen], paths: ['gen/prompts.json', 'gen/run.py'] } }
+permissions: { contents: write }
+jobs:
+  gen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 gen/run.py
+      - run: |
+          git config user.name "ad-media-gen"; git config user.email "noreply@anthropic.com"
+          git add gen/out && git commit -m "generated images" && git push

@@ -1,0 +1,11 @@
+{"style": ", photorealistic cinematic film still, 35mm photo, natural skin texture, shallow depth of field, candid moment, high detail, vertical portrait composition",
+ "who": "a Black African American mother in her early 30s with deep brown skin, freshly done neat long box braids styled in a high bun with laid edges, small gold hoop earrings",
+ "shots": [
+  ["s1_bills", [7101,7102], "{who}, wearing an oversized gray hoodie, sitting alone at a small kitchen table at 2 a.m., bills and envelopes spread out on the table, one hand on her forehead, worried, dim warm pendant lamp, dark window, phone face down beside her"],
+  ["s2_door", [7201,7202], "a 7 year old Black girl with two puff ponytails wearing pink pajamas standing in a dark hallway doorway at night, holding a stuffed bunny, looking with concern toward the kitchen light, warm light spilling on her face"],
+  ["s3_couch", [7301,7302], "{who}, wearing an oversized gray hoodie, sitting on a living room couch at night in the dark, face lit only by her phone screen, a single tear on her cheek, tired"],
+  ["s4_listen", [7401,7402], "{who}, wearing an oversized gray hoodie, curled up on a couch at night with white earbuds in, eyes closed, holding her phone to her chest, peaceful relieved expression, soft lamp glow, cozy blanket"],
+  ["s5_type", [7501,7502], "close-up over-the-shoulder of {who}, typing a message on her smartphone with both thumbs at night, cozy blanket, warm lamp light, phone screen glowing"],
+  ["s6_morning", [7601,7602], "{who}, wearing a cream sweater, standing in a sunny kitchen in the morning holding a coffee mug and reading her phone, a soft relieved smile, golden morning sunlight through the window"],
+  ["s7_hug", [7701,7702], "{who}, wearing a cream sweater, kneeling and hugging her smiling 7 year old daughter with two puff ponytails in pink pajamas in a sunny kitchen in the morning, both happy, golden light"]
+ ]}
