@@ -51,7 +51,8 @@ var CCX = {
     'seekFirstGet', 'seekFirstSave', 'getReelAudio', 'getReelsMusic', 'logSongFeedback',
     'altarSave', 'altarGet', 'askCovenant', 'replyNow',
     'chatSend', 'chatGet', 'teamThreads', 'teamThread', 'teamReply', 'teamMarkDone', 'connectInfo',
-    'checkEmail', 'resendVerification', 'resumeSession', 'forgetDevice']
+    'checkEmail', 'resendVerification', 'resumeSession', 'forgetDevice',
+    'memberPrefsGet', 'memberPrefsSave', 'memberActivityLog']
 };
 
 var CCX_CRISIS = ['suicide', 'suicidal', 'kill myself', 'killing myself', 'end my life', 'ending my life',

@@ -696,6 +696,8 @@
           <p><strong>Email:</strong> Used only for verification, password resets, and optional reminders. Never sold or shared.</p>
           <p><strong>SMS:</strong> Opt-in via Twilio; opt out anytime by removing your phone number.</p>
           <p><strong>Photos:</strong> Stored as files in your private folder, linked from your log.</p>
+          <p><strong>Listening &amp; likes:</strong> When you are signed in, the reels you hear, love or mark &ldquo;Not for me,&rdquo; the songs you play, your reading voice and your volume settings are saved to your account so they follow you to any device. Our team sees totals (for example, the most-loved reels) to know what helps people most. Never sold.</p>
+          <p><strong>Gifts:</strong> Donations are processed by Square. We never see or store your card number.</p>
           <p><strong>Retention:</strong> Kept while your account is active; removed within 30 days of deletion request.</p>
           <h4>Terms of Service</h4>
           <p><strong>Account:</strong> Keep your password confidential. <strong>Use:</strong> Personal spiritual growth only; abuse leads to suspension. <strong>Minors:</strong> Participate with parent/guardian awareness. <strong>Service:</strong> Provided "as-is" without warranties.</p>
@@ -2232,7 +2234,9 @@
   window.ccCloseWelcome = function(){ var w = document.getElementById('ccWelcome'); if (w) { w.style.transition = 'opacity .45s'; w.style.opacity = 0; setTimeout(function(){ w.style.display = 'none'; }, 460); } };
 
   /* ---------- REELS ---------- */
-  var built = false, auto = false, current = 0, likes = store('ccLikes') || {};
+  var built = false, auto = false, current = 0, likes = store('ccLikes') || {}, dislikes = store('ccDislikes') || {}; /* Reels v8 (Nov 16 2026): dislike = move to the end of your list */
+  window.ccReelsPrefsApplied = function(){ likes = store('ccLikes') || {}; dislikes = store('ccDislikes') || {}; try { vp = vpLoad(); } catch(e){} };
+  function ccT(type, id, title, detail){ try { if (window.ccTrack) window.ccTrack(type, id, title, detail); } catch(e){} }
   var ICON = {
     heart: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35 10.55 20C5.4 15.36 2 12.28 2 8.5A5.5 5.5 0 0 1 7.5 3c1.74 0 3.41.81 4.5 2.09A6 6 0 0 1 16.5 3 5.5 5.5 0 0 1 22 8.5c0 3.78-3.4 6.86-8.55 11.54z"/></svg>',
     speak: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4zM14 3.23v2.06a7 7 0 0 1 0 13.42v2.06A9 9 0 0 0 14 3.23z"/></svg>',
@@ -2242,6 +2246,7 @@
     if (built) return; built = true;
     var order = R.map(function(_, i){ return i; }).filter(function(i){ return (!ccTopic || R[i][6] === ccTopic) && (!window.ccReelSet || R[i][0] === window.ccReelSet); }); /* ccReelSet: photo-set filter for the welcome tiles (Nov 6 2026) */
     for (var i = order.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = order[i]; order[i] = order[j]; order[j] = t; }
+    order = order.filter(function(i){ return !dislikes[i]; }).concat(order.filter(function(i){ return dislikes[i]; })); /* disliked reels wait at the end */
     var feed = document.getElementById('ccFeed');
     feed.innerHTML = order.map(function(ri, k){
       var r = R[ri], liked = likes[ri];
@@ -2251,6 +2256,7 @@
         '<div class="verse">“' + esc(r[3]) + '”<b>' + esc(r[4]) + ' (KJV)</b></div>' +
         '<div class="think"><i>THINK ON THIS</i>' + esc(r[5]) + '</div></div>' +
         '<div class="side"><button class="lk' + (liked ? ' on' : '') + '" aria-label="Love">' + ICON.heart + '</button><small>Love</small>' +
+        '<button class="dk' + (dislikes[ri] ? ' on' : '') + '" aria-label="Not for me: move to the end of my list"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/></svg></button><small>Not for me</small>' +
         '<button class="sp" aria-label="Read aloud">' + ICON.speak + '</button><small>Listen</small>' +
         '<button class="sh" aria-label="Share">' + ICON.share + '</button><small>Share</small>' +
         '<button class="vc" aria-label="Choose the reading voice" onclick="event.stopPropagation(); ccVoicePanel();"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg></button><small>Voice</small></div>' +
@@ -2262,6 +2268,7 @@
     feed.addEventListener('click', function(ev){
       var s = ev.target.closest('.ccr'); if (!s) return; var ri = +s.getAttribute('data-i');
       if (ev.target.closest('.lk')) { toggleLike(s, ri); return; }
+      if (ev.target.closest('.dk')) { toggleDislike(s, ri); return; }
       if (ev.target.closest('.sp')) { speak(s, true); return; }
       if (ev.target.closest('.sh')) { share(R[ri]); return; }
     });
@@ -2271,7 +2278,18 @@
     setTimeout(function(){ if (feed.children[0]) feed.children[0].classList.add('seen'); }, 60);
   }
   function pop(s){ var hp = s.querySelector('.heartpop'); hp.classList.remove('go'); void hp.offsetWidth; hp.classList.add('go'); }
-  function toggleLike(s, ri){ likes[ri] = !likes[ri]; if (!likes[ri]) delete likes[ri]; store('ccLikes', likes); s.querySelector('.lk').classList.toggle('on', !!likes[ri]); if (likes[ri]) pop(s); }
+  function toggleLike(s, ri){ likes[ri] = !likes[ri]; if (!likes[ri]) delete likes[ri]; store('ccLikes', likes); s.querySelector('.lk').classList.toggle('on', !!likes[ri]); if (likes[ri]) pop(s);
+    if (likes[ri] && dislikes[ri]) { delete dislikes[ri]; store('ccDislikes', dislikes); var d0 = s.querySelector('.dk'); if (d0) d0.classList.remove('on'); }
+    ccT(likes[ri] ? 'like' : 'unlike', 'reel-' + ri, R[ri][1], R[ri][6] || ''); if (window.ccPrefsChanged) ccPrefsChanged(); }
+  function toggleDislike(s, ri){
+    var feed = document.getElementById('ccFeed'), d = s.querySelector('.dk');
+    if (dislikes[ri]) { delete dislikes[ri]; store('ccDislikes', dislikes); if (d) d.classList.remove('on'); toast('Back in your regular list'); ccT('undislike', 'reel-' + ri, R[ri][1], R[ri][6] || ''); if (window.ccPrefsChanged) ccPrefsChanged(); return; }
+    dislikes[ri] = Date.now(); store('ccDislikes', dislikes); if (d) d.classList.add('on');
+    if (likes[ri]) { delete likes[ri]; store('ccLikes', likes); var l0 = s.querySelector('.lk'); if (l0) l0.classList.remove('on'); }
+    ccT('dislike', 'reel-' + ri, R[ri][1], R[ri][6] || ''); if (window.ccPrefsChanged) ccPrefsChanged();
+    toast('Moved to the end of your list. You\u2019ll see it again after everything else.');
+    if (feed && feed.lastElementChild !== s) { try { if (synth) synth.cancel(); } catch(e){} try { var a0 = ccAudioEl(); a0.pause(); } catch(e){} feed.appendChild(s); var nx = feed.children[current]; if (nx) { nx.classList.add('seen'); nx.scrollIntoView({ block: 'start' }); if (auto) speak(nx); } }
+  }
   function share(r){
     var text = r[1] + '\n\n“' + r[3] + '” — ' + r[4] + ' (KJV)\n\nCommunity Covenant · woven together with those next to you';
     if (navigator.share) { navigator.share({ title: 'Community Covenant', text: text }).catch(function(){}); }
@@ -2458,6 +2476,7 @@
     try { var feed = document.getElementById('ccFeed'), nx = feed && feed.children[current + 1]; if (nx) { var pre = new Audio(); pre.preload = 'auto'; pre.src = ccRecUrl(nx.getAttribute('data-i')); } } catch(e){}
   }
   function speak(section, manual){
+    try { var ri0 = +section.getAttribute('data-i'); ccT('reel', 'reel-' + ri0, R[ri0][1], (VSTYLES[vp.style || 'natural'] || {}).label || vp.style || 'natural'); } catch(e){}
     if (ccRecOn()) { ccRecSpeak(section, manual); return; }
     speakOld(section, manual);
   }
@@ -2509,7 +2528,7 @@
   function label(){ var s = songs[si]; document.getElementById('ccRT').textContent = s ? s.t : 'No songs found in the playlist'; document.getElementById('ccRA').textContent = s ? s.a : '';
     var x = document.getElementById('ccRX'); if (x) { if (s && s.x) { x.textContent = '\u26A0 Advisory: this song may contain profanity and is not suitable for all listeners. Tap \u25B6\u258F to skip.'; x.classList.add('on'); } else { x.textContent = ''; x.classList.remove('on'); } } }
   var ADV_SEED = ['lPNdPQRcMnU'];
-  var DN_KEY = 'ccSongsHidden';
+  var DN_KEY = 'ccSongsHidden', ccLastSongT = '';
   function dnLoad(){ try { return JSON.parse(localStorage.getItem(DN_KEY) || '{}') || {}; } catch(e){ return {}; } }
   function startRadio(){
     wantPlay = true; show(true);
@@ -2522,7 +2541,7 @@
         playerVars: { autoplay: 1, playsinline: 1, controls: 0, rel: 0, modestbranding: 1 },
         events: {
           onReady: function(e){ e.target.setVolume(ccMusicVol()); e.target.playVideo(); },
-          onStateChange: function(e){ playing = e.data === 1; document.getElementById('ccTMusic').classList.toggle('on', playing); if (e.data === 0) ccRadioNext(); },
+          onStateChange: function(e){ playing = e.data === 1; document.getElementById('ccTMusic').classList.toggle('on', playing); if (e.data === 0) ccRadioNext(); if (playing && songs[si] && songs[si].id !== ccLastSongT) { ccLastSongT = songs[si].id; try { if (window.ccTrack) ccTrack('song', songs[si].id, songs[si].t, songs[si].a); } catch(x){} } },
           onError: function(){ setTimeout(ccRadioNext, 400); }
         } });
     });
@@ -2545,7 +2564,7 @@
   window.ccRadioDown = function(){
     if (!songs.length) return; var s = songs[si], h = dnLoad(); h[s.id] = 1; try { localStorage.setItem(DN_KEY, JSON.stringify(h)); } catch(e){}
     try { var who = (typeof currentUser !== 'undefined' && currentUser) ? ((currentUser.name || '') + ' <' + (currentUser.email || '') + '>') : ''; google.script.run.withFailureHandler(function(){}).logSongFeedback(s.t, s.a, s.id, 'down', who); } catch(e){}
-    songs.splice(si, 1); toast('Got it. We won\u2019t play that one for you again.');
+    songs.splice(si, 1); toast('Got it. We won\u2019t play that one for you again.'); try { if (window.ccPrefsChanged) ccPrefsChanged(); } catch(e){}
     if (!songs.length) { ccRadioStop(); return; } if (si >= songs.length) si = 0; label(); if (yt) yt.loadVideoById(songs[si].id);
   };
   window.ccRadioPrev = function(){ if (!songs.length) return; si = (si - 1 + songs.length) % songs.length; label(); if (yt) yt.loadVideoById(songs[si].id); };
@@ -4397,6 +4416,143 @@
 })();
 </script>
 <!-- ===== end Sound & Song Search v1.0 ===== -->
+
+<!-- ===== Give + Sync + History v1.0 (Nov 16 2026). Additive: donation screen (never blocks), account sync of likes/voice/volume, listening history. ===== -->
+<style>
+  #ccGive { position: fixed; inset: 0; z-index: 9800; background: rgba(28,20,44,.82); display: none; align-items: center; justify-content: center; padding: 18px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  #ccGive.on { display: flex; }
+  #ccGive .gv { background: #faf6ee; color: #372b4e; max-width: 430px; width: 100%; border-radius: 22px; padding: 26px 22px 18px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.4); font-family: 'Source Sans 3', sans-serif; max-height: 92vh; overflow: auto; }
+  #ccGive h2 { font-family: Georgia, serif; margin: 4px 0 8px; font-size: 1.5em; color: #372b4e; }
+  #ccGive .vs { font-style: italic; color: #8a6d3b; margin: 10px 0 14px; font-size: .95em; }
+  #ccGive p { margin: 8px 0; line-height: 1.5; }
+  #ccGive .amts { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 12px 0 6px; }
+  #ccGive .amts span { background: #fff; border: 1px solid #e7ddc9; border-radius: 999px; padding: 6px 12px; font-weight: 700; font-size: .9em; }
+  #ccGive .give { display: block; width: 100%; background: #c9a961; color: #2a2040; border: 0; border-radius: 14px; padding: 15px; font: 800 1.1em 'Source Sans 3', sans-serif; cursor: pointer; margin-top: 12px; text-decoration: none; }
+  #ccGive .cont { display: block; width: 100%; background: #372b4e; color: #fff; border: 0; border-radius: 14px; padding: 13px; font: 700 1em 'Source Sans 3', sans-serif; cursor: pointer; margin-top: 10px; }
+  #ccGive .skip { background: none; border: 0; color: #6d6080; text-decoration: underline; font-size: .85em; margin-top: 12px; cursor: pointer; }
+  #ccGive .how { text-align: left; background: #fff; border: 1px solid #e7ddc9; border-radius: 12px; padding: 10px 14px; font-size: .88em; margin-top: 12px; }
+  #ccGive .free { font-size: .82em; color: #6d6080; margin-top: 12px; }
+  #ccGive .free a { color: #8a6d3b; font-weight: 700; }
+  #ccGiveFab { position: fixed; right: 12px; bottom: 84px; z-index: 900; background: #c9a961; color: #2a2040; border: 0; border-radius: 999px; padding: 9px 14px; font: 800 .85em 'Source Sans 3', sans-serif; box-shadow: 0 6px 18px rgba(0,0,0,.25); cursor: pointer; display: none; }
+  body.cc-signed #ccGiveFab { display: block; }
+</style>
+<div id="ccGive" role="dialog" aria-modal="true" aria-labelledby="ccGiveT"><div class="gv">
+  <div style="font-size:2em">&#10084;</div>
+  <h2 id="ccGiveT">Help keep Community Covenant going</h2>
+  <p>Community Covenant is supported by people like you. Your gift pays for the reels, the voices, the music, the same-day replies and the team that prays with members.</p>
+  <div class="vs">&ldquo;God loveth a cheerful giver.&rdquo; &mdash; 2 Corinthians 9:7 (KJV)</div>
+  <div class="amts"><span>$5</span><span>$10</span><span>$25</span><span>Any amount</span></div>
+  <a class="give" id="ccGiveGo" href="#" target="_blank" rel="noopener">Give now</a>
+  <div class="how"><b>How giving works</b><br>Tap <b>Give now</b>. A secure Square page opens where you choose your amount and pay by card, Apple Pay, Google Pay or Cash App Pay. Square handles the payment; we never see your card number. You can also give any time from <b>Give</b> in the menu.</div>
+  <button class="cont" id="ccGiveCont" onclick="ccGiveClose('continue')">Continue to the app</button>
+  <button class="skip" id="ccGiveSkip" onclick="ccGiveClose('not-today')">Not today</button>
+  <button class="skip" onclick="ccGiveClose('gave')">I already gave</button>
+  <div class="free">Ask for Help, Scripture and the 988 crisis line are always free. Need help now? <a href="tel:988">Call or text 988</a>.</div>
+</div></div>
+<button id="ccGiveFab" onclick="ccGiveOpen('button')" aria-label="Give to Community Covenant">&#10084; Give</button>
+<script>
+(function(){
+  /* ---------- 1. GIVE (never blocks anyone) ---------- */
+  var cfg = window.COVENANT_CONFIG || {};
+  var GIVE_URL = cfg.GIVE_URL || 'SQUARE_LINK_PENDING';
+  var FREE_DAYS = 3;
+  function ls(k, v){ try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || 'null'); localStorage.setItem(k, JSON.stringify(v)); } catch(e){ return null; } }
+  function ss(k, v){ try { if (v === undefined) return sessionStorage.getItem(k); sessionStorage.setItem(k, v); } catch(e){ return null; } }
+  if (!ls('ccFirstSeen')) ls('ccFirstSeen', Date.now());
+  var go = document.getElementById('ccGiveGo');
+  if (/^https?:/.test(GIVE_URL)) go.href = GIVE_URL; else go.onclick = function(e){ e.preventDefault(); alert('Online giving is being set up. Please check back soon. Thank you!'); };
+  go.addEventListener('click', function(){ track('give-tap', 'give', 'Give now', ''); });
+  function days(){ return (Date.now() - (ls('ccFirstSeen') || Date.now())) / 864e5; }
+  window.ccGiveOpen = function(why){
+    var after = days() >= FREE_DAYS && why === 'open';
+    document.getElementById('ccGiveCont').style.display = after ? 'none' : '';
+    document.getElementById('ccGiveSkip').style.display = after ? '' : 'none';
+    document.getElementById('ccGive').classList.add('on');
+    track('give-screen', 'give', why || 'menu', after ? 'each-visit' : 'free-days');
+  };
+  window.ccGiveClose = function(how){
+    document.getElementById('ccGive').classList.remove('on');
+    if (how === 'gave') ls('ccGaveAt', Date.now());
+    track('give-' + how, 'give', how, '');
+  };
+  function shouldShow(){
+    if (ss('ccGiveShown')) return false;                                   /* once per visit */
+    var gave = ls('ccGaveAt'); if (gave && Date.now() - gave < 30 * 864e5) return false; /* gave in the last 30 days */
+    if (days() < FREE_DAYS) { var d = new Date().toDateString(); if (ls('ccGiveDay') === d) return false; ls('ccGiveDay', d); } /* first days: once a day, with Continue */
+    return true;
+  }
+  function crisisUp(){ var t = document.body.innerText || ''; return /988/.test(t) && document.querySelector('.crisis.on, #crisisBox.on, .cc-crisis.on'); }
+  setTimeout(function(){ if (shouldShow() && !crisisUp()) { ss('ccGiveShown', '1'); ccGiveOpen('open'); } }, 2500);
+  // "Give" in the menu
+  function addNav(){ var nav = document.querySelector('#appPage .nav'); if (!nav || document.getElementById('ccGiveNav')) return;
+    var b = document.createElement('button'); b.id = 'ccGiveNav'; b.innerHTML = '&#10084; Give'; b.onclick = function(){ ccGiveOpen('menu'); };
+    var lo = Array.prototype.filter.call(nav.children, function(x){ return /logout/i.test(x.textContent); })[0]; nav.insertBefore(b, lo || null); }
+  addNav();
+
+  /* ---------- 2. ACCOUNT SYNC (likes, dislikes, voice, volume, hidden songs) ---------- */
+  var KEYS = ['ccLikes', 'ccDislikes', 'ccVoicePref', 'ccVol_music', 'ccVol_scripture', 'ccSongsHidden', 'ccBreakEvery', 'ccSkitMute'];
+  function user(){ try { return (typeof currentUser !== 'undefined' && currentUser && currentUser.email && currentUser.token) ? currentUser : null; } catch(e){ return null; } }
+  function snap(){ var o = {}; KEYS.forEach(function(k){ var v = null; try { v = localStorage.getItem(k); } catch(e){} if (v !== null) o[k] = v; }); return o; }
+  function run(){ return (window.google && google.script && google.script.run) ? google.script.run : null; }
+  var synced = '', lastSnap = '', saving = null;
+  function apply(data){
+    Object.keys(data).forEach(function(k){ if (KEYS.indexOf(k) >= 0 && typeof data[k] === 'string') try { localStorage.setItem(k, data[k]); } catch(e){} });
+    try { if (window.ccReelsPrefsApplied) ccReelsPrefsApplied(); } catch(e){}
+    try { if (window.ccRadioApplyVol) ccRadioApplyVol(); } catch(e){}
+  }
+  function merge(server){ /* first sync on this device: keep everything from both */
+    var mine = snap(), out = {};
+    KEYS.forEach(function(k){
+      var a = mine[k], b = server[k];
+      if (/Likes|Dislikes|Hidden/.test(k) && a && b) { try { var A = JSON.parse(a) || {}, B = JSON.parse(b) || {}; Object.keys(B).forEach(function(x){ if (!(x in A)) A[x] = B[x]; }); out[k] = JSON.stringify(A); return; } catch(e){} }
+      if (b !== undefined) out[k] = b; else if (a !== undefined) out[k] = a;
+    });
+    try { var L = JSON.parse(out.ccLikes || '{}'), D = JSON.parse(out.ccDislikes || '{}'); Object.keys(L).forEach(function(x){ delete D[x]; }); out.ccDislikes = JSON.stringify(D); } catch(e){}
+    return out;
+  }
+  function pull(u){
+    var r = run(); if (!r) return;
+    r.withSuccessHandler(function(res){
+      var srv = (res && res.prefs) || null, st = (res && res.t) || 0, mineT = ls('ccPrefsT_' + u.email) || 0;
+      if (!srv) { push(true); }
+      else if (!mineT) { apply(merge(srv)); push(true); }
+      else if (st > mineT) { apply(srv); ls('ccPrefsT_' + u.email, st); lastSnap = JSON.stringify(snap()); }
+      else if (JSON.stringify(snap()) !== JSON.stringify(srv)) push(true);
+      synced = u.email;
+    }).withFailureHandler(function(){ synced = u.email; }).memberPrefsGet(u.email, u.token);
+  }
+  function push(force){
+    var u = user(); if (!u || synced !== u.email && !force) return; var r = run(); if (!r) return;
+    var s = snap(), j = JSON.stringify(s); if (!force && j === lastSnap) return; lastSnap = j;
+    var t = Date.now(); ls('ccPrefsT_' + u.email, t);
+    r.withSuccessHandler(function(){}).withFailureHandler(function(){}).memberPrefsSave(u.email, JSON.stringify({ t: t, prefs: s }), u.token);
+  }
+  window.ccPrefsChanged = function(){ clearTimeout(saving); saving = setTimeout(function(){ push(false); }, 1500); };
+
+  /* ---------- 3. LISTENING HISTORY (per member; the team sees totals) ---------- */
+  var Q = ls('ccTrackQ') || [];
+  window.ccTrack = function(type, id, title, detail){
+    Q.push([Date.now(), String(type), String(id || ''), String(title || '').slice(0, 140), String(detail || '').slice(0, 140)]);
+    if (Q.length > 400) Q = Q.slice(-400); ls('ccTrackQ', Q);
+  };
+  function track(a, b, c, d){ window.ccTrack(a, b, c, d); }
+  function flush(){
+    var u = user(); if (!u || !Q.length) return; var r = run(); if (!r) return;
+    var batch = Q.splice(0, 150); ls('ccTrackQ', Q);
+    r.withSuccessHandler(function(){}).withFailureHandler(function(){ Q = batch.concat(Q); ls('ccTrackQ', Q); }).memberActivityLog(u.email, JSON.stringify(batch), u.token);
+  }
+
+  /* ---------- the loop ---------- */
+  setInterval(function(){
+    var u = user();
+    document.body.classList.toggle('cc-signed', !!u);
+    if (u) { addNav(); if (synced !== u.email) { synced = '-'; pull(u); } else push(false); }
+  }, 4000);
+  setInterval(flush, 60000);
+  document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'hidden') { push(false); flush(); } });
+})();
+</script>
+<!-- ===== end Give + Sync + History v1.0 ===== -->
 
 <script src="connect.js"></script>
 <script src="../notify.js" data-app="Community Covenant" defer></script>

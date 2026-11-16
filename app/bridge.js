@@ -17,13 +17,15 @@
 
   /* ---------------- what each server function is ---------------- */
   var READ = { getUserProfile: 1, getUserEntries: 1, getWorkbookProgress: 1, getMusicPlaylist: 1, getReelsMusic: 1,
-    seekFirstGet: 1, altarGet: 1, chatGet: 1, connectInfo: 1, checkEmail: 1, getReelAudio: 1 };
+    seekFirstGet: 1, altarGet: 1, chatGet: 1, connectInfo: 1, checkEmail: 1, getReelAudio: 1, memberPrefsGet: 1 };
   var WRITE = { saveEntry: 1, saveWorkbookProgress: 1, seekFirstSave: 1, altarSave: 1, updateUserProfile: 1, updateFastType: 1,
-    logHelpQuestion: 1, logSongFeedback: 1, addUserSong: 1, chatSend: 1 };
+    logHelpQuestion: 1, logSongFeedback: 1, addUserSong: 1, chatSend: 1,
+    memberPrefsSave: 1, memberActivityLog: 1 };
   var AUTH = { loginUser: 1, resumeSession: 1 };
   // last-write-wins saves: only the newest waiting copy needs to be sent
   var COLLAPSE = { saveWorkbookProgress: function (a) { return a[1]; }, seekFirstSave: function (a) { return a[1] + '|' + a[2]; },
-    altarSave: function (a) { return a[1] + '|' + a[2]; }, updateUserProfile: function (a) { return a[0]; }, updateFastType: function (a) { return a[0]; } };
+    altarSave: function (a) { return a[1] + '|' + a[2]; }, updateUserProfile: function (a) { return a[0]; }, updateFastType: function (a) { return a[0]; },
+    memberPrefsSave: function (a) { return a[0]; } };
 
   /* ---------------- device storage (IndexedDB, with localStorage fallback) ---------------- */
   var DBN = 'cc-offline', db = null, mem = { cache: {}, outbox: [] }, seq = Date.now();
