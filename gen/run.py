@@ -1,15 +1,15 @@
-import json, urllib.request, urllib.parse, time, os
-P = json.load(open('gen/prompts.json')); os.makedirs('gen/out', exist_ok=True); log = []
+import json, os, time, shutil
+from gradio_client import Client
+P = json.load(open('gen/prompts.json')); os.makedirs('gen/out2', exist_ok=True); log = []
+c = Client("black-forest-labs/FLUX.1-schnell")
 for sid, seeds, p in P['shots']:
     p = p.replace('{who}', P['who']) + P['style']
     for sd in seeds:
-        url = 'https://image.pollinations.ai/prompt/' + urllib.parse.quote(p) + f'?width=768&height=1344&seed={sd}&model=flux&nologo=true&private=true'
-        for a in range(5):
+        for a in range(3):
             try:
-                with urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'}), timeout=180) as r: b = r.read()
-                if len(b) < 20000: raise Exception('small %d' % len(b))
-                open(f'gen/out/{sid}_{sd}.jpg', 'wb').write(b); log.append(f'{sid}_{sd} ok {len(b)}'); break
+                r = c.predict(prompt=p, seed=sd, randomize_seed=False, width=768, height=1344, num_inference_steps=4, api_name="/infer")
+                f = r[0] if isinstance(r, (list, tuple)) else r
+                shutil.copy(f, f'gen/out2/{sid}_{sd}.webp'); log.append(f'{sid}_{sd} ok'); break
             except Exception as e:
-                log.append(f'{sid}_{sd} try{a} {e}'); time.sleep(20)
-        time.sleep(12)
-open('gen/out/log.txt', 'w').write('\n'.join(log))
+                log.append(f'{sid}_{sd} try{a} {str(e)[:200]}'); time.sleep(30)
+open('gen/out2/log.txt', 'w').write('\n'.join(log))

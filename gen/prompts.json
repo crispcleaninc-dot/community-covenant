@@ -1,11 +1,62 @@
-{"style": ", photorealistic cinematic film still, 35mm photo, natural skin texture, shallow depth of field, candid moment, high detail, vertical portrait composition",
- "who": "a Black African American mother in her early 30s with deep brown skin, freshly done neat long box braids styled in a high bun with laid edges, small gold hoop earrings",
+{
+ "style": ", photorealistic cinematic film still, shot on 35mm, natural skin texture, realistic proportions, shallow depth of field, moody cinematic lighting, high detail",
+ "who": "a 32 year old Black African American woman with dark brown skin, a grown adult mother, beautiful, freshly done neat long box braids styled in a high bun with laid edges, small gold hoop earrings",
  "shots": [
-  ["s1_bills", [7101,7102], "{who}, wearing an oversized gray hoodie, sitting alone at a small kitchen table at 2 a.m., bills and envelopes spread out on the table, one hand on her forehead, worried, dim warm pendant lamp, dark window, phone face down beside her"],
-  ["s2_door", [7201,7202], "a 7 year old Black girl with two puff ponytails wearing pink pajamas standing in a dark hallway doorway at night, holding a stuffed bunny, looking with concern toward the kitchen light, warm light spilling on her face"],
-  ["s3_couch", [7301,7302], "{who}, wearing an oversized gray hoodie, sitting on a living room couch at night in the dark, face lit only by her phone screen, a single tear on her cheek, tired"],
-  ["s4_listen", [7401,7402], "{who}, wearing an oversized gray hoodie, curled up on a couch at night with white earbuds in, eyes closed, holding her phone to her chest, peaceful relieved expression, soft lamp glow, cozy blanket"],
-  ["s5_type", [7501,7502], "close-up over-the-shoulder of {who}, typing a message on her smartphone with both thumbs at night, cozy blanket, warm lamp light, phone screen glowing"],
-  ["s6_morning", [7601,7602], "{who}, wearing a cream sweater, standing in a sunny kitchen in the morning holding a coffee mug and reading her phone, a soft relieved smile, golden morning sunlight through the window"],
-  ["s7_hug", [7701,7702], "{who}, wearing a cream sweater, kneeling and hugging her smiling 7 year old daughter with two puff ponytails in pink pajamas in a sunny kitchen in the morning, both happy, golden light"]
- ]}
+  [
+   "s1_bills",
+   [
+    7111,
+    7112
+   ],
+   "{who}, wearing an oversized gray hoodie, sitting alone at a small kitchen table late at night, many unpaid bills and open envelopes spread across the table, a calculator, she rests her forehead in one hand looking stressed and exhausted, single warm pendant lamp above, dark window behind her"
+  ],
+  [
+   "s2_door",
+   [
+    7211,
+    7212
+   ],
+   "a 7 year old Black girl with dark brown skin and two puff ponytails, wearing pink pajamas, standing in a dark hallway doorway at night hugging a stuffed bunny, looking worried toward a lit kitchen, warm light on her face, cinematic"
+  ],
+  [
+   "s3_couch",
+   [
+    7311,
+    7312
+   ],
+   "{who}, wearing an oversized gray hoodie, sitting on a couch in a dark living room at night holding a smartphone with both hands, her face lit by the phone screen glow, a tear rolling down her cheek"
+  ],
+  [
+   "s4_listen",
+   [
+    7411,
+    7412
+   ],
+   "{who}, wearing an oversized gray hoodie, lying back on a couch at night wrapped in a blanket, white wireless earbuds in her ears, eyes closed, smartphone resting on her chest, calm peaceful relieved face, soft lamp glow"
+  ],
+  [
+   "s5_type",
+   [
+    7511,
+    7512
+   ],
+   "{who}, wearing an oversized gray hoodie, sitting on a couch at night typing on a smartphone with both thumbs, looking down at the glowing phone screen, focused and hopeful, warm lamp light"
+  ],
+  [
+   "s6_morning",
+   [
+    7611,
+    7612
+   ],
+   "{who}, wearing a cream knit sweater, standing in a bright kitchen in the morning holding a white coffee mug in one hand and a smartphone in the other, reading the phone with a soft relieved smile, golden sunlight through the window"
+  ],
+  [
+   "s7_hug",
+   [
+    7711,
+    7712
+   ],
+   "{who}, wearing a cream knit sweater, kneeling in a sunny kitchen in the morning hugging her 7 year old daughter who has dark brown skin, two puff ponytails and pink pajamas, both smiling with eyes closed, golden morning light"
+  ]
+ ]
+}

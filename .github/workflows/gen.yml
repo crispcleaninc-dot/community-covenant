@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: python3 gen/run.py
+      - run: pip install -q gradio_client && python3 gen/run.py
       - run: |
           git config user.name "ad-media-gen"; git config user.email "noreply@anthropic.com"
-          git add gen/out && git commit -m "generated images" && git push
+          git add gen/out2 && git commit -m "generated images" && git push
