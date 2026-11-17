@@ -1,0 +1,3 @@
+Loaded as API: https://black-forest-labs-flux-1-schnell.hf.space
+s17_9101 ok
+s17_9102 ok
