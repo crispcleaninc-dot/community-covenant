@@ -1,0 +1,21 @@
+name: ep-holland-gen
+on: { push: { branches: [ep-holland-gen] } }
+permissions: { contents: write }
+jobs:
+  img:
+    runs-on: ubuntu-latest
+    strategy: { fail-fast: false, max-parallel: 20, matrix: { shot: ["s01", "s02", "s03", "s04", "s05", "s06", "s07", "s08", "s09", "s10", "s11", "s12", "s13", "s14", "s15", "s16", "s17", "s18", "s19", "s20", "s21", "s22", "s23", "s24", "s25"] } }
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install -q gradio_client && SHOT=${{ matrix.shot }} python3 gen/img.py
+      - run: |
+          git config user.name "ep-holland-gen"; git config user.email "noreply@anthropic.com"
+          git checkout -b ep-holland-img-${{ matrix.shot }} && git add out && git commit -qm "img ${{ matrix.shot }}" && git push -f origin ep-holland-img-${{ matrix.shot }}
+  tts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get install -y -q espeak-ng && pip install -q kokoro soundfile && python3 gen/tts.py
+      - run: |
+          git config user.name "ep-holland-gen"; git config user.email "noreply@anthropic.com"
+          git checkout -b ep-holland-tts && git add out && git commit -qm "voices" && git push -f origin ep-holland-tts
