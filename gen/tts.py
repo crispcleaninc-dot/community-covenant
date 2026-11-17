@@ -1,5 +1,10 @@
-import json, os, soundfile as sf, numpy as np
-from kokoro import KPipeline
+import json, os, traceback
+os.makedirs('out', exist_ok=True)
+try:
+  import soundfile as sf, numpy as np
+  from kokoro import KPipeline
+except Exception:
+  open('out/err.txt','w').write(traceback.format_exc()); raise
 S = json.load(open('gen/story.json')); os.makedirs('out', exist_ok=True)
 pipe = KPipeline(lang_code='a')
 for sid, _, lines in S:
