@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Community Covenant — you are not alone</title>
+<meta name="description" content="A daily walk of scripture, prayer, movement and gratitude — and a team that answers you back the same day. Keep pushing one more day.">
+<meta property="og:title" content="Community Covenant — you are not alone">
+<meta property="og:description" content="Daily scripture, prayer, walking and gratitude, with a team that answers your log the same day. On any phone. Supported by gifts.">
+<meta property="og:image" content="https://crispcleaninc-dot.github.io/community-covenant/assets/how-it-works-poster.jpg">
+<meta property="og:url" content="https://crispcleaninc-dot.github.io/community-covenant/">
+<meta name="theme-color" content="#372b4e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<style>
+  :root{--cream:#faf6ee;--card:#fffdf7;--plum:#372b4e;--plum2:#4a3f66;--night:#1d1630;--gold:#b8964f;--gold2:#f1d999;--ink:#3a3352;--border:#e7ddc9}
+  *{box-sizing:border-box} html{scroll-behavior:smooth}
+  body{margin:0;background:var(--cream);color:var(--ink);font-family:"Source Sans 3",Arial,sans-serif;line-height:1.55}
+  a{color:inherit}
+  .serif{font-family:"Cormorant Garamond",Georgia,serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+  .kick{font-weight:700;font-size:.78em;letter-spacing:4px;text-transform:uppercase;color:var(--gold)}
+  .btn{display:inline-block;text-decoration:none;font-weight:700;border-radius:40px;padding:15px 30px;font-size:1.05em;border:0;cursor:pointer}
+  .btn.gold{background:linear-gradient(135deg,#f1d999,#b8964f);color:#1d1630;box-shadow:0 10px 30px rgba(184,150,79,.35)}
+  .btn.glass{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.35)}
+  .btn.plum{background:var(--plum);color:#fff}
+  /* hero */
+  .hero{background:radial-gradient(circle at 75% 20%,#4a3f66 0%,var(--night) 60%);color:#fff;padding:26px 0 70px;overflow:hidden}
+  nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:40px}
+  nav .logo{display:flex;align-items:center;gap:10px;font-family:"Cormorant Garamond",Georgia,serif;font-weight:700;font-size:1.35em;text-decoration:none}
+  nav .logo img{width:38px;height:38px;border-radius:10px}
+  nav a.sm{font-weight:700;text-decoration:none;color:var(--gold2);font-size:.95em}
+  .hgrid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
+  @media(max-width:860px){.hgrid{grid-template-columns:1fr}}
+  .hero h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:700;font-size:clamp(2.6em,6.4vw,4.4em);line-height:1.02;margin:12px 0 16px}
+  .hero .say{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-size:1.45em;color:#f3edf9;margin:0 0 8px}
+  .hero .ref{color:var(--gold2);font-size:.8em;letter-spacing:2px;text-transform:uppercase;font-weight:700}
+  .ctas{display:flex;flex-wrap:wrap;gap:12px;margin:28px 0 14px}
+  .stores{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;font-size:.88em;color:#cfc3e3}
+  .stores span{border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:7px 12px}
+  .phone{position:relative;justify-self:center;width:min(330px,82vw);aspect-ratio:9/16;border-radius:38px;background:#000;padding:10px;box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.08)}
+  .phone video{width:100%;height:100%;object-fit:cover;border-radius:30px;display:block;background:#000}
+  .phone .play{position:absolute;inset:10px;border-radius:30px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:26px;background:linear-gradient(180deg,rgba(0,0,0,0) 55%,rgba(29,22,48,.85));cursor:pointer;border:0;color:#fff;font:700 1em "Source Sans 3",Arial}
+  .phone .play i{width:64px;height:64px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;margin-bottom:10px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+  .phone .play i:after{content:"";border-left:20px solid #fff;border-top:12px solid transparent;border-bottom:12px solid transparent;margin-left:5px}
+  /* sections */
+  section{padding:70px 0}
+  h2{font-family:"Cormorant Garamond",Georgia,serif;font-weight:700;font-size:clamp(2em,4.4vw,2.9em);line-height:1.08;margin:10px 0 14px;color:var(--plum)}
+  .lead{font-size:1.15em;color:#4a3f66;max-width:680px}
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:30px}
+  @media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}} @media(max-width:520px){.cards{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:22px}
+  .card .n{font-family:"Cormorant Garamond",Georgia,serif;font-size:2.2em;color:var(--gold);line-height:1}
+  .card h3{font-family:"Cormorant Garamond",Georgia,serif;font-size:1.45em;margin:8px 0 6px;color:var(--plum)}
+  .card p{margin:0;color:#5a5170}
+  .band{background:var(--plum);color:#faf6ee}
+  .band h2{color:#fff} .band .lead{color:#e6dff2}
+  .three{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:30px}
+  @media(max-width:860px){.three{grid-template-columns:1fr}}
+  .band .card{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+  .band .card h3{color:var(--gold2)} .band .card p{color:#e6dff2}
+  .verse{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-size:clamp(1.6em,3.6vw,2.3em);line-height:1.3;color:var(--plum);text-align:center;max-width:820px;margin:0 auto}
+  .verse small{display:block;font-style:normal;font-family:"Source Sans 3",Arial;font-size:.42em;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-top:14px;font-weight:700}
+  .steps{counter-reset:s;display:grid;gap:14px;margin-top:26px;max-width:720px}
+  .steps div{counter-increment:s;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 18px 16px 64px;position:relative}
+  .steps div:before{content:counter(s);position:absolute;left:18px;top:14px;width:32px;height:32px;border-radius:50%;background:var(--plum);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center}
+  details{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 18px;margin:10px 0;max-width:820px}
+  summary{font-weight:700;cursor:pointer;color:var(--plum)}
+  .final{background:radial-gradient(circle at 50% 30%,#4a3f66,var(--night) 70%);color:#fff;text-align:center}
+  .final h2{color:#fff}
+  footer{background:var(--night);color:#b9add2;font-size:.9em;padding:26px 0;text-align:center}
+  footer a{color:var(--gold2)}
+  .care{background:#fbe9e4;color:#7a2f18;border-radius:14px;padding:14px 18px;max-width:820px;margin:26px auto 0;text-align:center}
+  #installTip{display:none;margin-top:10px;color:var(--gold2);font-size:.95em}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <nav>
+      <a class="logo" href="./"><img src="icons/icon-96.png" alt="">Community Covenant</a>
+      <a class="sm" href="app/">Log in &rarr;</a>
+    </nav>
+    <div class="hgrid">
+      <div>
+        <div class="kick">Thirty days &middot; Scripture &middot; Prayer &middot; Walking</div>
+        <h1>You are not alone.</h1>
+        <p class="say">Keep pushing one more day. Don&rsquo;t give up in God.</p>
+        <div class="ref">Woven together with those next to you &middot; Colossians 2:2</div>
+        <div class="ctas">
+          <a class="btn gold" href="app/">Start my covenant</a>
+          <button class="btn glass" id="installBtn" type="button">Get the app</button>
+        </div>
+        <div id="installTip"></div>
+        <div class="stores"><span>Works on any phone, tablet or computer</span><span>Google Play &amp; App Store &mdash; coming soon</span></div>
+      </div>
+      <div class="phone">
+        <video id="vid" playsinline preload="metadata" poster="assets/how-it-works-poster.jpg" src="assets/how-it-works.mp4"></video>
+        <button class="play" id="playBtn" type="button" aria-label="Play the how-it-works video"><i></i>See how it works &middot; 2&frac12; min</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="kick">Every day, a few honest minutes</div>
+    <h2>A covenant you keep one day at a time</h2>
+    <p class="lead">Community Covenant walks with you through thirty days of fasting, prayer, Scripture and movement &mdash; with a page that is yours every day, and people who read it.</p>
+    <div class="cards">
+      <div class="card"><div class="n">I</div><h3>The Word</h3><p>A fresh scripture every morning, with a second verse, the Apocrypha, the Quran and a plain &ldquo;what does this mean?&rdquo;</p></div>
+      <div class="card"><div class="n">II</div><h3>The Walk</h3><p>Log your walk, who walked with you, and a photo. Simple workouts matched to your age and energy.</p></div>
+      <div class="card"><div class="n">III</div><h3>Gratitude</h3><p>Four gratitudes, a revelation, and a message of love to someone who needs it today.</p></div>
+      <div class="card"><div class="n">IV</div><h3>Seal it</h3><p>Seal your day and it becomes a beautiful page in your own private folder, ready to keep or share.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="kick" style="color:#f1d999">New</div>
+    <h2>And now, we answer you back.</h2>
+    <p class="lead">You should never have to wonder whether anyone read what you wrote. Now you will know the same day.</p>
+    <div class="three">
+      <div class="card"><h3>Same-day replies</h3><p>Seal your log or write in any part of the app, and you get a personal reply the same day &mdash; your questions answered, plus a deeper reading and encouragement.</p></div>
+      <div class="card"><h3>Ask for Help</h3><p>Ask anything: a word, a verse, a hard question about marriage, forgiveness or faith. You get an answer grounded in Scripture right away.</p></div>
+      <div class="card"><h3>Chat with the team</h3><p>An open door, any time. Prayer requests, questions, or you just need to talk &mdash; a real person on our team reads every message.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- Nov 6 2026: screen-time breaks + Faith & Findings preview (added; nothing above changed) -->
+<section>
+  <div class="wrap">
+    <div class="kick">New &middot; Screen-time breaks</div>
+    <h2>Step away for a minute. Come back with a word.</h2>
+    <p class="lead">The app reminds you to take a break, then gives you a minute to breathe and something short to watch, all matched to your age, your interests and where you are in your covenant.</p>
+    <div class="cards">
+      <div class="card"><div class="n">&#9673;</div><h3>Text the Most High</h3><p>Short text-message skits where every reply is Scripture, plus <i>Texting a Wise Friend</i> for real-life questions.</p></div>
+      <div class="card"><div class="n">&#9654;</div><h3>Animated skits</h3><p>Characters act out faith in everyday life, like the Accuser and the Advocate, payday and screen time, in natural voices.</p></div>
+      <div class="card"><div class="n">&#10013;</div><h3>Sermon clips</h3><p>Short messages from Tony Evans, Charles Stanley, Sarah Jakes Roberts, T.D. Jakes, BibleProject and more, played from their own channels.</p></div>
+      <div class="card"><div class="n">&#9825;</div><h3>Made for kids too</h3><p>Children only see kid content: Bible-story cartoons and skits like <i>Brave and Worry</i> and <i>Three Jars</i>.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="fnf">
+  <div class="wrap fnfgrid">
+    <div>
+      <div class="kick" style="color:#f1d999">Our community on Facebook</div>
+      <h2>Faith &amp; Findings Forum</h2>
+      <p class="lead">Biblical takes on what&rsquo;s going on in the world: history, language, migration and Scripture. Come read, ask and talk with us.</p>
+      <a class="fnfcard" href="https://www.facebook.com/groups/943044184469864" target="_blank" rel="noopener">
+        <img src="assets/faith-findings-logo.jpg" alt="Faith &amp; Findings logo">
+        <span><b>Faith and Findings Forum</b><small>Public group on Facebook &middot; anyone can join</small><em>Join the group &rarr;</em></span>
+      </a>
+      <div class="fnflinks">
+        <a class="btn gold" href="https://www.facebook.com/groups/943044184469864" target="_blank" rel="noopener">Join on Facebook</a>
+        <a class="btn glass" href="https://linktr.ee/FaithandFindings" target="_blank" rel="noopener">All our links</a>
+      </div>
+      <p style="margin:14px 0 0;color:#e6dff2"><a href="https://www.facebook.com/ciarne.ne/videos/1422181726072081/" target="_blank" rel="noopener" style="color:#f1d999;font-weight:700">&#9654; Watch: a walk through Wisdom Reels and the music inside the app (on Facebook)</a></p>
+    </div>
+    <div class="fnfvid">
+      <iframe src="https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Fciarne.ne%2Fvideos%2F1368231905378162%2F&amp;show_text=false" title="Faith &amp; Findings: Sober September" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe>
+      <small>Faith &amp; Findings &mdash; Sober September</small>
+    </div>
+  </div>
+  <style>
+    .fnfgrid{display:grid;grid-template-columns:1.1fr .9fr;gap:34px;align-items:center}
+    @media(max-width:860px){.fnfgrid{grid-template-columns:1fr}}
+    .fnfcard{display:flex;gap:14px;align-items:center;text-decoration:none;background:#fffdf7;color:var(--ink);border-radius:18px;padding:12px;margin:18px 0 14px;max-width:460px;box-shadow:0 14px 36px rgba(0,0,0,.25)}
+    .fnfcard img{width:88px;height:88px;border-radius:14px;flex:none}
+    .fnfcard b{display:block;font-family:"Cormorant Garamond",Georgia,serif;font-size:1.35em;color:var(--plum)}
+    .fnfcard small{display:block;color:#6a6180}
+    .fnfcard em{display:block;font-style:normal;font-weight:700;color:var(--gold);margin-top:4px}
+    .fnflinks{display:flex;flex-wrap:wrap;gap:10px}
+    .fnfvid{background:#000;border-radius:20px;overflow:hidden;box-shadow:0 30px 70px rgba(0,0,0,.45)}
+    .fnfvid iframe{width:100%;aspect-ratio:16/9;border:0;display:block}
+    .fnfvid small{display:block;padding:8px 12px;color:#cfc3e3}
+  </style>
+</section>
+
+<section>
+  <div class="wrap" style="display:grid;grid-template-columns:1fr 1fr;gap:34px;align-items:center" id="rest">
+    <div>
+      <div class="kick">No strength tonight? Just press play.</div>
+      <h2>You don&rsquo;t have to answer anything to be held.</h2>
+      <p class="lead">Right on the welcome screen &mdash; no sign-in, no questions &mdash; tap <b>Watch &amp; listen with gospel music</b>. Scripture and encouragement are read aloud to you while gospel music plays. Set the phone down and let your heart rest.</p>
+      <a class="btn plum" href="app/">Open and press play</a>
+    </div>
+    <div class="card" style="background:var(--night);color:#faf6ee;border:0;padding:30px">
+      <div class="kick" style="color:#f1d999">A testimony</div>
+      <p class="serif" style="font-style:italic;font-size:1.35em;line-height:1.45;margin:14px 0;color:#faf6ee">&ldquo;I was so weak and so overwhelmed that I couldn&rsquo;t sleep. I couldn&rsquo;t even get into the app &mdash; I didn&rsquo;t have the strength to answer one question. But I could press play. I set the phone down and listened to the Word of God and the music until my heart rested, and I found peace &mdash; and went back to sleep.&rdquo;</p>
+      <div style="font-weight:700;letter-spacing:2px;font-size:.8em;color:#f1d999;text-transform:uppercase">&mdash; A member of our community</div>
+      <p class="serif" style="font-style:italic;color:#cfc3e3;margin:16px 0 0">&ldquo;He giveth his beloved sleep.&rdquo; &mdash; Psalm 127:2</p>
+    </div>
+  </div>
+  <style>@media(max-width:860px){#rest{grid-template-columns:1fr !important}}</style>
+</section>
+
+<section style="padding-top:10px">
+  <div class="wrap">
+    <p class="verse">&ldquo;Two are better than one&hellip; For if they fall, the one will lift up his fellow.&rdquo;<small>Ecclesiastes 4:9&ndash;10</small></p>
+  </div>
+</section>
+
+<section style="padding-top:20px">
+  <div class="wrap">
+    <div class="kick">Begin in two minutes</div>
+    <h2>How to start</h2>
+    <div class="steps">
+      <div><b>Create your account.</b> Tap <a href="app/"><b>Start my covenant</b></a>, then Create an account. Add your name, email, birth date and how you would like to fast.</div>
+      <div><b>Verify your email.</b> Tap the link we send you (check spam if you don&rsquo;t see it), then log in.</div>
+      <div><b>Open today&rsquo;s page.</b> Read the scripture, fill in your day, and tap <b>Seal today&rsquo;s entry</b>. We will write back to you the same day.</div>
+      <div><b>Keep it close.</b> Put it on your home screen (Android: Install &middot; iPhone: Share &rarr; Add to Home Screen) and turn on reminders.</div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:10px">
+  <div class="wrap">
+    <h2>Questions</h2>
+    <details><summary>Does it cost anything?</summary><p>There is no charge to join. Community Covenant runs on gifts from people who believe in it, so we do ask you to give what you can. Giving never locks anyone out, and Ask for Help, Scripture and the 988 crisis line are always free.</p></details>
+    <details id="give"><summary>How do I give?</summary><p>Tap <b>Give</b> in the app menu, or use the <a href="app/" class="cc-give-link">secure Square giving page</a>. You choose the amount and pay by card, Apple Pay, Google Pay or Cash App Pay. Square handles the payment, so we never see your card number. Thank you for helping keep the reels, the voices, the music and the same-day replies going.</p></details>
+    <details><summary>Will it work on my phone?</summary><p>Yes &mdash; any phone, tablet or computer with a browser. If you opened this from Facebook, everything works there too; to install it, tap the &hellip; menu and choose Open in browser.</p></details>
+    <details><summary>Who sees what I write?</summary><p>Your entries are kept in your own private folder. Only you and our care team can see them, so we can reply and pray with you. We never sell your information.</p></details>
+    <details><summary>Who writes the replies?</summary><p>Daily replies and Ask for Help answers are prepared with an AI writing assistant, guided by Scripture and our team, so you hear back the same day. Anything that sounds like you are hurting goes straight to a real person on our team. Team chat is always answered by a person.</p></details>
+    <details><summary>Is this for my whole family?</summary><p>Yes. Children, teens, young adults and grown-ups each get content made for their age, and families can walk the covenant together.</p></details>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <h2>One more day. Starting today.</h2>
+    <p class="lead" style="color:#e6dff2;margin:0 auto 26px">Someone is glad you&rsquo;re here.</p>
+    <a class="btn gold" href="app/">Start my covenant</a>
+    <p style="margin:16px 0 0"><a class="cc-give-link" href="app/" style="color:#f1d999;font-weight:700">&#10084; Give to keep Community Covenant going</a></p>
+    <div class="care">If today feels too heavy, call or text <b>988</b> (Suicide &amp; Crisis Lifeline) any time, day or night. You matter.</div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">Community Covenant &middot; Covenant Mundo &middot; <a href="app/">Open the app</a> &middot; <a href="chat.html">Chat with the team</a> &middot; <a class="cc-give-link" href="app/">Give</a> &middot; <a href="https://www.facebook.com/groups/943044184469864" target="_blank" rel="noopener">Faith &amp; Findings on Facebook</a> &middot; <a href="https://linktr.ee/FaithandFindings" target="_blank" rel="noopener">Linktree</a><br>
+  &ldquo;Being knit together in love&rdquo; &mdash; Colossians 2:2</div>
+</footer>
+
+<script>
+  (function () {
+    var v = document.getElementById('vid'), pb = document.getElementById('playBtn');
+    pb.onclick = function () { v.controls = true; v.play(); pb.style.display = 'none'; };
+    var deferred = null, tip = document.getElementById('installTip'), btn = document.getElementById('installBtn');
+    var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var inFB = /FBAN|FBAV|Instagram/i.test(navigator.userAgent);
+    window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; });
+    btn.onclick = function () {
+      if (deferred) { deferred.prompt(); return; }
+      tip.style.display = 'block';
+      tip.innerHTML = inFB ? 'Tap the <b>&hellip;</b> menu (top right) &rarr; <b>Open in browser</b>, then tap Get the app again.'
+        : isIOS ? 'In Safari, tap <b>Share</b> &rarr; <b>Add to Home Screen</b>.'
+        : 'Open your browser menu and choose <b>Install app</b> or <b>Add to Home screen</b>. Or just <a href="app/" style="color:#f1d999">start here</a> &mdash; it works in any browser.';
+    };
+    if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(function () {});
+  })();
+</script>
+</body>
+</html>

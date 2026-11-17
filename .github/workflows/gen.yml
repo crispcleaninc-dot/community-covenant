@@ -1,0 +1,26 @@
+name: cc-reels-gen
+on: { push: { branches: [cc-reels-gen] } }
+permissions: { contents: write }
+jobs:
+  tts:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { folder: reels, voice: am_onyx, speed: '0.78', script: plain, filt: 'loudnorm=I=-16:TP=-1.5' }
+          - { folder: reels-woman, voice: af_heart, speed: '0.92', script: plain, filt: 'loudnorm=I=-16:TP=-1.5' }
+          - { folder: reels-elder, voice: bm_george, speed: '0.8', script: plain, filt: 'asetrate=24000*0.93,aresample=24000,atempo=1.02,aecho=0.8:0.6:60|110:0.18|0.12,loudnorm=I=-16:TP=-1.5' }
+          - { folder: reels-fiery, voice: am_fenrir, speed: '1.08', script: fiery, filt: 'aecho=0.8:0.5:45|90:0.15|0.1,loudnorm=I=-15:TP=-1.5' }
+          - { folder: reels-oldschool, voice: am_santa, speed: '0.86', script: preacher, filt: 'asetrate=24000*0.92,aresample=24000,atempo=1.04,bass=g=4:f=110,aecho=0.8:0.55:70|130:0.2|0.12,loudnorm=I=-15:TP=-1.5' }
+          - { folder: reels-seasoned, voice: am_onyx, speed: '0.86', script: preacher, filt: 'bass=g=3:f=110,aecho=0.8:0.5:60|110:0.15|0.1,loudnorm=I=-15:TP=-1.5' }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: sudo apt-get install -y -q espeak-ng ffmpeg && pip install -q kokoro soundfile
+      - run: python3 gen/tts.py ${{ matrix.folder }} ${{ matrix.voice }} ${{ matrix.speed }} ${{ matrix.script }} '${{ matrix.filt }}' > run.txt 2>&1 || true; mkdir -p out; cp run.txt out/${{ matrix.folder }}_run.txt
+      - if: always()
+        run: |
+          git config user.name "cc-reels-gen"; git config user.email "noreply@anthropic.com"
+          git checkout -b cc-reels-out-${{ matrix.folder }} && git add out && git commit -qm "voices ${{ matrix.folder }}" && git push -f origin cc-reels-out-${{ matrix.folder }}
