@@ -1,0 +1,12 @@
+name: dub-sw-tts
+on: { push: { branches: [dub-sw-tts] } }
+permissions: { contents: write }
+jobs:
+  tts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install -q piper-tts && python3 tts/run.py
+      - run: |
+          git config user.name "dub-sw-tts"; git config user.email "noreply@anthropic.com"
+          git checkout -b dub-sw-out && git add out && git commit -qm "sw voice" && git push -f origin dub-sw-out
