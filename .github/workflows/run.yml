@@ -1,0 +1,22 @@
+name: dub-holland
+on: { push: { branches: [dub-holland] } }
+permissions: { contents: write }
+jobs:
+  sep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get -qq update && sudo apt-get -qq install -y ffmpeg
+      - run: pip install -q torch torchaudio --index-url https://download.pytorch.org/whl/cpu && pip install -q demucs soundfile
+      - run: python3 -m demucs --two-stems=vocals -n htdemucs -o sep job/holland_audio.flac && ffmpeg -v error -y -i sep/htdemucs/holland_audio/no_vocals.wav -c:a flac music.flac && ffmpeg -v error -y -i sep/htdemucs/holland_audio/vocals.wav -ac 1 -ar 24000 -c:a flac vocals.flac
+      - run: |
+          git config user.name dub-holland; git config user.email noreply@anthropic.com
+          git checkout -b dub-holland-music && git add music.flac vocals.flac && git commit -qm music && git push -f origin dub-holland-music
+  tts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install -q piper-tts && python3 job/run.py
+      - run: |
+          git config user.name dub-holland; git config user.email noreply@anthropic.com
+          git checkout -b dub-holland-tts && git add out && git commit -qm voices && git push -f origin dub-holland-tts
