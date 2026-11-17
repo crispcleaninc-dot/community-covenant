@@ -3,60 +3,52 @@
  "who": "a 32 year old Black African American woman with dark brown skin, a grown adult mother, beautiful, freshly done neat long box braids styled in a high bun with laid edges, small gold hoop earrings",
  "shots": [
   [
-   "s1_bills",
+   "e2_bed",
    [
-    7111,
-    7112
+    8101,
+    8102
    ],
-   "{who}, wearing an oversized gray hoodie, sitting alone at a small kitchen table late at night, many unpaid bills and open envelopes spread across the table, a calculator, she rests her forehead in one hand looking stressed and exhausted, single warm pendant lamp above, dark window behind her"
+   "a 7 year old Black girl with dark brown skin and two puff ponytails, wearing pink pajamas, lying awake in her bed in a dark bedroom at night, eyes wide open, listening, a thin line of warm light under the closed bedroom door, stuffed bunny beside her"
   ],
   [
-   "s2_door",
+   "e2_notice",
    [
-    7211,
-    7212
+    8201,
+    8202
    ],
-   "a 7 year old Black girl with dark brown skin and two puff ponytails, wearing pink pajamas, standing in a dark hallway doorway at night hugging a stuffed bunny, looking worried toward a lit kitchen, warm light on her face, cinematic"
+   "close-up of a white paper notice taped to the outside of a worn apartment front door in a dim hallway, the text on the paper is blurry and unreadable, dramatic moody light, cinematic, no people"
   ],
   [
-   "s3_couch",
+   "e2_doorway",
    [
-    7311,
-    7312
+    8301,
+    8302
    ],
-   "{who}, wearing an oversized gray hoodie, sitting on a couch in a dark living room at night holding a smartphone with both hands, her face lit by the phone screen glow, a tear rolling down her cheek"
+   "{who}, wearing an oversized gray hoodie, sitting at a small kitchen table at night with tears on her cheeks, turning to look toward a 7 year old Black girl with dark brown skin and two puff ponytails in pink pajamas standing in the kitchen doorway holding a stuffed bunny, warm pendant lamp light"
   ],
   [
-   "s4_listen",
+   "e2_lap",
    [
-    7411,
-    7412
+    8401,
+    8402
    ],
-   "{who}, wearing an oversized gray hoodie, lying back on a couch at night wrapped in a blanket, white wireless earbuds in her ears, eyes closed, smartphone resting on her chest, calm peaceful relieved face, soft lamp glow"
+   "{who}, wearing an oversized gray hoodie, sitting at a kitchen table at night holding a 7 year old Black girl with dark brown skin and two puff ponytails in pink pajamas on her lap in a tight comforting hug, mother's eyes closed, gentle, warm lamp light"
   ],
   [
-   "s5_type",
+   "e2_pray",
    [
-    7511,
-    7512
+    8501,
+    8502
    ],
-   "{who}, wearing an oversized gray hoodie, sitting on a couch at night typing on a smartphone with both thumbs, looking down at the glowing phone screen, focused and hopeful, warm lamp light"
+   "{who}, wearing an oversized gray hoodie, and a 7 year old Black girl with dark brown skin and two puff ponytails in pink pajamas sitting at a kitchen table at night, holding hands with heads bowed in prayer, eyes closed, a smartphone glowing on the table, warm lamp light"
   ],
   [
-   "s6_morning",
+   "e2_move",
    [
-    7611,
-    7612
+    8601,
+    8602
    ],
-   "{who}, wearing a cream knit sweater, standing in a bright kitchen in the morning holding a white coffee mug in one hand and a smartphone in the other, reading the phone with a soft relieved smile, golden sunlight through the window"
-  ],
-  [
-   "s7_hug",
-   [
-    7711,
-    7712
-   ],
-   "{who}, wearing a cream knit sweater, kneeling in a sunny kitchen in the morning hugging her 7 year old daughter who has dark brown skin, two puff ponytails and pink pajamas, both smiling with eyes closed, golden morning light"
+   "{who}, wearing a yellow t-shirt and jeans, and a 7 year old Black girl with dark brown skin and two puff ponytails wearing a yellow t-shirt, carrying cardboard moving boxes into a small bright empty new apartment in the morning, both smiling, golden sunlight through the windows"
   ]
  ]
 }

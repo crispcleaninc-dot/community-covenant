@@ -4,7 +4,7 @@ permissions: { contents: write }
 jobs:
   gen:
     runs-on: ubuntu-latest
-    strategy: { fail-fast: false, matrix: { shots: ['s2_door', 's3_couch', 's4_listen', 's5_type', 's6_morning', 's7_hug'] } }
+    strategy: { fail-fast: false, matrix: { shots: ['e2_bed', 'e2_notice', 'e2_doorway', 'e2_lap', 'e2_pray', 'e2_move'] } }
     steps:
       - uses: actions/checkout@v4
       - run: pip install -q gradio_client && SHOTS=${{ matrix.shots }} python3 gen/run.py
