@@ -12,4 +12,4 @@ jobs:
       - if: always()
         run: |
           git config user.name "ep-dad-tts"; git config user.email "noreply@anthropic.com"
-          git checkout -b ep-dad-tts-out && git add out && git commit -qm "voices" && git push -f origin ep-dad-tts-out
+          git checkout -b ep-dad-tts-out2 && git add out && git commit -qm "voices" && git push -f origin ep-dad-tts-out
