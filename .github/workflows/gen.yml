@@ -4,11 +4,11 @@ permissions: { contents: write }
 jobs:
   img:
     runs-on: ubuntu-latest
-    strategy: { fail-fast: false, matrix: { shot: [d02, d07, d08] } }
+    strategy: { fail-fast: false, matrix: { shot: [d02, d03, d04, d05, d06, d07, d08] } }
     steps:
       - uses: actions/checkout@v4
       - run: pip install -q gradio_client && SHOT=${{ matrix.shot }} python3 gen/img.py || true
       - if: always()
         run: |
           git config user.name "ep-dad-gen"; git config user.email "noreply@anthropic.com"
-          git checkout -b ep-dad-img2-${{ matrix.shot }} && git add out && git commit -qm "img ${{ matrix.shot }}" && git push -f origin ep-dad-img2-${{ matrix.shot }}
+          git checkout -b ep-dad-img3-${{ matrix.shot }} && git add out && git commit -qm "img ${{ matrix.shot }}" && git push -f origin ep-dad-img3-${{ matrix.shot }}
