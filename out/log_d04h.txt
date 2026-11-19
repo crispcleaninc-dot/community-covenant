@@ -1,0 +1,3 @@
+params ['input_image', 'prompt', 'steps', 'negative_prompt', 'duration_seconds', 'guidance_scale', 'guidance_scale_2', 'seed', 'randomize_seed']
+err No GPU was available after 60s. <a style="white-space: nowrap;text-underline-offset: 2px;color: var(--body-text-color)" href="https://huggingface.co/join">Create a free account</a> to get a higher priority in ZeroGPU queues.
+ok
