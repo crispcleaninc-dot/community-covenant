@@ -1,0 +1,33 @@
+ACE-Step/ACE-Step endpoints {'/toggle_ref_audio_visibility': ['is_checked'], '/update_tags_from_preset': ['preset_name'], '/retake_process_func': ['json_data', 'retake_variance', 'retake_seeds'], '/lambda': ['x'], '/repaint_process_func': ['text2music_json_data', 'repaint_json_data', 'retake_variance', 'retake_seeds', 'repaint_start', 'repaint_end', 'repaint_source', 'repaint_source_audio_upload', 'prompt', 'lyrics', 'infer_step', 'guidance_scale', 'scheduler_type', 'cfg_type', 'omega_scale', 'manual_seeds', 'guidance_interval', 'guidance_interval_decay', 'min_guidance_scale', 'use_erg_tag', 'use_erg_lyric', 'use_erg_diffusion', 'oss_steps', 'guidance_scale_text', 'guidance_scale_lyric'], '/edit_type_change_func': ['edit_type'], '/lambda_1': ['x'], '/edit_process_func': ['text2music_json_data', 'edit_input_params_json', 'edit_source', 'edit_source_audio_upload', 'prompt', 'lyrics', 'edit_prompt', 'edit_lyrics', 'edit_n_min', 'edit_n_max', 'infer_step', 'guidance_scale', 'scheduler_type', 'cfg_type', 'omega_scale', 'manual_seeds', 'guidance_interval', 'guidance_interval_decay', 'min_guidance_scale', 'use_erg_tag', 'use_erg_lyric', 'use_erg_diffusion', 'oss_steps', 'guidance_scale_text', 'guidance_scale_lyric', 'retake_seeds'], '/lambda_2': ['x'], '/extend_process_func': ['text2music_json_data', 'extend_input_params_json', 'extend_seeds', 'left_extend_length', 'right_extend_length', 'extend_source', 'extend_source_audio_upload', 'prompt', 'lyrics', 'infer_step', 'guidance_scale', 'scheduler_type', 'cfg_type', 'omega_scale', 'manual_seeds', 'guidance_interval', 'guidance_interval_decay', 'min_guidance_scale', 'use_erg_tag', 'use_erg_lyric', 'use_erg_diffusion', 'oss_steps', 'guidance_scale_text', 'guidance_scale_lyric'], '/sample_data': ['lora_name_or_path_'], '/__call__': ['audio_duration', 'prompt', 'lyrics', 'infer_step', 'guidance_scale', 'scheduler_type', 'cfg_type', 'omega_scale', 'manual_seeds', 'guidance_interval', 'guidance_interval_decay', 'min_guidance_scale', 'use_erg_tag', 'use_erg_lyric', 'use_erg_diffusion', 'oss_steps', 'guidance_scale_text', 'guidance_scale_lyric', 'audio2audio_enable', 'ref_audio_strength', 'ref_audio_input', 'lora_name_or_path']}
+ACE-Step/ACE-Step err t
+    raise self._exception
+  File "/usr/lib/python3.14/concurrent/futures/thread.py", line 86, in run
+    result = ctx.run(self.task)
+  File "/usr/lib/python3.14/concurrent/futures/thread.py", line 73, in run
+    return fn(*args, **kwargs)
+  File "/home/runner/.local/lib/python3.14/site-packages/gradio_client/client.py", line 1233, in _inner
+    predictions = _predict(*data, **kwargs)
+  File "/home/runner/.local/lib/python3.14/site-packages/gradio_client/client.py", line 1356, in _predict
+    raise AppError(message=message, **result)
+gradio_client.exceptions.AppError: RepositoryNotFoundError
+
+Surn/UnlimitedMusicGen endpoints {'/interrupt': [], '/lambda': [], '/audio_src_change': ['choice'], '/video_orientation_change': ['video_orientation'], '/melody_filepath_change': ['melody_filepath', 'title', 'assigned_model', 'topp', 'temperature', 'cfg_coef', 'segment_length'], '/reuse_seed_click': ['x'], '/autoplay_cb_change': ['x'], '/segment_length_change': ['melody_filepath', 'title', 'assigned_model', 'topp', 'temperature', 'cfg_coef', 'segment_length'], '/_fetch_user_history': [], '/_export_user_history': [], '/lambda_1': [], '/lambda_2': [], '/_delete_user_history': [], '/lambda_3': [], '/submit': [], '/ping': [], '/predict_simple': ['model', 'text', 'melody_filepath', 'duration', 'dimension', 'topk', 'topp', 'temperature', 'cfg_coef', 'background', 'title', 'settings_font', 'settings_font_color', 'seed', 'overlap', 'prompt_index', 'include_title', 'include_settings', 'harmony_only', 'profile', 'segment_length', 'settings_font_size', 'settings_animate_waveform', 'video_orientation', 'return_history_json'], '/_check_login_status': [], '/_fetch_user_history_1': [], '/_inner': []}
+res ()
+Surn/UnlimitedMusicGen err Traceback (most recent call last):
+  File "/home/runner/work/community-covenant/community-covenant/gen/run.py", line 31, in <module>
+    f=r[0] if isinstance(r,(list,tuple)) else r
+      ~^^^
+IndexError: tuple index out of range
+
+facebook/MusicGen endpoints {'/predict_batched': ['texts', 'melodies']}
+facebook/MusicGen err ult
+    raise self._exception
+  File "/usr/lib/python3.14/concurrent/futures/thread.py", line 86, in run
+    result = ctx.run(self.task)
+  File "/usr/lib/python3.14/concurrent/futures/thread.py", line 73, in run
+    return fn(*args, **kwargs)
+  File "/home/runner/.local/lib/python3.14/site-packages/gradio_client/client.py", line 1233, in _inner
+    predictions = _predict(*data, **kwargs)
+  File "/home/runner/.local/lib/python3.14/site-packages/gradio_client/client.py", line 1356, in _predict
+    raise AppError(message=message, **result)
+gradio_client.exceptions.AppError: Internal Gradio error
