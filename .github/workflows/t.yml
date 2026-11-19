@@ -1,0 +1,14 @@
+name: sk-test
+on: { push: { branches: [sk-test] } }
+permissions: { contents: write }
+jobs:
+  t:
+    runs-on: ubuntu-latest
+    strategy: { fail-fast: false, matrix: { w: [wan, music] } }
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install -q gradio_client && W=${{ matrix.w }} python3 gen/test.py || true
+      - if: always()
+        run: |
+          git config user.name "sk"; git config user.email "noreply@anthropic.com"
+          git checkout -b sk-test-${{ matrix.w }} && git add out && git commit -qm t && git push -f origin sk-test-${{ matrix.w }}
