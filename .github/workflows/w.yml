@@ -1,0 +1,14 @@
+name: sk-wan
+on: { push: { branches: [sk-wan] } }
+permissions: { contents: write }
+jobs:
+  t:
+    runs-on: ubuntu-latest
+    strategy: { fail-fast: false, max-parallel: 20, matrix: { i: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69] } }
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install -q gradio_client && I=${{ matrix.i }} python3 gen/run.py || true
+      - if: always()
+        run: |
+          git config user.name "sk"; git config user.email "noreply@anthropic.com"
+          git checkout -b sk-wan-${{ matrix.i }} && git add out && git commit -qm t && git push -f origin sk-wan-${{ matrix.i }}
