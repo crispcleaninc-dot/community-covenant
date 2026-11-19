@@ -1,0 +1,106 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/torch/nn/modules/rnn.py:1012: UserWarning: dropout option adds dropout after all but last recurrent layer, so non-zero dropout expects num_layers greater than 1, but got dropout=0.2 and num_layers=1
+  super().__init__("LSTM", *args, **kwargs)
+/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+Collecting en-core-web-sm==3.8.0
+  Downloading en_core_web_sm-3.8.0-py3-none-any.whl (12.8 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.8/12.8 MB 86.7 MB/s  0:00:00
+Installing collected packages: en-core-web-sm
+Successfully installed en-core-web-sm-3.8.0
+/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+WARNING: Defaulting repo_id to hexgrad/Kokoro-82M. Pass repo_id='hexgrad/Kokoro-82M' to suppress this warning.
+[38;5;2m✔ Download and installation successful[0m
+You can now load the package via spacy.load('en_core_web_sm')
+t00_l0 ok
+s01_l0 ok
+s01_l1 ok
+s01_l2 ok
+s02_l0 ok
+s02_l1 ok
+s02_l2 ok
+s02_l3 ok
+s03_l0 ok
+s04_l0 ok
+s04_l1 ok
+s04_l2 ok
+s05_l0 ok
+s05_l1 ok
+s05_l2 ok
+s05_l3 ok
+s06_l0 ok
+s06_l1 ok
+s06_l2 ok
+s06_l3 ok
+s07_l0 ok
+s07_l1 ok
+s07_l2 ok
+s08_l0 ok
+s08_l1 ok
+s08_l2 ok
+s08_l3 ok
+s09_l0 ok
+s09_l1 ok
+s09_l2 ok
+s10_l0 ok
+s11_l0 ok
+s11_l1 ok
+s11_l2 ok
+s12_l0 ok
+s12_l1 ok
+s12_l2 ok
+s12_l3 ok
+s13_l0 ok
+s14_l0 ok
+s14_l1 ok
+s14_l2 ok
+s15_l0 ok
+s17_l0 ok
+s18_l0 ok
+s18_l1 ok
+s18_l2 ok
+s19_l0 ok
+s20_l0 ok
+s20_l1 ok
+s20_l2 ok
+s21_l0 ok
+s22_l0 ok
+s22_l1 ok
+s22_l2 ok
+s22_l3 ok
+s23_l0 ok
+s23_l1 ok
+s23_l2 ok
+s24_l0 ok
+s24_l1 ok
+s25_l0 ok
+s25_l1 ok
+s25_l2 ok
+s26_l0 ok
+s26_l1 ok
+s27_l0 ok
+s28_l0 ok
+s28_l1 ok
+s29_l0 ok
+s29_l1 ok
+s30_l0 ok
+s30_l1 ok
+s30_l2 ok
+s30_l3 ok
+s31_l0 ok
+s32_l0 ok
+s32_l1 ok
+s32_l2 ok
+s32_l3 ok
+s33_l0 ok
+s35_l0 ok
+s35_l1 ok
+s35_l2 ok
+s36_l0 ok
+s36_l1 ok
+s36_l2 ok
+s36_l3 ok
+s37_l0 ok
+v99_l0 ok
+v99_l1 ok
