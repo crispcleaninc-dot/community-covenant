@@ -1,0 +1,412 @@
+1
+00:00:00,300 --> 00:00:03,300
+Dos caminos, un invierno
+
+2
+00:00:03,550 --> 00:00:06,258
+Chidi: ¡Ay! ¿Quién abrió el congelador?
+
+3
+00:00:06,358 --> 00:00:14,640
+Uncle Emeka: ¡Chidi! ¿Ya llegaste? Estoy en doble turno. Toma el autobús, el 125.
+
+4
+00:00:14,740 --> 00:00:18,261
+Chidi: No hay problema, tío. ¿Dónde está la parada?
+
+5
+00:00:18,361 --> 00:00:19,980
+Uncle Emeka: La que está temblando.
+
+6
+00:00:23,580 --> 00:00:35,193
+Tía Rosa: ¡Mijo! Ven, ven. En esta casa hay tres reglas: trabajamos, comemos y siempre, siempre llamamos a la familia.
+
+7
+00:00:23,630 --> 00:00:26,730
+[Casa de tía Rosa, suroeste de Detroit]
+
+8
+00:00:35,293 --> 00:00:37,882
+Mateo: Sí, tía. Está bien.
+
+9
+00:00:37,982 --> 00:00:39,752
+Luis: Mañana te recojo a las cinco.
+
+10
+00:00:39,852 --> 00:00:41,303
+Mateo: ¿A las cinco de la tarde?
+
+11
+00:00:41,403 --> 00:00:44,746
+Luis: De la mañana, primo. Bienvenido a Detroit.
+
+12
+00:00:44,996 --> 00:00:47,696
+Dos años antes
+
+13
+00:00:47,846 --> 00:00:48,987
+Agent: ¿De dónde eres?
+
+14
+00:00:49,087 --> 00:00:50,131
+Mateo: Honduras.
+
+15
+00:00:50,231 --> 00:00:54,291
+Man in cell: Bienvenido a la hielera, hermano.
+
+16
+00:00:54,541 --> 00:00:57,241
+Aviso de comparecencia: una cita en corte en una ciudad que nunca había oído
+
+17
+00:00:57,541 --> 00:01:00,241
+Interestatal 10, rumbo al este
+
+18
+00:01:00,541 --> 00:01:03,241
+Puesto de control de la Patrulla Fronteriza, Sierra Blanca, Texas
+
+19
+00:01:07,541 --> 00:01:10,241
+Houston. Dos años de tablaroca.
+
+20
+00:01:10,391 --> 00:01:13,583
+Luis: Primo, vente a Detroit. Hay chamba.
+
+21
+00:01:13,683 --> 00:01:15,066
+Mateo: Otra vez la hielera.
+
+22
+00:01:15,216 --> 00:01:18,316
+[Una tienda en Southfield, esa misma semana]
+
+23
+00:01:21,666 --> 00:01:24,049
+Mr. Daniels: Señor, ¿le ayudo a encontrar algo?
+
+24
+00:01:24,149 --> 00:01:35,995
+Chidi: ¡Tío! Buenas tardes, señor. ¿Cómo está su familia? Por favor, este abrigo. $109. ¿Cuál es su último precio?
+
+25
+00:01:36,095 --> 00:01:37,477
+Mr. Daniels: ¿Mi... último precio?
+
+26
+00:01:37,577 --> 00:01:43,879
+Chidi: En Lagos negociamos. Usted dice un precio, yo digo otro, y nos encontramos a la mitad como hermanos.
+
+27
+00:01:43,979 --> 00:01:49,008
+Mr. Daniels: Hermano, el precio está en la etiqueta. Y no soy el cajero. Soy de seguridad.
+
+28
+00:01:49,108 --> 00:01:51,748
+Chidi: Ah. Así que me estaba vigilando.
+
+29
+00:01:51,848 --> 00:01:54,536
+Mr. Daniels: Lleva dos horas aquí con una sábana.
+
+30
+00:01:54,636 --> 00:01:58,280
+Chidi: Es un wrapper, una tela de mi tierra. Y es lo más caliente que tengo.
+
+31
+00:01:58,380 --> 00:01:59,404
+Mr. Daniels: ¿Primer invierno?
+
+32
+00:01:59,504 --> 00:02:00,588
+Chidi: Primera semana.
+
+33
+00:02:00,688 --> 00:02:08,007
+Mr. Daniels: Grace Fellowship, en la esquina junto a la gasolinera. El sábado regalan abrigos. Dígale a la hermana Gloria que lo mandó Daniels.
+
+34
+00:02:08,107 --> 00:02:09,947
+Chidi: Dios lo bendiga, tío.
+
+35
+00:02:10,047 --> 00:02:12,954
+Mr. Daniels: Y deje de llamarme tío. Tengo treinta y un años.
+
+36
+00:02:13,104 --> 00:02:16,004
+[El primer trabajo de techos de Mateo]
+
+37
+00:02:16,054 --> 00:02:23,766
+Boss: Bueno, escucha. Quita las tejas viejas de atrás. Y no pises la parte blanda, o te caes por mi techo.
+
+38
+00:02:23,866 --> 00:02:25,432
+Mateo: Está bien, jefe.
+
+39
+00:02:25,532 --> 00:02:27,104
+Mateo: Primo... ¿qué dijo?
+
+40
+00:02:27,204 --> 00:02:30,528
+Luis: No pises el hoyo. Lo demás te lo enseño.
+
+41
+00:02:32,628 --> 00:02:34,346
+Mateo: Tía, me pagaron menos.
+
+42
+00:02:34,446 --> 00:02:42,759
+Tía Rosa: Sin pelear, mijo. Con respeto. Apunta tus horas en papel y pídelo por escrito.
+
+43
+00:02:42,859 --> 00:02:44,301
+Boss: ¿Quién te enseñó a hacer eso?
+
+44
+00:02:44,401 --> 00:02:45,441
+Mateo: Mi tía.
+
+45
+00:02:45,541 --> 00:02:47,811
+Boss: Dile a tu tía que debería manejar la nómina.
+
+46
+00:02:47,961 --> 00:02:50,861
+[Sábado: la colecta de abrigos de la iglesia]
+
+47
+00:02:50,911 --> 00:02:54,581
+Chidi: Buenos días, tía. Me mandó Daniels.
+
+48
+00:02:54,681 --> 00:02:58,007
+Sister Gloria: Entonces estás en el lugar correcto. ¿Qué talla usas, mi amor?
+
+49
+00:02:58,107 --> 00:03:01,414
+Chidi: Tía, si me llevo dos, ¿cuánto es el descuento?
+
+50
+00:03:01,514 --> 00:03:02,653
+Sister Gloria: Son gratis.
+
+51
+00:03:02,753 --> 00:03:04,745
+Chidi: Entonces el descuento es muy bueno.
+
+52
+00:03:04,845 --> 00:03:11,483
+Mateo: Es gratis, hermano. ¡Gratis! Llévate el grande. El viento aquí... ¡fuuu!
+
+53
+00:03:11,583 --> 00:03:12,893
+Chidi: ¿Tú también eres nuevo?
+
+54
+00:03:12,993 --> 00:03:15,166
+Mateo: Un mes. ¿Y tú?
+
+55
+00:03:15,266 --> 00:03:19,149
+Chidi: Una semana. Ya soy profesional en temblar.
+
+56
+00:03:19,249 --> 00:03:20,163
+Mateo: ¡Genial!
+
+57
+00:03:20,263 --> 00:03:22,871
+Chidi: ¿Genial? ¿Qué es genial?
+
+58
+00:03:22,971 --> 00:03:25,675
+Mateo: Como... muy bueno. Chévere.
+
+59
+00:03:25,775 --> 00:03:27,848
+Chidi: En Lagos decimos "e choke": está buenísimo.
+
+60
+00:03:27,948 --> 00:03:28,829
+Mateo: ¿E choke?
+
+61
+00:03:28,929 --> 00:03:29,876
+Chidi: ¡E choke!
+
+62
+00:03:29,976 --> 00:03:30,851
+Chidi: (con la boca tapada) Genial.
+
+63
+00:03:30,951 --> 00:03:37,861
+Uncle Emeka: Chidi, tranquilo. Detroit es ciudad santuario. Nadie te va a molestar.
+
+64
+00:03:31,001 --> 00:03:34,101
+[Cena en la iglesia, después de la colecta]
+
+65
+00:03:37,961 --> 00:03:43,676
+Luis: No, no, no. Detroit no es santuario. Es una "ciudad acogedora".
+
+66
+00:03:43,776 --> 00:03:45,258
+Chidi: ¿Cuál es la diferencia?
+
+67
+00:03:45,358 --> 00:03:51,332
+Luis: Acogedora quiere decir que la policía de la ciudad no debe pedirte papeles. Santuario es... algo más.
+
+68
+00:03:51,432 --> 00:03:56,563
+Tía Rosa: Y ICE es federal. No le piden permiso a la ciudad para nada.
+
+69
+00:03:56,663 --> 00:03:58,084
+Uncle Emeka: Entonces es acogedora...
+
+70
+00:03:58,184 --> 00:03:59,608
+Tía Rosa: ...pero con chaqueta.
+
+71
+00:03:59,708 --> 00:04:03,202
+Tía Rosa: Guarda esto en tu cartera. Siempre.
+
+72
+00:04:03,302 --> 00:04:18,497
+Chidi: Vine con visa de turista. Mi I-94 dice cuánto tiempo puedo quedarme. Antes de que se venciera, presenté mi I-589, la solicitud de asilo. Ahora espero meses antes de poder pedir el I-765 para un permiso de trabajo.
+
+73
+00:04:03,352 --> 00:04:06,452
+[El apartamento del tío Emeka]
+
+74
+00:04:18,597 --> 00:04:24,921
+Chidi: En Nigeria enseñaba álgebra a 40 niños. Aquí no me dejan trabajar, así que cuento copos de nieve.
+
+75
+00:04:29,021 --> 00:04:30,154
+Sister Gloria: ¿Comiste hoy?
+
+76
+00:04:29,071 --> 00:04:30,204
+[La despensa de la iglesia]
+
+77
+00:04:30,254 --> 00:04:32,068
+Chidi: Estoy bien, tía.
+
+78
+00:04:32,168 --> 00:04:39,385
+Sister Gloria: Eso no es lo que pregunté. Mira. Pide ayuda. Escribe lo que necesitas. Personas reales responden.
+
+79
+00:04:44,485 --> 00:04:48,614
+Chidi: Un tutor de matemáticas. Tía, nací para esto.
+
+80
+00:04:48,714 --> 00:04:54,368
+Mateo: Se llevaron a Don Beto. En su cita. Fue como siempre y no salió.
+
+81
+00:04:48,764 --> 00:04:51,864
+[Casa de tía Rosa]
+
+82
+00:04:54,468 --> 00:04:57,586
+Tía Rosa: Primero oramos. Luego llamamos.
+
+83
+00:05:00,686 --> 00:05:08,023
+Mateo: Chidi. Los niños de Beto tienen tarea de matemáticas. Su papá... no está. ¿Puedes ayudar?
+
+84
+00:05:08,123 --> 00:05:12,009
+Chidi: Ya voy. Diles que saquen punta a los lápices.
+
+85
+00:05:16,609 --> 00:05:19,475
+Chidi: Tía, ¿y si entro y no salgo?
+
+86
+00:05:16,659 --> 00:05:19,525
+[Corte de inmigración]
+
+87
+00:05:19,575 --> 00:05:24,701
+Sister Gloria: Entonces yo estaré sentada aquí y haré las llamadas. Pero hoy, entramos.
+
+88
+00:05:24,801 --> 00:05:27,301
+Chidi: El juez dice que vuelva en catorce meses.
+
+89
+00:05:27,401 --> 00:05:30,280
+Sister Gloria: Esa es buena noticia. Sigues aquí.
+
+90
+00:05:30,380 --> 00:05:33,360
+Chidi: En Nigeria, catorce meses es una condena.
+
+91
+00:05:33,460 --> 00:05:37,872
+Sister Gloria: Aquí es un calendario. Vamos, los niños esperan a su tutor.
+
+92
+00:05:38,122 --> 00:05:40,822
+Poco a poco
+
+93
+00:05:43,972 --> 00:05:45,649
+Luis: Hoy tú eres el jefe.
+
+94
+00:05:45,899 --> 00:05:49,099
+El club de matemáticas del señor Chidi
+
+95
+00:05:49,249 --> 00:05:51,547
+Chidi: ¡Tío! ¡Llegó!
+
+96
+00:05:51,647 --> 00:05:53,707
+Mail carrier: Todos son tu tío, ¿eh?
+
+97
+00:05:53,957 --> 00:05:56,157
+El noviembre siguiente
+
+98
+00:05:56,307 --> 00:05:58,913
+Chidi: Bienvenida. ¿Primer invierno?
+
+99
+00:05:59,013 --> 00:06:06,059
+Chidi: No hay problema. Toma este, y este. Gratis. No hace falta descuento.
+
+100
+00:06:06,159 --> 00:06:09,772
+Mateo: ¿Qué tal, profe?
+
+101
+00:06:09,872 --> 00:06:12,933
+Chidi: Está buenísimo, mi hermano. ¿Y tú?
+
+102
+00:06:13,033 --> 00:06:13,946
+Mateo: ¡Genial!
+
+103
+00:06:16,696 --> 00:06:23,196
+"Fui forastero, y me recogisteis." Mateo 25:35
+
