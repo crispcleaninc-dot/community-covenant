@@ -1,0 +1,361 @@
+/**
+ * Crispus Profit Engine — v2.1 add-on (Nov 19, 2026): CHANNELS (YouTube, Instagram, TikTok, Facebook).
+ *
+ * Page (PIN): <exec>?t=…&view=channels   (button "Channels" on every signed-in page)
+ * Data tabs: Channels, ChannelStats (one row per channel per day), ChannelVideos, ChannelComments.
+ *
+ * What it does on its own (no Claude needed):
+ *  - channelsCheck() every 6 hours: pulls public numbers for every YouTube channel in the Channels tab
+ *    (subscribers, total views, video count, each video's views/likes/comments and language) and logs a daily snapshot.
+ *  - Finds viewer comments that have no reply from the channel yet, sorts them (prayer request, thanks, question,
+ *    crisis, spam) and drafts a reply IN THE VIDEO'S LANGUAGE with the free Pollinations AI (same service the
+ *    Creative Studio uses), with fixed templates as a fallback. Crisis comments always get the helpline template.
+ *  - Instagram / TikTok / Facebook: numbers are typed in on the page (their APIs need business-account approval).
+ *
+ * What still needs a one-time connection (not built until Ciarne approves it):
+ *  - Watch hours and posting replies AS the Community Covenant / Mommy channels require signing in as each
+ *    brand channel through a Google Cloud OAuth client. Until then the page shows each draft with
+ *    "Copy reply" + "Open comment" so a reply takes two taps, and marks it done when YouTube shows the channel's reply.
+ *
+ * Additive only: wraps act_, doGet and page_ and adds tabs to the offline snapshot; nothing existing is removed.
+ * Needs the "YouTube Data API v3" advanced service (identifier YouTube) enabled in this project.
+ */
+TABS.Channels = ['key', 'platform', 'name', 'handle', 'channel_id', 'account', 'url', 'language_focus', 'goal_subs', 'goal_hours', 'goal_date',
+  'subs', 'views', 'videos', 'watch_hours', 'updated', 'notes'];
+TABS.ChannelStats = ['date', 'key', 'platform', 'subs', 'views', 'videos', 'watch_hours', 'source'];
+TABS.ChannelVideos = ['key', 'video_id', 'title', 'published', 'lang', 'views', 'likes', 'comments', 'updated'];
+TABS.ChannelComments = ['comment_id', 'key', 'video_id', 'video_title', 'lang', 'author', 'text', 'published', 'category', 'status', 'draft', 'updated'];
+var CH_VERSION = 'v2.1';
+var CH_PLATFORMS = ['YouTube', 'Instagram', 'TikTok', 'Facebook'];
+var CH_STATUSES = ['needs reply', 'replied', 'skip'];
+var CH_SEED = [
+  // key, platform, name, handle, channel_id, account, language_focus, goal_subs, goal_hours, goal_date, notes
+  ['CC-YT', 'YouTube', 'Community Covenant', '@CommunityCovenantApp', 'UCh2MGECQqtOMFC_kKkHpAxQ', 'crispcleaninc (brand channel)', 'en, fr, es, hi, zh, pt, sw', 2000, 8000, '2027-02-01', 'App: https://covenant.crispusmundo.com'],
+  ['MIHT-YT', 'YouTube', 'Mommy Is Human Too', '@MommyIsHumanToo', 'UCn_wxAArG5wYb-ARLCjDVNQ', 'crispcareses', 'en, es, fr, hi, zh', 2000, 8000, '2027-02-01', 'App: https://mommy.crispusmundo.com'],
+  ['MIHTK-YT', 'YouTube', 'Mommy Is Human Too Kids', '@MommyIsHumanTooKids', 'UC-qmWULUuA5NCOCVIu07COg', 'crispcareses', 'en', '', '', '', 'Made for kids: YouTube turns comments off'],
+  ['CLEAN-YT', 'YouTube', 'crisp clean', '@crispclean7726', '', 'crispcleaninc', 'en', '', '', '', ''],
+  ['CARES-IG', 'Instagram', 'Crisp Cares', 'crispcaresco', '', 'crispcaresco', 'en', '', '', '', 'Type numbers in on the Channels page'],
+  ['MERCH-IG', 'Instagram', 'Crisp Clean Merchandising', 'crispclean_merchandising', '', 'crispclean_merchandising', 'en', '', '', '', 'Planned home for the Community Covenant and Mommy Instagram promotion'],
+  ['CC-IG', 'Instagram', 'Community Covenant', '', '', '', 'en', '', '', '', 'Not created yet'],
+  ['MIHT-IG', 'Instagram', 'Mommy Is Human Too', '', '', '', 'en', '', '', '', 'Not created yet'],
+  ['CC-TT', 'TikTok', 'Community Covenant', '', '', '', 'en', '', '', '', 'Not created yet'],
+  ['MIHT-TT', 'TikTok', 'Mommy Is Human Too', '', '', '', 'en', '', '', '', 'Not created yet']
+];
+var CH_CRISIS = /suicid|kill (my|him|her)self|end (my|it all)|want to die|self[- ]?harm|cutting myself|no reason to live|me quiero morir|suicidio|quitarme la vida|me suicider|mettre fin à mes jours|envie de mourir|आत्महत्या|मरना चाहत|自杀|想死|kujiua|nataka kufa|abus|beat me|hits me|violence|violación|viol\b/i;
+var CH_SPAM = /(https?:\/\/|www\.)(?!youtu|covenant\.crispusmundo|mommy\.crispusmundo)|whats\s*app\s*\+?\d{6,}|telegram|crypto|bitcoin|forex|investment plan|sub ?4 ?sub|check (out )?my channel/i;
+var CH_PRAYER = /pray|prayer|prière|priez|prie|oración|ora por|oren|ore por|orar|prece|प्रार्थना|祷告|代祷|omba|maombi|bless|amen|amén/i;
+var CH_THANKS = /thank|merci|gracias|obrigad|धन्यवाद|शुक्रिया|谢谢|asante|blessed|beautiful|needed this|touched|powerful/i;
+var CH_LANG_NAME = { en: 'English', fr: 'French', es: 'Spanish', hi: 'Hindi', zh: 'Simplified Chinese', pt: 'Brazilian Portuguese', sw: 'Swahili' };
+var CH_TEMPLATES = {
+  crisis: {
+    en: 'Thank you for telling us. You are not alone, and your life matters. Please reach out right now to someone you trust or to a free, confidential helpline in your country: https://findahelpline.com (in the U.S., call or text 988). We are praying for you.',
+    fr: 'Merci de nous l\'avoir dit. Vous n\'êtes pas seul(e), et votre vie compte. Contactez dès maintenant une personne de confiance ou une ligne d\'écoute gratuite et confidentielle dans votre pays : https://findahelpline.com. Nous prions pour vous.',
+    es: 'Gracias por decírnoslo. No estás solo(a), y tu vida importa. Por favor, comunícate ahora mismo con alguien de confianza o con una línea de ayuda gratuita y confidencial en tu país: https://findahelpline.com. Estamos orando por ti.',
+    hi: 'हमें बताने के लिए धन्यवाद। आप अकेले नहीं हैं, और आपकी ज़िंदगी मायने रखती है। कृपया अभी किसी भरोसेमंद व्यक्ति से या अपने देश की मुफ़्त, गोपनीय हेल्पलाइन से बात करें: https://findahelpline.com। हम आपके लिए प्रार्थना कर रहे हैं।',
+    zh: '谢谢你告诉我们。你并不孤单，你的生命很重要。请现在就联系你信任的人，或你所在地区的免费保密求助热线：https://findahelpline.com。我们在为你祷告。',
+    pt: 'Obrigado por nos contar. Você não está sozinho(a), e sua vida importa. Por favor, procure agora alguém de confiança ou uma linha de apoio gratuita e confidencial no seu país: https://findahelpline.com. Estamos orando por você.',
+    sw: 'Asante kwa kutuambia. Hauko peke yako, na maisha yako ni ya thamani. Tafadhali wasiliana sasa na mtu unayemwamini au na huduma ya msaada ya bure na ya siri nchini mwako: https://findahelpline.com. Tunakuombea.'
+  },
+  prayer: {
+    en: 'Thank you for trusting us with this. Our team is praying for you right now. "Cast thy burden upon the Lord, and he shall sustain thee." (Psalm 55:22) Keep us posted.',
+    fr: 'Merci de nous confier cela. Notre équipe prie pour vous dès maintenant. « Remets ton sort à l\'Éternel, et il te soutiendra. » (Psaume 55:22) Que Dieu vous bénisse.',
+    es: 'Gracias por confiarnos esto. Nuestro equipo está orando por ti ahora mismo. «Echa sobre Jehová tu carga, y él te sustentará.» (Salmos 55:22) Dios te bendiga a ti y a tu familia.',
+    hi: 'हम पर भरोसा करने के लिए धन्यवाद। हमारी टीम अभी आपके लिए प्रार्थना कर रही है। "अपना बोझ यहोवा पर डाल दे, वह तुझे सम्भालेगा।" (भजन संहिता 55:22)',
+    zh: '谢谢你信任我们。我们的团队正在为你祷告。“你要把你的重担卸给耶和华，他必抚养你。”（诗篇 55:22）',
+    pt: 'Obrigado por confiar isso a nós. Nossa equipe está orando por você agora. "Lança o teu cuidado sobre o Senhor, e ele te susterá." (Salmos 55:22)',
+    sw: 'Asante kwa kutuamini. Timu yetu inakuombea sasa hivi. "Umtwike Bwana mzigo wako, naye atakutegemeza." (Zaburi 55:22)'
+  },
+  thanks: {
+    en: 'Thank you for watching and for sharing this. We post a new story every week. Who else needs to see it today?',
+    fr: 'Merci d\'avoir regardé et partagé. Que Dieu vous bénisse. Une nouvelle histoire chaque semaine : qui d\'autre a besoin de la voir aujourd\'hui ?',
+    es: 'Gracias por verlo y compartirlo. Dios te bendiga a ti y a tu familia. Cada semana hay una historia nueva: ¿quién más necesita verla hoy?',
+    hi: 'देखने और साझा करने के लिए धन्यवाद। हर हफ़्ते एक नई कहानी आती है। आज और किसे यह देखना चाहिए?',
+    zh: '谢谢你观看和分享。我们每周都会发布新的故事。今天还有谁需要看到它？',
+    pt: 'Obrigado por assistir e compartilhar. Toda semana tem uma história nova. Quem mais precisa ver isso hoje?',
+    sw: 'Asante kwa kutazama na kushiriki. Kila wiki tunaweka hadithi mpya. Nani mwingine anahitaji kuiona leo?'
+  },
+  other: {
+    en: 'Thank you for your comment. God bless you. The Community Covenant app is at https://covenant.crispusmundo.com (in English for now).',
+    fr: 'Merci pour votre commentaire. Que Dieu vous bénisse. L\'appli Community Covenant : https://covenant.crispusmundo.com (en anglais pour l\'instant).',
+    es: 'Gracias por tu comentario. Dios te bendiga. La app Community Covenant: https://covenant.crispusmundo.com (en inglés por ahora).',
+    hi: 'आपकी टिप्पणी के लिए धन्यवाद। परमेश्वर आपको आशीष दे। Community Covenant ऐप: https://covenant.crispusmundo.com (अभी अंग्रेज़ी में)।',
+    zh: '谢谢你的留言。愿神祝福你。Community Covenant 应用：https://covenant.crispusmundo.com（目前为英文版）。',
+    pt: 'Obrigado pelo seu comentário. Deus te abençoe. O app Community Covenant: https://covenant.crispusmundo.com (em inglês por enquanto).',
+    sw: 'Asante kwa maoni yako. Mungu akubariki. Programu ya Community Covenant: https://covenant.crispusmundo.com (kwa Kiingereza kwa sasa).'
+  }
+};
+
+// ------------------------------------------------------------------ setup
+/** Run once from the editor (safe to re-run): creates the tabs, adds the channels, sets the 6-hour check, notes it in CAIOCC. */
+function setupChannels() {
+  ['Channels', 'ChannelStats', 'ChannelVideos', 'ChannelComments'].forEach(function (n) { ensureTab_(n, TABS[n]); });
+  var have = {}; rows_('Channels').forEach(function (r) { have[r.key] = true; });
+  CH_SEED.forEach(function (s) {
+    if (have[s[0]]) return;
+    append_('Channels', { key: s[0], platform: s[1], name: s[2], handle: s[3], channel_id: s[4], account: s[5], language_focus: s[6],
+      goal_subs: s[7], goal_hours: s[8], goal_date: s[9], notes: s[10], url: chUrl_(s[1], s[3], s[4]) });
+  });
+  ScriptApp.getProjectTriggers().forEach(function (tr) { if (tr.getHandlerFunction() === 'channelsCheck') ScriptApp.deleteTrigger(tr); });
+  ScriptApp.newTrigger('channelsCheck').timeBased().everyHours(6).create();
+  var res = channelsCheck();
+  try {
+    var now = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+    var reg = SpreadsheetApp.openById(CAIOCC_REGISTRY_ID), app = reg.getSheetByName('Applications'), head = app.getRange(1, 1, 1, app.getLastColumn()).getValues()[0];
+    var v = app.getRange(2, 1, app.getLastRow() - 1, head.length).getValues();
+    for (var i = 0; i < v.length; i++) if (String(v[i][head.indexOf('Name')]) === 'Crispus Profit Engine') {
+      var old = String(v[i][head.indexOf('Notes')] || '');
+      if (old.indexOf('Channels (v2.1)') < 0) {
+        app.getRange(i + 2, head.indexOf('Notes') + 1).setValue(old + ' | Channels (v2.1, Nov 19 2026): ' + EXEC_URL + '?view=channels (PIN) — YouTube/Instagram/TikTok numbers, goals, comment reply queue; channelsCheck every 6h.');
+        app.getRange(i + 2, head.indexOf('UpdatedAt') + 1).setValue(now);
+      }
+    }
+  } catch (e) { Logger.log('CAIOCC note skipped: ' + e.message); }
+  Logger.log('Channels ready. ' + res + ' | render ' + channelsPage_(token_(), '', '').getContent().length);
+}
+function chUrl_(platform, handle, id) {
+  if (platform === 'YouTube') return id ? 'https://www.youtube.com/channel/' + id : (handle ? 'https://www.youtube.com/' + handle : '');
+  if (!handle) return '';
+  if (platform === 'Instagram') return 'https://www.instagram.com/' + handle.replace(/^@/, '') + '/';
+  if (platform === 'TikTok') return 'https://www.tiktok.com/@' + handle.replace(/^@/, '');
+  if (platform === 'Facebook') return 'https://www.facebook.com/' + handle.replace(/^@/, '');
+  return '';
+}
+
+// ------------------------------------------------------------------ the check (trigger)
+function channelsCheck() {
+  if (typeof YouTube === 'undefined') return 'YouTube service is not turned on in this project.';
+  ['Channels', 'ChannelStats', 'ChannelVideos', 'ChannelComments'].forEach(function (n) { ensureTab_(n, TABS[n]); });
+  var out = [], today = today_();
+  rows_('Channels').filter(function (c) { return c.platform === 'YouTube'; }).forEach(function (c) {
+    try {
+      var id = String(c.channel_id || '');
+      if (!id && c.handle) {
+        var f = YouTube.Channels.list('id', { forHandle: String(c.handle).replace(/^@/, '') });
+        if (f.items && f.items.length) { id = f.items[0].id; update_('Channels', c._row, { channel_id: id, url: chUrl_('YouTube', c.handle, id) }); }
+      }
+      if (!id) { out.push(c.key + ': no channel id'); return; }
+      var ch = YouTube.Channels.list('statistics,contentDetails', { id: id }).items;
+      if (!ch || !ch.length) { out.push(c.key + ': not found'); return; }
+      var st = ch[0].statistics, upl = ch[0].contentDetails.relatedPlaylists.uploads;
+      update_('Channels', c._row, { subs: Number(st.subscriberCount || 0), views: Number(st.viewCount || 0), videos: Number(st.videoCount || 0), updated: new Date() });
+      chSnapshot_(today, c.key, 'YouTube', Number(st.subscriberCount || 0), Number(st.viewCount || 0), Number(st.videoCount || 0), c.watch_hours, 'YouTube API');
+      var vids = chVideos_(c.key, upl);
+      var n = chComments_(c, id, vids);
+      out.push(c.key + ': ' + st.subscriberCount + ' subs, ' + vids.length + ' videos, ' + n + ' new comments');
+    } catch (e) { out.push(c.key + ': ' + e.message); }
+  });
+  props_().setProperty('CH_LAST_RUN', JSON.stringify({ at: new Date().toISOString(), result: out.join(' · ') }));
+  return out.join(' · ');
+}
+function chSnapshot_(date, key, platform, subs, views, videos, hours, source) {
+  var r = rows_('ChannelStats').filter(function (x) { return x.date === date && x.key === key; })[0];
+  var o = { date: date, key: key, platform: platform, subs: subs, views: views, videos: videos, watch_hours: hours === undefined ? '' : hours, source: source };
+  if (r) update_('ChannelStats', r._row, o); else append_('ChannelStats', o);
+}
+function chVideos_(key, uploads) {
+  var ids = [], tok = '';
+  do {
+    var pl = YouTube.PlaylistItems.list('contentDetails', { playlistId: uploads, maxResults: 50, pageToken: tok });
+    (pl.items || []).forEach(function (it) { ids.push(it.contentDetails.videoId); });
+    tok = pl.nextPageToken || '';
+  } while (tok && ids.length < 500);
+  var existing = {}; rows_('ChannelVideos').forEach(function (r) { existing[r.video_id] = r._row; });
+  var vids = [];
+  for (var i = 0; i < ids.length; i += 50) {
+    var res = YouTube.Videos.list('snippet,statistics', { id: ids.slice(i, i + 50).join(',') });
+    (res.items || []).forEach(function (v) {
+      var lang = String(v.snippet.defaultAudioLanguage || v.snippet.defaultLanguage || 'en').slice(0, 2).toLowerCase();
+      var o = { key: key, video_id: v.id, title: v.snippet.title, published: String(v.snippet.publishedAt).slice(0, 10), lang: lang,
+        views: Number(v.statistics.viewCount || 0), likes: Number(v.statistics.likeCount || 0), comments: Number(v.statistics.commentCount || 0), updated: today_() };
+      if (existing[v.id]) update_('ChannelVideos', existing[v.id], o); else append_('ChannelVideos', o);
+      vids.push(o);
+    });
+  }
+  return vids;
+}
+function chComments_(c, channelId, vids) {
+  var byId = {}; vids.forEach(function (v) { byId[v.video_id] = v; });
+  var known = {}; rows_('ChannelComments').forEach(function (r) { known[r.comment_id] = r; });
+  var added = 0, tok = '', pages = 0;
+  do {
+    var res;
+    try { res = YouTube.CommentThreads.list('snippet,replies', { allThreadsRelatedToChannelId: channelId, maxResults: 100, pageToken: tok, textFormat: 'plainText' }); }
+    catch (e) { if (/disabled/i.test(e.message)) return 0; throw e; }
+    (res.items || []).forEach(function (th) {
+      var top = th.snippet.topLevelComment.snippet, cid = th.snippet.topLevelComment.id;
+      var mine = top.authorChannelId && top.authorChannelId.value === channelId;
+      var answered = (th.replies && th.replies.comments || []).some(function (r) { return r.snippet.authorChannelId && r.snippet.authorChannelId.value === channelId; });
+      var k = known[cid];
+      if (mine) return;
+      if (k) { if (answered && k.status === 'needs reply') update_('ChannelComments', k._row, { status: 'replied', updated: today_() }); return; }
+      var v = byId[th.snippet.videoId] || { title: '', lang: 'en' };
+      var cat = chCategory_(top.textDisplay);
+      var o = { comment_id: cid, key: c.key, video_id: th.snippet.videoId, video_title: v.title, lang: v.lang, author: top.authorDisplayName, text: String(top.textDisplay).slice(0, 2000),
+        published: String(top.publishedAt).slice(0, 10), category: cat, status: answered ? 'replied' : (cat === 'spam' ? 'skip' : 'needs reply'),
+        draft: answered || cat === 'spam' ? '' : chDraft_(top.textDisplay, v.lang, cat, v.title, c.name), updated: today_() };
+      append_('ChannelComments', o); added++;
+    });
+    tok = res.nextPageToken || ''; pages++;
+  } while (tok && pages < 5);
+  return added;
+}
+function chCategory_(text) {
+  var t = String(text || '');
+  if (CH_CRISIS.test(t)) return 'crisis';
+  if (CH_SPAM.test(t)) return 'spam';
+  if (CH_PRAYER.test(t)) return 'prayer';
+  if (/\?|¿|？/.test(t)) return 'question';
+  if (CH_THANKS.test(t)) return 'thanks';
+  return 'other';
+}
+/** Drafts a reply in the video's language. Crisis comments always use the fixed helpline text (never AI). */
+function chDraft_(text, lang, cat, title, channel) {
+  var L = CH_TEMPLATES.crisis[lang] ? lang : 'en';
+  if (cat === 'crisis') return CH_TEMPLATES.crisis[L];
+  var tpl = (CH_TEMPLATES[cat] || CH_TEMPLATES.other)[L] || CH_TEMPLATES.other[L];
+  var sys = 'You reply to YouTube comments for the Christian channel "' + channel + '". Write ONE reply of 1 to 3 short sentences in ' + (CH_LANG_NAME[L] || 'the same language as the comment') +
+    ' (if the comment is clearly in another language, use the comment\'s language). Warm, plain, respectful; no flattery, no emojis except at most one 🙏. ' +
+    'If it is a prayer request: acknowledge it, say the team is praying, and add one short fitting Bible verse with its reference. If it is a question about the app: the app is https://covenant.crispusmundo.com and is in English for now; never call it free. ' +
+    'Write "Lord" in normal case, never all capitals. Do not give medical, legal or financial advice. Output only the reply text.';
+  try {
+    var r = UrlFetchApp.fetch('https://text.pollinations.ai/openai', { method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+      payload: JSON.stringify({ model: 'openai', messages: [{ role: 'system', content: sys }, { role: 'user', content: 'Video: ' + title + '\nComment: ' + String(text).slice(0, 1500) }] }) });
+    if (r.getResponseCode() === 200) {
+      var body = r.getContentText(), out = body;
+      try { var j = JSON.parse(body); out = j.choices && j.choices[0] && j.choices[0].message ? j.choices[0].message.content : body; } catch (e) { }
+      out = String(out || '').trim().replace(/^["“]|["”]$/g, '').replace(/\bLORD\b/g, 'Lord');
+      if (out && out.length < 700 && !/\bfree\b|gratuit|gratis|grátis|免费|मुफ़्त|bure/i.test(out)) return out;
+    }
+  } catch (e) { /* fall back to the template */ }
+  return tpl;
+}
+
+// ------------------------------------------------------------------ actions
+function chAct_(p) {
+  if (p.a === 'chstatus') {
+    var r = rows_('ChannelComments').filter(function (x) { return x.comment_id === p.id; })[0];
+    if (!r) throw new Error('Comment not found');
+    if (CH_STATUSES.indexOf(p.status) < 0) throw new Error('Unknown status');
+    update_('ChannelComments', r._row, { status: p.status, updated: today_() }); return 'Marked ' + p.status + '.';
+  }
+  if (p.a === 'chdraft') {
+    var d = rows_('ChannelComments').filter(function (x) { return x.comment_id === p.id; })[0];
+    if (!d) throw new Error('Comment not found');
+    update_('ChannelComments', d._row, { draft: String(p.draft || '').slice(0, 2000), updated: today_() }); return 'Draft saved.';
+  }
+  if (p.a === 'chnums') {
+    var c = rows_('Channels').filter(function (x) { return x.key === p.key; })[0];
+    if (!c) throw new Error('Channel not found');
+    var o = { updated: new Date() };
+    ['subs', 'views', 'videos', 'watch_hours'].forEach(function (k) { if (p[k] !== undefined && p[k] !== '') o[k] = num_(p[k]); });
+    if (p.handle !== undefined) { o.handle = String(p.handle).trim().slice(0, 80); o.url = chUrl_(c.platform, o.handle, c.channel_id); }
+    ['goal_subs', 'goal_hours'].forEach(function (k) { if (p[k] !== undefined && p[k] !== '') o[k] = num_(p[k]); });
+    update_('Channels', c._row, o);
+    chSnapshot_(today_(), c.key, c.platform, o.subs !== undefined ? o.subs : c.subs, o.views !== undefined ? o.views : c.views, o.videos !== undefined ? o.videos : c.videos,
+      o.watch_hours !== undefined ? o.watch_hours : c.watch_hours, 'typed in');
+    return 'Saved ' + c.name + ' (' + c.platform + ').';
+  }
+  if (p.a === 'chrun') return channelsCheck() || 'Checked.';
+  return '';
+}
+var _chOrigAct = act_;
+act_ = function (p) { if (p && p.a && String(p.a).indexOf('ch') === 0) return chAct_(p); return _chOrigAct(p); };
+
+// ------------------------------------------------------------------ page
+function chSpark_(vals, color) {
+  vals = vals.map(Number).filter(function (x) { return isFinite(x); });
+  if (vals.length < 2) return '';
+  var mx = Math.max.apply(null, vals), mn = Math.min.apply(null, vals), w = 120, h = 30, rng = mx - mn || 1;
+  var pts = vals.map(function (v, i) { return (i * w / (vals.length - 1)).toFixed(1) + ',' + (h - 2 - (v - mn) / rng * (h - 4)).toFixed(1); }).join(' ');
+  return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="trend"><polyline fill="none" stroke="' + color + '" stroke-width="2" points="' + pts + '"/></svg>';
+}
+function chBar_(val, goal) {
+  if (!goal) return '';
+  var pct = Math.max(0, Math.min(100, Math.round(num_(val) / num_(goal) * 100)));
+  return '<div style="background:#eee;border-radius:6px;height:8px;margin:4px 0"><div style="width:' + pct + '%;background:#b8862b;height:8px;border-radius:6px"></div></div><div class="muted">' + pct + '% of ' + Math.round(num_(goal)).toLocaleString() + '</div>';
+}
+function channelsPage_(t, msg, tab) {
+  var chans = rows_('Channels'), stats = rows_('ChannelStats'), vids = rows_('ChannelVideos'), coms = rows_('ChannelComments');
+  var last = JSON.parse(props_().getProperty('CH_LAST_RUN') || '{}');
+  var need = coms.filter(function (c) { return c.status === 'needs reply'; });
+  var crisis = need.filter(function (c) { return c.category === 'crisis'; });
+  var fmt = function (n) { return n === '' || n === undefined || n === null ? '—' : Math.round(num_(n)).toLocaleString(); };
+  var tiles = chans.map(function (c) {
+    var hist = stats.filter(function (s) { return s.key === c.key; }).slice(-30);
+    var col = { YouTube: '#c4302b', Instagram: '#8a4fd0', TikTok: '#111', Facebook: '#2f6fd0' }[c.platform] || '#1B2951';
+    var nums = c.platform === 'YouTube'
+      ? '<div><b>' + fmt(c.subs) + '</b> subscribers · <b>' + fmt(c.views) + '</b> views · <b>' + fmt(c.videos) + '</b> videos</div>' +
+        '<div>Watch hours (12 months): <b>' + (c.watch_hours === '' ? 'connect channel to read' : fmt(c.watch_hours)) + '</b></div>'
+      : '<div><b>' + fmt(c.subs) + '</b> followers · <b>' + fmt(c.views) + '</b> views/plays · <b>' + fmt(c.videos) + '</b> posts</div>';
+    var goals = (c.goal_subs ? '<div class="muted">Goal by ' + esc_(c.goal_date) + ': subscribers</div>' + chBar_(c.subs, c.goal_subs) : '') +
+      (c.goal_hours ? '<div class="muted">Watch hours</div>' + chBar_(c.watch_hours, c.goal_hours) : '');
+    var edit = '<details><summary>Type in numbers' + (c.platform === 'YouTube' ? ' (watch hours from YouTube Studio)' : '') + '</summary>' +
+      form_({ t: t, view: 'channels', a: 'chnums', key: c.key },
+        (c.platform === 'YouTube' ? '<label>Watch hours, last 12 months<input name="watch_hours" inputmode="decimal" value="' + esc_(c.watch_hours) + '"></label>' :
+          '<label>Handle<input name="handle" value="' + esc_(c.handle) + '"></label><div class="grid"><label>Followers<input name="subs" inputmode="numeric" value="' + esc_(c.subs) + '"></label>' +
+          '<label>Views / plays<input name="views" inputmode="numeric" value="' + esc_(c.views) + '"></label><label>Posts<input name="videos" inputmode="numeric" value="' + esc_(c.videos) + '"></label></div>') +
+        '<div class="grid"><label>Goal subscribers/followers<input name="goal_subs" inputmode="numeric" value="' + esc_(c.goal_subs) + '"></label>' +
+        (c.platform === 'YouTube' ? '<label>Goal watch hours<input name="goal_hours" inputmode="numeric" value="' + esc_(c.goal_hours) + '"></label>' : '') + '</div><button>Save</button>') + '</details>';
+    return '<div class="card" style="border-left:5px solid ' + col + '"><span class="pill">' + esc_(c.platform) + '</span> <b>' + esc_(c.name) + '</b> ' +
+      (c.url ? '<a href="' + esc_(c.url) + '" target="_blank">' + esc_(c.handle || 'open') + '</a>' : '<span class="muted">' + esc_(c.handle || 'not set up') + '</span>') +
+      nums + goals + (hist.length > 1 ? '<div class="muted">Subscribers, last ' + hist.length + ' days ' + chSpark_(hist.map(function (h) { return h.subs; }), col) + '</div>' : '') +
+      (c.notes ? '<div class="muted">' + esc_(c.notes) + '</div>' : '') + edit + '</div>';
+  }).join('');
+  // views by language (YouTube)
+  var byLang = {}; vids.forEach(function (v) { var k = v.key + '|' + v.lang; byLang[k] = byLang[k] || { key: v.key, lang: v.lang, n: 0, views: 0, likes: 0, comments: 0 };
+    byLang[k].n++; byLang[k].views += num_(v.views); byLang[k].likes += num_(v.likes); byLang[k].comments += num_(v.comments); });
+  var langRows = Object.keys(byLang).map(function (k) { return byLang[k]; }).sort(function (a, b) { return b.views - a.views; });
+  var langTable = langRows.length ? '<table><tr><th>Channel</th><th>Language</th><th>Videos</th><th>Views</th><th>Likes</th><th>Comments</th><th>Views per video</th></tr>' +
+    langRows.map(function (r) { return '<tr><td>' + esc_(r.key) + '</td><td>' + esc_(CH_LANG_NAME[r.lang] || r.lang) + '</td><td>' + r.n + '</td><td>' + fmt(r.views) + '</td><td>' + fmt(r.likes) + '</td><td>' + fmt(r.comments) + '</td><td>' + fmt(r.views / r.n) + '</td></tr>'; }).join('') + '</table>' : '<p class="muted">No video numbers yet.</p>';
+  var top = vids.slice().sort(function (a, b) { return num_(b.views) - num_(a.views); }).slice(0, 12);
+  var topTable = top.length ? '<table><tr><th>Video</th><th>Lang</th><th>Views</th><th>Likes</th><th>Comments</th></tr>' + top.map(function (v) {
+    return '<tr><td><a href="https://youtu.be/' + esc_(v.video_id) + '" target="_blank">' + esc_(String(v.title).slice(0, 70)) + '</a></td><td>' + esc_(v.lang) + '</td><td>' + fmt(v.views) + '</td><td>' + fmt(v.likes) + '</td><td>' + fmt(v.comments) + '</td></tr>'; }).join('') + '</table>' : '';
+  // comment queue
+  var catCol = { crisis: '#b3261e', prayer: '#0f8a7e', question: '#2f6fd0', thanks: '#2e8b3d', other: '#666', spam: '#999' };
+  var queue = need.sort(function (a, b) { return (a.category === 'crisis' ? 0 : 1) - (b.category === 'crisis' ? 0 : 1); }).map(function (c) {
+    var id = esc_(c.comment_id);
+    return '<div class="card" style="border-left:5px solid ' + (catCol[c.category] || '#666') + '"><span class="pill">' + esc_(c.category) + '</span> <span class="pill">' + esc_(CH_LANG_NAME[c.lang] || c.lang) + '</span> <span class="muted">' + esc_(c.published) + ' · ' + esc_(c.video_title).slice(0, 60) + '</span>' +
+      '<div style="margin:6px 0"><b>' + esc_(c.author) + ':</b> ' + esc_(c.text) + '</div>' +
+      '<pre id="r-' + id + '" style="white-space:pre-wrap;font-family:inherit;background:#faf7f0;padding:10px;border-radius:8px">' + esc_(c.draft) + '</pre>' +
+      '<button type="button" onclick="navigator.clipboard.writeText(document.getElementById(\'r-' + id + '\').innerText).then(function(){this.textContent=\'Copied\'}.bind(this))">Copy reply</button> ' +
+      '<a class="btn" href="https://www.youtube.com/watch?v=' + esc_(c.video_id) + '&lc=' + id + '" target="_blank">Open comment</a> ' +
+      '<a class="btn light" href="' + link_({ t: t, view: 'channels', tab: 'comments', a: 'chstatus', id: c.comment_id, status: 'replied' }) + '">Mark replied</a> ' +
+      '<a class="btn light" href="' + link_({ t: t, view: 'channels', tab: 'comments', a: 'chstatus', id: c.comment_id, status: 'skip' }) + '">Skip</a>' +
+      '<details><summary>Edit the draft</summary>' + form_({ t: t, view: 'channels', tab: 'comments', a: 'chdraft', id: c.comment_id }, '<textarea name="draft" rows="4">' + esc_(c.draft) + '</textarea><button>Save draft</button>') + '</details></div>';
+  }).join('') || '<div class="card muted">No comments waiting for a reply.</div>';
+  var done = coms.filter(function (c) { return c.status === 'replied'; }).length;
+  var tabs = [['overview', 'Overview'], ['comments', 'Comments (' + need.length + ')'], ['videos', 'Videos & languages']].map(function (x) {
+    return '<a class="btn' + ((tab || 'overview') === x[0] ? '' : ' light') + '" href="' + link_({ t: t, view: 'channels', tab: x[0] }) + '">' + x[1] + '</a>'; }).join('');
+  var body = (msg ? '<div class="card ok">' + esc_(msg) + '</div>' : '') +
+    (crisis.length ? '<div class="card" style="border:2px solid #b3261e"><b style="color:#b3261e">' + crisis.length + ' comment(s) mention crisis or harm.</b> Reply first — the helpline reply is already drafted. <a class="btn" href="' + link_({ t: t, view: 'channels', tab: 'comments' }) + '">Open</a></div>' : '') +
+    '<div class="card"><b>Channels</b> <span class="muted">· YouTube numbers update every 6 hours' + (last.at ? ' · last check ' + esc_(String(last.at).slice(0, 16).replace('T', ' ')) + ' UTC' : '') + '</span>' +
+    '<div style="margin-top:8px">' + tabs + '<a class="btn light" href="' + link_({ t: t, view: 'channels', tab: tab || 'overview', a: 'chrun' }) + '">Check now</a></div>' +
+    '<div class="muted" style="margin-top:6px">' + need.length + ' comment(s) need a reply · ' + done + ' replied.</div></div>';
+  if ((tab || 'overview') === 'comments') body += queue;
+  else if (tab === 'videos') body += '<div class="card"><b>Views by language</b>' + langTable + '</div><div class="card"><b>Top videos</b>' + topTable + '</div>';
+  else body += tiles + '<div class="card"><b>Views by language</b>' + langTable + '</div>' +
+    '<p class="muted">Instagram, TikTok and Facebook numbers are typed in for now (their data feeds need a business-account connection). YouTube watch hours: type them from YouTube Studio until the channel connection is approved.</p>';
+  return page_('Channels', body, t);
+}
+
+var _chOrigDoGet = doGet;
+doGet = function (e) {
+  var p = (e && e.parameter) || {};
+  if (p.view === 'channels' && !p.front && !p.card && !p.vcf && !p.pin && tokenOk_(p.t)) {
+    var msg = '';
+    try { msg = act_(p); } catch (err) { msg = 'Could not do that: ' + err.message; }
+    return channelsPage_(p.t, msg, p.tab || '');
+  }
+  return _chOrigDoGet(e);
+};
+var _chOrigPage = page_;
+page_ = function (title, body, t) {
+  var out = _chOrigPage(title, body, t);
+  if (!t) return out;
+  var c = out.getContent();
+  if (c.indexOf('>Channels</a>') < 0) c = c.replace('>Listings &amp; cards</a>', '>Listings &amp; cards</a><a class="btn light" href="' + link_({ t: t, view: 'channels' }) + '" target="_top">Channels</a>');
+  return HtmlService.createHtmlOutput(c).setTitle(APP.NAME).addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
+};
+// offline app gets the channel numbers too
+['Channels', 'ChannelStats'].forEach(function (n) { if (SNAPSHOT_TABS.indexOf(n) < 0) SNAPSHOT_TABS.push(n); });
