@@ -1,0 +1,17 @@
+name: safe-gen2
+on: { push: { branches: [safe-gen2] } }
+permissions: { contents: write }
+jobs:
+  tts:
+    runs-on: ubuntu-latest
+    strategy: { fail-fast: false, matrix: { lang: [en, ar] } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: sudo apt-get install -y -q espeak-ng ffmpeg && pip install -q kokoro soundfile edge-tts "misaki[en]"
+      - run: python3 gen/tts.py ${{ matrix.lang }} > run.txt 2>&1 || true; mkdir -p out; cp run.txt out/${{ matrix.lang }}_run.txt
+      - if: always()
+        run: |
+          git config user.name "safe-gen"; git config user.email "noreply@anthropic.com"
+          git checkout -b safe-tts2-${{ matrix.lang }} && git add out && git commit -qm "voices ${{ matrix.lang }}" && git push -f origin safe-tts2-${{ matrix.lang }}
