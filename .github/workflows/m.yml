@@ -1,0 +1,18 @@
+name: sk-mus
+on: { push: { branches: [sk-mus] } }
+permissions: { contents: write }
+jobs:
+  t:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir -p out; cd out
+          for n in "Wholesome" "Bossa Antigua" "Carefree" "Easy Lemon" "Dreamer" "Healing" "Happy Alley" "Investigations" "Sunshine A" "Pamgaea" "Local Forecast - Elevator" "Fretless" "Funkorama" "Gymnopedie No 1" "Life of Riley" "Hidden Agenda" "Cheery Monday" "Danger Storm" "Bassa Island Game Loop" "Mariachi Snooze" "Ouroboros" "Jaunty Gumption" "Rising Tide" "Peaceful Desolation"; do
+            u="https://incompetech.com/music/royalty-free/mp3-royaltyfree/$(echo "$n" | sed 's/ /%20/g').mp3"
+            curl -sfL -o "$(echo "$n" | tr ' ' _).mp3" "$u" && echo "ok $n" >> log.txt || echo "fail $n" >> log.txt
+          done
+      - if: always()
+        run: |
+          git config user.name "sk"; git config user.email "noreply@anthropic.com"
+          git checkout -b sk-mus-out && git add out && git commit -qm t && git push -f origin sk-mus-out
