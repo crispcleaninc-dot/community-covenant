@@ -1,0 +1,15 @@
+name: sk-tts
+on: { push: { branches: [sk-tts] } }
+permissions: { contents: write }
+jobs:
+  tts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: sudo apt-get install -y -q espeak-ng; mkdir -p out; (pip install -q kokoro soundfile && python3 gen/tts.py) > out/run.txt 2>&1 || true
+      - if: always()
+        run: |
+          git config user.name "sk-tts"; git config user.email "noreply@anthropic.com"
+          git checkout -b sk-tts-out && git add out && git commit -qm "voices" && git push -f origin sk-tts-out
