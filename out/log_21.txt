@@ -1,0 +1,4 @@
+a01v try0 You have exceeded your ZeroGPU quota (105s requested vs. 89s left). Try again in 18:32:53. Authenticate with a Hugging Face token for more quota - https://huggingface.co/settings/tokens
+a01v try1 You have exceeded your ZeroGPU quota (105s requested vs. 89s left). Try again in 18:32:13. Authenticate with a Hugging Face token for more quota - https://huggingface.co/settings/tokens
+a01v try2 You have exceeded your ZeroGPU quota (105s requested vs. 89s left). Try again in 18:31:33. Authenticate with a Hugging Face token for more quota - https://huggingface.co/settings/tokens
+a01v try3 You have exceeded your ZeroGPU quota (105s requested vs. 89s left). Try again in 18:30:52. Authenticate with a Hugging Face token for more quota - https://huggingface.co/settings/tokens
