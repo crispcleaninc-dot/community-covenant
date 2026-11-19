@@ -7,10 +7,10 @@
  *  - Calls to the Apps Script server are never cached here (app/bridge.js handles offline data). */
 try { importScripts('notify-sw.js'); } catch (e) {} // Cyars Notify: alerts + taps
 try { importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js'); } catch (e) {}
-var CACHE = 'cc-shell-v7';
+var CACHE = 'cc-shell-v8';
 var MEDIA = 'cc-media-v1';
 var RUNTIME = 'cc-runtime-v1';
-var SHELL = ['./notify.js', './notify-sw.js', './', 'index.html', 'app/', 'app/index.html', 'app/bridge.js', 'app/connect.js', 'config.js', 'chat.html', 'manifest.webmanifest',
+var SHELL = ['./notify.js', './notify-sw.js', './', 'index.html', 'app/', 'app/index.html', 'app/bridge.js', 'app/connect.js', 'app/shelter.js', 'config.js', 'chat.html', 'manifest.webmanifest',
   'icons/icon-32.png', 'icons/icon-96.png', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png',
   'assets/faith-findings-logo.jpg', 'assets/how-it-works-poster.jpg', 'assets/offline-files.json'];
 var RUNTIME_HOSTS = /^(fonts\.googleapis\.com|fonts\.gstatic\.com|images\.unsplash\.com|i\.ytimg\.com)$/;
