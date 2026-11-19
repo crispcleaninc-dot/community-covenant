@@ -4,24 +4,11 @@ permissions: { contents: write }
 jobs:
   img:
     runs-on: ubuntu-latest
-    strategy: { fail-fast: false, max-parallel: 20, matrix: { shot: ["t00", "s01", "s02", "s03", "s04", "s05", "s06", "s07", "s08", "s09", "s10", "s11", "s12", "s13", "s14", "s15", "s17", "s18", "s19", "s20", "s21", "s22", "s23", "s24", "s25", "s26", "s27", "s28", "s29", "s30", "s31", "s32", "s33", "s35", "s36", "s37", "v99", "v1", "v2", "v3", "v4"] } }
+    strategy: { fail-fast: false, max-parallel: 20, matrix: { shot: [s23, s30, v1] } }
     steps:
       - uses: actions/checkout@v4
       - run: pip install -q gradio_client && SHOT=${{ matrix.shot }} python3 gen/img.py || true
       - if: always()
         run: |
           git config user.name "safe-gen"; git config user.email "noreply@anthropic.com"
-          mkdir -p out; git checkout -b safe-img-${{ matrix.shot }} && git add out && git commit -qm "img ${{ matrix.shot }}" && git push -f origin safe-img-${{ matrix.shot }}
-  tts:
-    runs-on: ubuntu-latest
-    strategy: { fail-fast: false, matrix: { lang: [en, es, fr, pt, hi, zh] } }
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: '3.11' }
-      - run: sudo apt-get install -y -q espeak-ng ffmpeg && pip install -q kokoro soundfile "misaki[zh]" "misaki[en]"
-      - run: python3 gen/tts.py ${{ matrix.lang }} > run.txt 2>&1 || true; mkdir -p out; cp run.txt out/${{ matrix.lang }}_run.txt
-      - if: always()
-        run: |
-          git config user.name "safe-gen"; git config user.email "noreply@anthropic.com"
-          git checkout -b safe-tts-${{ matrix.lang }} && git add out && git commit -qm "voices ${{ matrix.lang }}" && git push -f origin safe-tts-${{ matrix.lang }}
+          mkdir -p out; git checkout -b safe-img2-${{ matrix.shot }} && git add out && git commit -qm "img ${{ matrix.shot }}" && git push -f origin safe-img2-${{ matrix.shot }}

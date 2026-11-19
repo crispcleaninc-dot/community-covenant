@@ -11,12 +11,12 @@ c=None
 for a in range(6):
     try: c=Client("black-forest-labs/FLUX.1-schnell"); break
     except Exception as e: log.append('client '+str(e)[:200]); time.sleep(30)
-for sd in [7301,7302]:
+for sd in [7301]:
     for a in range(4):
         try:
             r=c.predict(prompt=p,seed=sd,randomize_seed=False,width=W,height=H,num_inference_steps=4,api_name="/infer")
             f=r[0] if isinstance(r,(list,tuple)) else r
             shutil.copy(f,f'out/{sid}_{sd}.webp'); log.append(f'{sid}_{sd} ok'); break
         except Exception as e:
-            log.append(f'{sid}_{sd} try{a} {str(e)[:200]}'); time.sleep(45)
+            log.append(f'{sid}_{sd} try{a} {str(e)[:200]}'); time.sleep(90)
 open(f'out/{sid}_log.txt','w').write('\n'.join(log)); print('\n'.join(log))
