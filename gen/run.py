@@ -43,7 +43,7 @@ try:
             if 'duration' in n: kw[n]=3.0
         for a in range(4):
             try:
-                r=c.predict(**kw,api_name="/generate_video"); save(r,f"out/{T['id']}.mp4"); log.append('ok'); break
+                r=c.predict(**kw,api_name="/generate_video"); save(r,f"out/{T['id']}_{os.environ['I']}.mp4"); log.append('ok'); break
             except Exception as e:
                 log.append('err '+str(e)[:300])
                 if 'duration' in str(e).lower() or 'invalid' in str(e).lower():
