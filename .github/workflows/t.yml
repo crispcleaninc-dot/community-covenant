@@ -1,0 +1,13 @@
+name: sk-edge
+on: { push: { branches: [sk-edge] } }
+permissions: { contents: write }
+jobs:
+  t:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install -q edge-tts && python3 gen/tts.py > run.txt 2>&1 || true; mkdir -p out; mv run.txt out/
+      - if: always()
+        run: |
+          git config user.name "sk"; git config user.email "noreply@anthropic.com"
+          git checkout -b sk-edge-out && git add out && git commit -qm t && git push -f origin sk-edge-out
