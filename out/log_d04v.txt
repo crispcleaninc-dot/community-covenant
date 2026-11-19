@@ -1,0 +1,5 @@
+params ['input_image', 'prompt', 'steps', 'negative_prompt', 'duration_seconds', 'guidance_scale', 'guidance_scale_2', 'seed', 'randomize_seed']
+err You have exceeded your ZeroGPU quota (105s requested vs. 85s left). Try again in 21:34:56. Authenticate with a Hugging Face token for more quota - https://huggingface.co/settings/tokens
+err You have exceeded your ZeroGPU quota (105s requested vs. 85s left). Try again in 21:34:09. Authenticate with a Hugging Face token for more quota - https://huggingface.co/settings/tokens
+err You have exceeded your ZeroGPU quota (105s requested vs. 85s left). Try again in 21:33:23. Authenticate with a Hugging Face token for more quota - https://huggingface.co/settings/tokens
+err You have exceeded your ZeroGPU quota (105s requested vs. 85s left). Try again in 21:32:37. Authenticate with a Hugging Face token for more quota - https://huggingface.co/settings/tokens
