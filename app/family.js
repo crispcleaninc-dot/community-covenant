@@ -47,7 +47,7 @@
     '#familyView .pp{flex:0 0 auto;text-align:center;width:74px}#familyView .pp .av{width:58px;height:58px;border-radius:50%;margin:0 auto 4px;display:flex;align-items:center;justify-content:center;font:700 1.3em Georgia;color:#fff;position:relative}' +
     '#familyView .pp .av i{position:absolute;right:-2px;bottom:-2px;background:#2e8b57;color:#fff;border-radius:50%;width:20px;height:20px;font:700 12px Arial;display:flex;align-items:center;justify-content:center;font-style:normal}' +
     '#familyView .pp small{display:block;color:#6b6280}' +
-    '#familyView .bar{height:12px;background:#efe8f6;border-radius:99px;overflow:hidden;margin-top:6px}#familyView .bar b{display:block;height:100%;background:linear-gradient(90deg,#c9a961,#f1d999);border-radius:99px;transition:width .8s}' +
+    '#familyView .fam-bar{height:12px;background:#efe8f6;border-radius:99px;overflow:hidden;margin-top:6px}#familyView .fam-bar b{display:block;height:100%;background:linear-gradient(90deg,#c9a961,#f1d999);border-radius:99px;transition:width .8s}' +
     '#familyView .tabs{display:flex;gap:6px;margin:4px 0 12px}#familyView .tabs button{flex:1;border:0;border-radius:999px;padding:9px;font:700 .9em Arial;background:#f3eef8;color:#372b4e;cursor:pointer}#familyView .tabs button.on{background:#372b4e;color:#fff}' +
     '#familyView .post{background:#fff;border-radius:18px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(55,43,78,.07)}' +
     '#familyView .post .who{display:flex;gap:10px;align-items:center;margin-bottom:8px}#familyView .post .who .av{width:38px;height:38px;border-radius:50%;color:#fff;font:700 1em Georgia;display:flex;align-items:center;justify-content:center}' +
@@ -145,7 +145,7 @@
       '<span class="code">' + esc(f.code) + '</span> <button class="fam-btn gold" id="famInvite" style="padding:7px 12px;margin-left:6px">Invite family</button>' +
       '<div class="streak"><span class="flame">' + (h.familyStreak ? '🔥' : '🕯️') + '</span><div><b style="font-size:1.4em">' + h.familyStreak + ' day' + (h.familyStreak === 1 ? '' : 's') + '</b><div style="font-size:.9em">' + L.streak + (badge ? ' · ' + badge : '') + '</div></div></div></div>' +
       '<div class="fam-card"><b>Who showed up today</b><div class="people">' + people + '</div>' +
-      '<div style="margin-top:6px"><b>This week\'s family walks:</b> ' + walks + ' of ' + goal + '<div class="bar"><b style="width:' + pct + '%"></b></div></div></div>' +
+      '<div style="margin-top:6px"><b>This week\'s family walks:</b> ' + walks + ' of ' + goal + '<div class="fam-bar"><b style="width:' + pct + '%"></b></div></div></div>' +
       '<div class="tabs"><button data-t="feed" class="' + (S.tab === 'feed' ? 'on' : '') + '">Feed</button><button data-t="map" class="' + (S.tab === 'map' ? 'on' : '') + '">Map</button><button data-t="testi" class="' + (S.tab === 'testi' ? 'on' : '') + '">' + L.testimonies + '</button></div>' +
       '<div id="famTab"></div>' +
       '<div style="text-align:center;margin:18px 0"><button class="fam-btn ghost" id="famLeave">Leave this family</button></div>';
