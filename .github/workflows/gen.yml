@@ -4,7 +4,7 @@ permissions: { contents: write }
 jobs:
   img:
     runs-on: ubuntu-latest
-    strategy: { fail-fast: false, max-parallel: 12, matrix: { shot: [a1,a2,a3,a4,b1,b2,b3,b4,c1,c2,c3,c4] } }
+    strategy: { fail-fast: false, max-parallel: 12, matrix: { shot: [b2,b3] } }
     steps:
       - uses: actions/checkout@v4
       - run: pip install -q gradio_client && SHOT=${{ matrix.shot }} python3 gen/img.py || true
@@ -16,7 +16,7 @@ jobs:
           if-no-files-found: ignore
   tts:
     runs-on: ubuntu-latest
-    strategy: { fail-fast: false, matrix: { lang: [en, es, fr, hi, zh, ar] } }
+    strategy: { fail-fast: false, matrix: { lang: [en] } }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -42,5 +42,5 @@ jobs:
           path: all
           merge-multiple: true
       - run: |
-          git init -q o && cd o && git checkout -q -b mih-out && cp -r ../all/. . && git add . && git -c user.name=mih-gen -c user.email=noreply@anthropic.com commit -qm "mih outputs"
-          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" mih-out
+          git init -q o && cd o && git checkout -q -b mih-out2 && cp -r ../all/. . && git add . && git -c user.name=mih-gen -c user.email=noreply@anthropic.com commit -qm "mih outputs"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" mih-out2
