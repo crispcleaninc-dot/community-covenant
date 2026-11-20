@@ -1,0 +1,37 @@
+name: mih-gen
+on: { push: { branches: [mih-gen] } }
+permissions: { contents: write }
+jobs:
+  img:
+    runs-on: ubuntu-latest
+    strategy: { fail-fast: false, max-parallel: 12, matrix: { shot: [a1,a2,a3,a4,b1,b2,b3,b4,c1,c2,c3,c4] } }
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install -q gradio_client && SHOT=${{ matrix.shot }} python3 gen/img.py || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: img-${{ matrix.shot }}, path: out/, if-no-files-found: ignore }
+  tts:
+    runs-on: ubuntu-latest
+    strategy: { fail-fast: false, matrix: { lang: [en, es, fr, hi, zh, ar] } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: |
+          timeout 600 sudo apt-get install -y -q espeak-ng ffmpeg
+          case "${{ matrix.lang }}" in ar) pip install -q edge-tts;; en) pip install -q kokoro soundfile "misaki[en]";; zh) pip install -q kokoro soundfile "misaki[zh]";; *) pip install -q kokoro soundfile;; esac
+      - run: python3 gen/tts.py ${{ matrix.lang }} > run.txt 2>&1 || true; mkdir -p out; cp run.txt out/${{ matrix.lang }}_run.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: tts-${{ matrix.lang }}, path: out/, if-no-files-found: ignore }
+  collect:
+    needs: [img, tts]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: all, merge-multiple: true }
+      - run: |
+          git init -q o && cd o && git checkout -q -b mih-out && cp -r ../all/. . && git add . && git -c user.name=mih-gen -c user.email=noreply@anthropic.com commit -qm "mih outputs"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" mih-out
