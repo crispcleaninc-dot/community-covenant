@@ -1,6 +1,7 @@
 /* Community Covenant service worker: works offline + phone notifications.
  * v5 (2026-11-06): offline-first.
  * v9 (2026-11-20): app/family.js added to the saved app files.
+ * v10 (2026-11-20): Legal Help card on the Day Page.
  *  - App screens and scripts: fresh copy when online (so updates show right away), saved copy when offline.
  *  - Skit and Wisdom Reels recordings: saved on the device in the background, then played from the device
  *    (with seeking support), so read-aloud works with no internet.
@@ -8,7 +9,7 @@
  *  - Calls to the Apps Script server are never cached here (app/bridge.js handles offline data). */
 try { importScripts('notify-sw.js'); } catch (e) {} // Cyars Notify: alerts + taps
 try { importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js'); } catch (e) {}
-var CACHE = 'cc-shell-v9';
+var CACHE = 'cc-shell-v10';
 var MEDIA = 'cc-media-v1';
 var RUNTIME = 'cc-runtime-v1';
 var SHELL = ['./notify.js', './notify-sw.js', './', 'index.html', 'app/', 'app/index.html', 'app/bridge.js', 'app/connect.js', 'app/shelter.js', 'app/family.js', 'config.js', 'chat.html', 'manifest.webmanifest',
