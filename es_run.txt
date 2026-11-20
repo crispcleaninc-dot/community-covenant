@@ -1,0 +1,26 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/torch/nn/modules/rnn.py:1012: UserWarning: dropout option adds dropout after all but last recurrent layer, so non-zero dropout expects num_layers greater than 1, but got dropout=0.2 and num_layers=1
+  super().__init__("LSTM", *args, **kwargs)
+/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+WARNING: Defaulting repo_id to hexgrad/Kokoro-82M. Pass repo_id='hexgrad/Kokoro-82M' to suppress this warning.
+es a 0 ok
+es a 1 ok
+es a 2 ok
+es a 3 ok
+es a 4 ok
+es a 5 ok
+es a 6 ok
+es b 0 ok
+es b 1 ok
+es b 2 ok
+es b 3 ok
+es b 4 ok
+es b 5 ok
+es b 6 ok
+es c 0 ok
+es c 1 ok
+es c 2 ok
+es c 3 ok
+es c 4 ok
+es c 5 ok
