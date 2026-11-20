@@ -24,3 +24,11 @@ Server settings live in Apps Script → Project Settings → Script properties (
 - `sw.js` keeps the app files, fonts, photos already seen, and every skit and Wisdom Reels recording on the device.
 - When you add new recordings, regenerate `assets/offline-files.json` (list of every .mp3 under assets/) so they are saved for offline use too.
 - Needs the internet: creating an account, password reset, Scripture AI answers (the question is kept for the team), YouTube sermon clips and gospel radio, the how-it-works video.
+
+## Family (Nov 20 2026)
+Additive add-on: `app/family.js` + `server/CovenantFamily.gs` (must be the LAST file in the Apps Script project; it adds its functions to `CCX.BRIDGE`).
+- Family code (FAM-XXXXX) links relatives. Faith mode or Everyday (no religious wording) mode, chosen when the family is started.
+- Family tab: members' day counts, family streak, weekly family walk goal, feed with cheers, Testimonies/Stories tab, map.
+- The only extra step: "Share with my family" appears on the green bar after sealing a day. Nothing is shared automatically.
+- Map privacy: location only when the person shares, rounded to about 1 km and drawn as an area circle, never an exact address.
+- Sheets created on first use: Covenant — Families, Covenant — Family Members, Covenant — Family Feed.
