@@ -32,3 +32,12 @@ Additive add-on: `app/family.js` + `server/CovenantFamily.gs` (must be the LAST 
 - The only extra step: "Share with my family" appears on the green bar after sealing a day. Nothing is shared automatically.
 - Map privacy: location only when the person shares, rounded to about 1 km and drawn as an area circle, never an exact address.
 - Sheets created on first use: Covenant — Families, Covenant — Family Members, Covenant — Family Feed.
+
+## Reading along with Cover to Cover (Nov 22 2026)
+Additive add-on: `app/covertocover.js`.
+- Top of the Scripture card: "Today's reading plan" with three buttons members can switch between any time: **Covenant plan** (the app's own daily Scripture, the default), **Reading along: Cover to Cover** (the card follows the Faith & Findings Forum's whole-Bible read, KJV, Day 1 = Sun Nov 22 2026), and **Both** (app verse plus today's Cover to Cover reading under it).
+- Cover to Cover shows today's chapters with a KJV link, the scene of the day (Days 1–14), Friday Night Apocrypha Special Edition, Wednesday Full Armor of God (8 weeks), the Saturday Hebrew Word Study note, and a link to the group. Daily Focus and the + chips stay.
+- "Mark Day N read", "Behind or ahead? Set my day" (then it moves forward a day each day) and "Back to the group's day". The day follows the Date box.
+- In the Word: one tap fills "What did you read today?" with today's Cover to Cover reading.
+- Same choice in Settings → Reading Plan. Saved on the device and to the member's account (ccReadPlan, ccC2CStart, ccC2CDone).
+- Plan source: the "FNF Cover to Cover — 365-Day Bible Reading & Video Plan" sheet.

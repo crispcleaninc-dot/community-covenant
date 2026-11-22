@@ -4510,7 +4510,7 @@
   addNav();
 
   /* ---------- 2. ACCOUNT SYNC (likes, dislikes, voice, volume, hidden songs) ---------- */
-  var KEYS = ['ccLikes', 'ccDislikes', 'ccVoicePref', 'ccVol_music', 'ccVol_scripture', 'ccSongsHidden', 'ccBreakEvery', 'ccSkitMute'];
+  var KEYS = ['ccLikes', 'ccDislikes', 'ccVoicePref', 'ccVol_music', 'ccVol_scripture', 'ccSongsHidden', 'ccBreakEvery', 'ccSkitMute', 'ccReadPlan', 'ccC2CStart', 'ccC2CDone'];
   function user(){ try { return (typeof currentUser !== 'undefined' && currentUser && currentUser.email && currentUser.token) ? currentUser : null; } catch(e){ return null; } }
   function snap(){ var o = {}; KEYS.forEach(function(k){ var v = null; try { v = localStorage.getItem(k); } catch(e){} if (v !== null) o[k] = v; }); return o; }
   function run(){ return (window.google && google.script && google.script.run) ? google.script.run : null; }
@@ -4519,6 +4519,7 @@
     Object.keys(data).forEach(function(k){ if (KEYS.indexOf(k) >= 0 && typeof data[k] === 'string') try { localStorage.setItem(k, data[k]); } catch(e){} });
     try { if (window.ccReelsPrefsApplied) ccReelsPrefsApplied(); } catch(e){}
     try { if (window.ccRadioApplyVol) ccRadioApplyVol(); } catch(e){}
+    try { if (window.ccC2CApply) ccC2CApply(); } catch(e){}
   }
   function merge(server){ /* first sync on this device: keep everything from both */
     var mine = snap(), out = {};
@@ -4577,6 +4578,7 @@
 <script src="connect.js"></script>
 <script src="shelter.js"></script>
 <script src="family.js"></script>
+<script src="covertocover.js"></script>
 <script src="../notify.js" data-app="Community Covenant" defer></script>
 </body>
 </html>
