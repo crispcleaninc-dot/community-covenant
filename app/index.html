@@ -580,7 +580,7 @@
     <div id="logView" class="view">
       <div class="card">
         <h3>Your Covenant Log</h3>
-        <div class="bar green" style="margin-top: 0;">Need a lift while you review your journey? <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noopener">Take a motivation break &#9654;</a> \u2014 never give up on this covenant.</div>
+        <div class="bar green" style="margin-top: 0;">Need a lift while you review your journey? <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noopener">Take a motivation break &#9654;</a> \u2014 never give up on this covenant. <a href="https://www.youtube.com/@CommunityCovenantApp?sub_confirmation=1" target="_blank" rel="noopener">Watch Community Covenant on YouTube &#9654;</a></div>
         <div id="logLinks" class="hint" style="margin-bottom: 12px;"></div>
         <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px;">
           <button class="btn ghost small" onclick="downloadLogJSON()">Download my log (JSON)</button>
@@ -3739,6 +3739,7 @@
   var SITE = (window.COVENANT_CONFIG && window.COVENANT_CONFIG.SITE_URL) || 'https://crispcleaninc-dot.github.io/community-covenant/';
   var FB_GROUP = 'https://www.facebook.com/groups/943044184469864';
   var LINKTREE = 'https://linktr.ee/FaithandFindings';
+  var YT_CHANNEL = 'https://www.youtube.com/@CommunityCovenantApp?sub_confirmation=1';
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function ls(k, v){ try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || 'null'); localStorage.setItem(k, JSON.stringify(v)); } catch(e){ return null; } }
   function U(id, w){ return 'https://images.unsplash.com/' + id + '?auto=format&fit=crop&q=70&w=' + (w || 900); }
@@ -4253,11 +4254,13 @@
     function(){ window.ccReelSet = 'creation'; if (typeof ccSetTopic === 'function') ccSetTopic(-2); var l = document.getElementById('ccTopicLbl'); if (l) l.innerHTML = 'His creation &#9662;'; ccOpenReels(false); },
     function(){ sheet('<h4>Your people</h4><p>Woven together with those next to you. Find your community.</p>' +
       A(FB_GROUP, 'Faith and Findings Forum', 'Our Facebook group: biblical takes on what’s going on in the world') +
+      A(YT_CHANNEL, 'Community Covenant on YouTube', 'Shorts, Bible teachings, deep dives and short films. Subscribe') +
       A(LINKTREE, 'Faith & Findings on Linktree', 'Every link in one place') +
       A(SITE + 'chat.html', 'Chat with the team', 'Talk to the Community Covenant team') +
       B("ccOpenBreak('play')", 'Skits & commercials', 'Short, faith-filled and made for your age')); }
   ];
   var ICON_FB = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.3v7A10 10 0 0 0 22 12z"/></svg>';
+  var ICON_YT = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .5 12a31 31 0 0 0 .5 4.8 3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.8 31 31 0 0 0-.5-4.8zM9.7 15.1V8.9l5.8 3.1z"/></svg>';
   var ICON_LT = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M10.6 2h2.8v5.6l4-4 2 2-4.3 4.1H21v2.8h-6l4.3 4.2-2 2-5.3-5.4-5.3 5.4-2-2 4.3-4.2H3V9.7h5.9L4.6 5.6l2-2 4 4zM10.6 15h2.8v7h-2.8z"/></svg>';
   function wireWelcome(){
     var strip = document.getElementById('ccwStrip'); if (!strip || !strip.children.length) return setTimeout(wireWelcome, 400);
@@ -4268,7 +4271,7 @@
       acts.insertBefore(b, acts.children[1] || null); }
     var foot = document.querySelector('#ccWelcome .foot');
     if (foot && !document.getElementById('ccwLinks')) { var l = document.createElement('div'); l.className = 'links'; l.id = 'ccwLinks';
-      l.innerHTML = '<a href="' + FB_GROUP + '" target="_blank" rel="noopener">' + ICON_FB + 'Faith &amp; Findings on Facebook</a><a href="' + LINKTREE + '" target="_blank" rel="noopener">' + ICON_LT + 'Linktree</a>';
+      l.innerHTML = '<a href="' + FB_GROUP + '" target="_blank" rel="noopener">' + ICON_FB + 'Faith &amp; Findings on Facebook</a><a href="' + YT_CHANNEL + '" target="_blank" rel="noopener">' + ICON_YT + 'Community Covenant on YouTube</a><a href="' + LINKTREE + '" target="_blank" rel="noopener">' + ICON_LT + 'Linktree</a>';
       foot.parentNode.insertBefore(l, foot); }
     if (foot && !document.getElementById('ccwFnf')) { var c = document.createElement('a'); c.id = 'ccwFnf'; c.href = FB_GROUP; c.target = '_blank'; c.rel = 'noopener'; c.className = 'fnf';
       c.innerHTML = '<img src="' + SITE + 'assets/faith-findings-logo.jpg" alt=""><span><b>Faith and Findings Forum</b><small>Our public Facebook group &middot; biblical takes on what\u2019s going on in the world</small><em>Join the conversation &rsaquo;</em></span>';

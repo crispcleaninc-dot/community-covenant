@@ -9,7 +9,7 @@
  *  - Calls to the Apps Script server are never cached here (app/bridge.js handles offline data). */
 try { importScripts('notify-sw.js'); } catch (e) {} // Cyars Notify: alerts + taps
 try { importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js'); } catch (e) {}
-var CACHE = 'cc-shell-v10';
+var CACHE = 'cc-shell-v11';
 var MEDIA = 'cc-media-v1';
 var RUNTIME = 'cc-runtime-v1';
 var SHELL = ['./notify.js', './notify-sw.js', './', 'index.html', 'app/', 'app/index.html', 'app/bridge.js', 'app/connect.js', 'app/shelter.js', 'app/family.js', 'config.js', 'chat.html', 'manifest.webmanifest',
