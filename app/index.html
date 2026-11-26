@@ -4542,6 +4542,7 @@
     track('give-' + how, 'give', how, '');
   };
   function shouldShow(){
+    if (/[?&]family=1/.test(location.search) || window.CC_FAMILY_MODE) return false; /* Nov 26 2026: no donation screen inside the private Family Covenant app */
     if (ss('ccGiveShown')) return false;                                   /* once per visit */
     var gave = ls('ccGaveAt'); if (gave && Date.now() - gave < 30 * 864e5) return false; /* gave in the last 30 days */
     if (days() < FREE_DAYS) { var d = new Date().toDateString(); if (ls('ccGiveDay') === d) return false; ls('ccGiveDay', d); } /* first days: once a day, with Continue */
