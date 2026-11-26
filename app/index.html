@@ -2526,6 +2526,8 @@
 
   /* ---------- GOSPEL RADIO from the owner's YouTube playlist sheet ---------- */
   var songs = [], si = 0, yt = null, ytReady = false, wantPlay = false, playing = false;
+  /* First song for Cover to Cover readers: "Stand" by Donnie McClurkin (his official channel, plays in embeds, 4:38) */
+  var C2C_FIRST = { id: 'f_AZWYVlzD8', t: 'Stand', a: 'Donnie McClurkin' };
   function vid(u){ var m = String(u || '').match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/); return m ? m[1] : ''; }
   function loadSongs(cb){
     if (songs.length) { cb(); return; }
@@ -2534,6 +2536,16 @@
       var hidden = dnLoad();
       songs = (list || []).map(function(s){ var id = vid(s.youtubeLink); return { t: s.title, a: s.artist && s.artist !== '?' ? s.artist : '', id: id, x: !!s.advisory || ADV_SEED.indexOf(id) > -1 }; }).filter(function(s){ return s.id && !hidden[s.id]; });
       for (var i = songs.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = songs[i]; songs[i] = songs[j]; songs[j] = t; }
+      /* Nov 26 2026 (additive): members reading along with Cover to Cover (or Both) hear "Stand" first.
+         Skipped if the member turned this song down before; the rest of the playlist stays shuffled as before. */
+      try {
+        var ccPlan = localStorage.getItem('ccReadPlan');
+        if ((ccPlan === 'c2c' || ccPlan === 'both') && !hidden[C2C_FIRST.id]) {
+          songs = songs.filter(function(s){ return s.id !== C2C_FIRST.id; });
+          songs.unshift({ t: C2C_FIRST.t, a: C2C_FIRST.a, id: C2C_FIRST.id, x: false });
+          si = 0;
+        }
+      } catch(e){}
       cb();
     };
     google.script.run.withSuccessHandler(got).withFailureHandler(function(){ google.script.run.withSuccessHandler(got).withFailureHandler(function(){ cb(); }).getMusicPlaylist(); }).getReelsMusic();
