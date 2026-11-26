@@ -2485,10 +2485,27 @@
     var feed = document.getElementById('ccFeed'); if (!feed) return;
     var from = current, nx = feed.children[current + 1] || feed.children[0];
     if (!nx) return;
+    /* Nov 26 2026: screen off or app in the background, keep reading the next reel (scrolling doesn't fire while hidden) */
+    if (document.hidden) { current = Array.prototype.indexOf.call(feed.children, nx); try { feed.scrollTop = nx.offsetTop; } catch(e){} speak(nx); return; }
     nx.scrollIntoView({ behavior: 'smooth' });
     setTimeout(function(){ if (auto && current === from) { feed.scrollTop = nx.offsetTop; } }, 1200);
   }
   function ccAfterRead(manual){ ccDisarm(); duck(false); if (auto && !manual) setTimeout(function(){ if (auto) ccNext(); }, 1600); }
+  /* Nov 26 2026: lock-screen / notification player ("widget"): shows the reel or song with play, pause, next and back,
+     so Wisdom Reels keep going with the screen off. Uses the phone's Media Session controls; nothing else changes. */
+  window.ccMediaNow = function(title, artist, img){
+    try { if (!('mediaSession' in navigator)) return;
+      navigator.mediaSession.metadata = new MediaMetadata({ title: title || 'Wisdom Reels', artist: artist || 'Community Covenant', album: 'Community Covenant',
+        artwork: [{ src: img || ((window.COVENANT_CONFIG && COVENANT_CONFIG.SITE_URL) || 'https://crispcleaninc-dot.github.io/community-covenant/') + 'icons/icon-512.png', sizes: '512x512', type: img ? 'image/jpeg' : 'image/png' }] });
+    } catch(e){}
+  };
+  (function(){ if (!('mediaSession' in navigator)) return; var ms = navigator.mediaSession;
+    function reelsOpen(){ var r = document.getElementById('ccReels'); return r && r.classList.contains('on'); }
+    try { ms.setActionHandler('play', function(){ if (reelsOpen()) { if (!auto) ccToggleAuto(); else { var a = ccAudioEl(); if (a.paused) a.play().catch(function(){}); } } else if (window.ccRadioToggle) ccRadioToggle(); }); } catch(e){}
+    try { ms.setActionHandler('pause', function(){ if (reelsOpen() && auto) { var a = ccAudioEl(); if (!a.paused) a.pause(); else ccToggleAuto(); } else if (window.ccRadioToggle) ccRadioToggle(); }); } catch(e){}
+    try { ms.setActionHandler('nexttrack', function(){ if (reelsOpen()) { var w = auto; auto = true; ccNext(); auto = w; } else if (window.ccRadioNext) ccRadioNext(); }); } catch(e){}
+    try { ms.setActionHandler('previoustrack', function(){ if (reelsOpen()) { var feed = document.getElementById('ccFeed'), pv = feed && feed.children[Math.max(0, current - 1)]; if (pv) { current = Math.max(0, current - 1); feed.scrollTop = pv.offsetTop; speak(pv, true); } } else if (window.ccRadioPrev) ccRadioPrev(); }); } catch(e){}
+  })();
   /* Wisdom Reels v6 (2026-11-06): natural recorded voice (deep, human-sounding) is the default. Files: assets/reels/<reel number>.mp3.
      If a file can't play, the reel falls back to the voice it used before. The other voice choices are all still in the picker. */
   var CC_REC = ((window.COVENANT_CONFIG && window.COVENANT_CONFIG.SITE_URL) || 'https://crispcleaninc-dot.github.io/community-covenant/') + 'assets/reels/';
@@ -2507,6 +2524,7 @@
     try { var feed = document.getElementById('ccFeed'), nx = feed && feed.children[current + 1]; if (nx) { var pre = new Audio(); pre.preload = 'auto'; pre.src = ccRecUrl(nx.getAttribute('data-i')); } } catch(e){}
   }
   function speak(section, manual){
+    try { var rim = +section.getAttribute('data-i'); ccMediaNow(R[rim][1], (CC_FOUNDER[rim] ? 'Read by the founder' : 'Wisdom Reels') + (R[rim][6] ? ' \u00b7 ' + R[rim][6] : ''), ((window.COVENANT_CONFIG && COVENANT_CONFIG.SITE_URL) || 'https://crispcleaninc-dot.github.io/community-covenant/') + 's/c/r' + rim + '.jpg'); } catch(e){}
     try { var ri0 = +section.getAttribute('data-i'); ccT('reel', 'reel-' + ri0, R[ri0][1], (VSTYLES[vp.style || 'natural'] || {}).label || vp.style || 'natural'); } catch(e){}
     if (ccRecOn() || CC_FOUNDER[+section.getAttribute('data-i')]) { ccRecSpeak(section, manual); return; }
     speakOld(section, manual);
@@ -2568,7 +2586,7 @@
   var prevYT = window.onYouTubeIframeAPIReady;
   window.onYouTubeIframeAPIReady = function(){ ytReady = true; if (typeof prevYT === 'function') prevYT(); if (wantPlay) startRadio(); };
   function show(on){ document.getElementById('ccRadio').classList.toggle('on', on); document.body.classList.toggle('cc-radio-on', on); document.getElementById('ccTMusic').classList.toggle('on', on && playing); }
-  function label(){ var s = songs[si]; document.getElementById('ccRT').textContent = s ? s.t : 'No songs found in the playlist'; document.getElementById('ccRA').textContent = s ? s.a : '';
+  function label(){ var s = songs[si]; document.getElementById('ccRT').textContent = s ? s.t : 'No songs found in the playlist'; document.getElementById('ccRA').textContent = s ? s.a : ''; try { if (s && window.ccMediaNow && !(document.getElementById('ccReels') || {classList:{contains:function(){return false;}}}).classList.contains('on')) ccMediaNow(s.t, s.a || 'Gospel radio'); } catch(e){}
     var x = document.getElementById('ccRX'); if (x) { if (s && s.x) { x.textContent = '\u26A0 Advisory: this song may contain profanity and is not suitable for all listeners. Tap \u25B6\u258F to skip.'; x.classList.add('on'); } else { x.textContent = ''; x.classList.remove('on'); } } }
   var ADV_SEED = ['lPNdPQRcMnU'];
   var DN_KEY = 'ccSongsHidden', ccLastSongT = '';
